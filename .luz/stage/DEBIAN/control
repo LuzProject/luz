@@ -1,0 +1,8 @@
+Name: Trolley
+Package: com.jaidan.trolley
+Depends: mobilesubstrate
+Architecture: iphoneos-arm
+Description: TROLLEY BUS DEMO
+Author: Jaidan
+Section: Tweaks
+Version: 1.0.0

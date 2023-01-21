@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "luz"
+version = "0.0.1"
+description = "A build system for iOS tweaks."
+authors = ["ja1dan <ajaidan0@gmail.com>"]
+readme = "README.md"
+packages = [{include = "luz"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pyclang = {git = "https://github.com/LuzProject/pyclang"}
+pydeb = {git = "https://github.com/LuzProject/pydeb"}
+pyyaml = "^6.0"
+
+[tool.poetry.scripts]
+luz = 'luz.__main__:main'
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
