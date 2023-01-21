@@ -7,7 +7,7 @@ from yaml import safe_load
 
 # local imports
 from .logger import error, log, log_stdout, remove_log_stdout
-from .module import Module
+from .modules.modules import assign_module
 from .utils import setup_luz_dir
 
 class LuzBuild:
@@ -29,6 +29,9 @@ class LuzBuild:
         # control
         self.control_raw = ''
         
+        # rootless
+        self.rootless = True
+        
         self.modules = {}
         
         if self.luzbuild.get('CC') is not None:
@@ -38,16 +41,21 @@ class LuzBuild:
 
         for key in self.luzbuild:
             value = self.luzbuild.get(key)
+            # rootless
+            if key == 'rootless':
+                self.rootless = bool(value)
             # control assignments
             if key in ['name', 'id', 'depends', 'architecture', 'version', 'maintainer', 'description', 'section', 'author', 'homepage', 'icon', 'priority', 'size', 'tags', 'replaces', 'provides', 'conflicts', 'installed-size', 'depiction']:
                 if type(value) is str:
-                    if key == 'id':
+                    if key == 'architecture' and self.rootless:
+                        self.control_raw += 'Architecture: iphoneos-arm64\n'
+                    elif key == 'id':
                         self.control_raw += f'Package: {value}\n'
                     else:
                         self.control_raw += f'{key.capitalize()}: {value}\n'
             # add modules
             if type(value) is dict:
-                self.modules[key] = Module(value, key, self.compiler, self.control_raw)
+                self.modules[key] = assign_module(value, key, self.compiler, self.control_raw)
         
         # ensure modules exist
         if self.modules == {}:
@@ -59,7 +67,7 @@ class LuzBuild:
         """Build the project."""
         start = time()
         with ThreadPool() as pool:
-            for result in pool.map(lambda x: x.compile(), self.modules.values()):
+            for result in pool.map(lambda x: x.compile(rootless=self.rootless), self.modules.values()):
                 if result is not None:
                     error(result)
                     exit(1)
