@@ -1,6 +1,5 @@
 # module imports
 from os import makedirs, mkdir, path
-from pyclang import CCompiler
 from shutil import copytree
 from time import time
 
@@ -11,15 +10,25 @@ from ..utils import get_hash, setup_luz_dir
 
 
 class Tool(Module):
-    def __init__(self, module: dict, key: str, compiler: CCompiler, control: str):
-        # raw ctrl
-        self.__raw_control = control
+    def __init__(self, **kwargs):
+        """Tool module class.
+        
+        :param dict module: Module dictionary to build
+        :param str key: Module key name
+        :param CCompiler compiler: Compiler to use to build
+        :param LuzBuild luzbuild: Luzbuild class
+        """
+        # kwargs parsing
+        module = kwargs.get('module')
+        key = kwargs.get('key')
+        compiler = kwargs.get('compiler')
+        luzbuild = kwargs.get('luzbuild')
         # get luz dir
         self.dir = setup_luz_dir()
         # files
         files = module.get('files') if type(module.get(
             'files')) is list else [module.get('files')]
-        super().__init__(module, key, compiler, control)
+        super().__init__(module, key, compiler, luzbuild)
         self.files = self.__hash_files(files)
 
     def __hash_files(self, files: list) -> list:
@@ -41,13 +50,6 @@ class Tool(Module):
 
     def __stage(self, rootless: bool = False):
         """Stage a deb to be packaged."""
-        # make staging dirs
-        if not path.exists(self.dir + '/stage/DEBIAN'):
-            makedirs(self.dir + '/stage/DEBIAN')
-        # write control
-        with open(self.dir + '/stage/DEBIAN/control', 'w') as f:
-            f.write(self.__raw_control)
-
         # dirs to make
         dirtomake = '/stage/usr/' if not rootless else '/stage/var/jb/usr/'
         dirtocopy = '/stage/usr/bin/' if not rootless else '/stage/var/jb/usr/bin/'

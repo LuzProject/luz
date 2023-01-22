@@ -3,7 +3,6 @@ from glob import glob
 from json import loads
 from multiprocessing.pool import ThreadPool
 from os import makedirs, mkdir, path
-from pyclang import CCompiler
 from shutil import copytree
 from subprocess import check_output
 from time import time
@@ -16,15 +15,25 @@ from ..utils import cmd_in_path, get_hash, setup_luz_dir
 
 
 class Tweak(Module):
-    def __init__(self, module: dict, key: str, compiler: CCompiler, control: str):
-        # raw ctrl
-        self.__raw_control = control
+    def __init__(self, **kwargs):
+        """Tweak module class
+        
+        :param dict module: Module dictionary to build
+        :param str key: Module key name
+        :param CCompiler compiler: Compiler to use to build
+        :param LuzBuild luzbuild: Luzbuild class
+        """
+        # kwargs parsing
+        module = kwargs.get('module')
+        key = kwargs.get('key')
+        compiler = kwargs.get('compiler')
+        luzbuild = kwargs.get('luzbuild')
         # get luz dir
         self.dir = setup_luz_dir()
         # files
         files = module.get('files') if type(module.get(
             'files')) is list else [module.get('files')]
-        super().__init__(module, key, compiler, control)
+        super().__init__(module, key, compiler, luzbuild)
         self.files = self.__hash_files(files)
     
 
@@ -78,13 +87,6 @@ class Tweak(Module):
 
     def __stage(self, rootless: bool = False):
         """Stage a deb to be packaged."""
-        # make staging dirs
-        if not path.exists(self.dir + '/stage/DEBIAN'):
-            makedirs(self.dir + '/stage/DEBIAN')
-        # write control
-        with open(self.dir + '/stage/DEBIAN/control', 'w') as f:
-            f.write(self.__raw_control)
-
         # dirs to make
         dirtomake = '/stage/Library/MobileSubstrate/' if not rootless else '/stage/var/jb/usr/lib/'
         dirtocopy = '/stage/Library/MobileSubstrate/DynamicLibraries/' if not rootless else '/stage/var/jb/usr/lib/TweakInject'

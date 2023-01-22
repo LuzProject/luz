@@ -1,16 +1,18 @@
 # module imports
 from multiprocessing.pool import ThreadPool
-from os import path
+from os import makedirs, path
 from pyclang import CCompiler
 from pydeb import Pack
 from shutil import copytree
+from subprocess import getoutput
 from time import time
 from yaml import safe_load
 
 # local imports
 from .logger import error, log, log_stdout, remove_log_stdout
 from .modules.modules import assign_module
-from .utils import setup_luz_dir
+from .utils import cmd_in_path, setup_luz_dir
+
 
 class LuzBuild:
     def __init__(self, path: str = 'LuzBuild'):
@@ -36,6 +38,9 @@ class LuzBuild:
         
         self.modules = {}
         
+        # sdk
+        self.sdk = ''
+        
         if self.luzbuild.get('CC') is not None:
             self.compiler = CCompiler().set_compiler(self.luzbuild.get('CC'))
         else:
@@ -57,13 +62,36 @@ class LuzBuild:
                         self.control_raw += f'{key.capitalize()}: {value}\n'
             # add modules
             if type(value) is dict:
-                self.modules[key] = assign_module(value, key, self.compiler, self.control_raw)
+                self.modules[key] = assign_module(value, key, self.compiler, self)
         
         # ensure modules exist
         if self.modules == {}:
             error('No modules found in LuzBuild file.')
             exit(1)
         
+        # luzdir
+        self.dir = setup_luz_dir()
+        
+    
+    def get_sdk(self):
+        """Get a default SDK using xcrun."""
+        if self.sdk == '':
+            xcrun = cmd_in_path('xcrun')
+            if xcrun is None:
+                error(
+                    'Xcode does not appear to be installed. Please specify an SDK manually.')
+                exit(1)
+            else:
+                log_stdout('Finding an SDK...')
+                sdkA = getoutput(
+                    f'{xcrun} --show-sdk-path --sdk iphoneos').split('\n')[-1]
+                if sdkA == '':
+                    error('Could not find an SDK. Please specify one manually.')
+                    exit(1)
+                remove_log_stdout('Finding an SDK...')
+                self.sdk = sdkA
+        return self.sdk
+    
     
     def build(self):
         """Build the project."""
@@ -74,6 +102,12 @@ class LuzBuild:
                     error(result)
                     exit(1)
         log_stdout('Packing up .deb file...')
+        # make staging dirs
+        if not path.exists(self.dir + '/stage/DEBIAN'):
+            makedirs(self.dir + '/stage/DEBIAN')
+        # write control
+        with open(self.dir + '/stage/DEBIAN/control', 'w') as f:
+            f.write(self.control_raw)
         self.__pack()
         remove_log_stdout('Packing up .deb file...')
         log(f'Done in {round(time() - start, 2)} seconds.')
@@ -81,10 +115,8 @@ class LuzBuild:
   
     def __pack(self):
         """Pack up the .deb file."""
-        # dir
-        dir = setup_luz_dir()
         # layout
         if path.exists('layout'):
-            copytree('layout', dir + '/stage')
+            copytree('layout', self.dir + '/stage')
         # pack
-        Pack(dir + '/stage')
+        Pack(self.dir + '/stage')

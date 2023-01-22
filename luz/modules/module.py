@@ -2,12 +2,10 @@
 from os import path
 from pyclang import CCompiler
 from shutil import rmtree
-from subprocess import getoutput
 
 # local imports
 from ..deps import clone_headers, clone_libraries
-from ..logger import error, log_stdout, remove_log_stdout
-from ..utils import cmd_in_path, setup_luz_dir
+from ..logger import error
 
 
 def get_safe(module: dict, key: str, default: str = None) -> str:
@@ -22,18 +20,20 @@ def get_safe(module: dict, key: str, default: str = None) -> str:
 
 
 class Module:
-    def __init__(self, module: dict, key: str, compiler: CCompiler, control: str):
-        # declare raw module
-        self.__raw_module = module
-
-        # raw control
-        self.__raw_control = control
-
+    def __init__(self, module: dict, key: str, compiler: CCompiler, luzbuild):
+        """Module superclass.
+        
+        :param dict module: Module dictionary to build
+        :param str key: Module key name
+        :param CCompiler compiler: Compiler to use to build
+        :param LuzBuild luzbuild: Luzbuild class
+        """
         # type
         self.type = get_safe(module, 'type', 'tweak')
 
         # process
-        self.filter = get_safe(module, 'filter', {'executables': ['SpringBoard']})
+        self.filter = get_safe(
+            module, 'filter', {'executables': ['SpringBoard']})
 
         # compiler
         self.compiler = compiler
@@ -43,7 +43,7 @@ class Module:
 
         # use arc
         self.arc = bool(
-            get_safe(module, 'arc', True))
+            get_safe(module, 'arc', True if self.type == 'tweak' else False))
 
         # only compile changes
         self.only_compile_changed = get_safe(
@@ -101,19 +101,7 @@ class Module:
 
         # attempt to manually find an sdk
         if sdkA == '':
-            xcbuild = cmd_in_path('xcodebuild')
-            if xcbuild is None:
-                error(
-                    'Xcode does not appear to be installed. Please specify an SDK manually.')
-                exit(1)
-            else:
-                log_stdout('Finding an SDK...')
-                sdkA = getoutput(
-                    f'{xcbuild} -version -sdk iphoneos Path').split('\n')[-1]
-                if sdkA == '':
-                    error('Could not find an SDK. Please specify one manually.')
-                    exit(1)
-                remove_log_stdout('Finding an SDK...')
+            sdkA = luzbuild.get_sdk()
         else:
             # ensure sdk exists
             if not path.exists(sdkA):

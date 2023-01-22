@@ -7,19 +7,18 @@ from .tool import Tool
 from .tweak import Tweak
 
 
-def assign_module(module: dict, key: str, compiler: CCompiler, control: str):
+def assign_module(module: dict, key: str, compiler: CCompiler, luzbuild):
     """Assign the module to the correct class.
 
     :param dict module: The module dict.
     :param str key: The key of the module.
     :param CCompiler compiler: The compiler object.
-    :param str control: The control string.
     :return: The module object.
     """
     if module.get('type') == 'tool':
-        return Tool(module, key, compiler, control)
+        return Tool(module=module, key=key, compiler=compiler, luzbuild=luzbuild)
     elif module.get('type') == 'tweak':
-        return Tweak(module, key, compiler, control)
+        return Tweak(module=module, key=key, compiler=compiler, luzbuild=luzbuild)
     else:
         error(f'Unknown module type: {module.get("type")}')
         exit(1)
