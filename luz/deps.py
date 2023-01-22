@@ -9,6 +9,7 @@ from .utils import cmd_in_path, setup_luz_dir
 
 def get_luz_storage() -> str:
     """Gets the Luz storage directory."""
+    print(environ.get('HOME'))
     if not path.exists(f'{environ.get("HOME")}/.luz'):
         log_stdout('Creating Luz storage directory...')
         mkdir(f'{environ.get("HOME")}/.luz')
