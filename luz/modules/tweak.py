@@ -5,13 +5,14 @@ from multiprocessing.pool import ThreadPool
 from os import makedirs, mkdir, path
 from pyclang import CCompiler
 from shutil import copytree
+from subprocess import check_output
 from time import time
 
 # local imports
 from ..deps import logos
-from ..logger import log
+from ..logger import log, error
 from .module import Module
-from ..utils import get_hash, setup_luz_dir
+from ..utils import cmd_in_path, get_hash, setup_luz_dir
 
 
 class Tweak(Module):
@@ -108,12 +109,28 @@ class Tweak(Module):
             filtermsg += '};'
             f.write(filtermsg)
 
-    def __linker(self):
+    def __linker(self, rootless: bool = False):
         """Use a linker on the compiled files."""
         log(f'Linking compiled files to {self.name}.dylib...')
         files = ' '.join(glob(f'{self.dir}/obj/*.o'))
         self.compiler.compile(files, f'{self.dir}/dylib/{self.name}.dylib', ['-fobjc-arc' if self.arc else '', f'-isysroot {self.sdk}', '-Wall', '-O2', '-dynamiclib',
                               '-Xlinker', '-segalign', '-Xlinker 4000', self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.archs])
+        # rpath
+        install_tool = cmd_in_path('install_name_tool')
+        if install_tool is None:
+            error('install_name_tool_not found.')
+            exit(1)
+        # fix rpath
+        rpath = '/var/jb/Library/Frameworks/' if rootless else '/Library/Frameworks'
+        check_output(f'{install_tool} -add_rpath {rpath} {self.dir}/dylib/{self.name}.dylib', shell=True)
+        # ldid
+        ldid = cmd_in_path('ldid')
+        if ldid is None:
+            error('ldid not found.')
+            exit(1)
+        # run ldid
+        check_output(f'{ldid} -S {self.dir}/dylib/{self.name}.dylib', shell=True)
+        
 
     def __compile_tweak_file(self, file):
         """Compile a tweak file."""
