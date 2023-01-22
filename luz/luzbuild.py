@@ -75,6 +75,7 @@ class LuzBuild:
     
     def get_sdk(self):
         """Get a default SDK using xcrun."""
+        print('here (sdk)')
         if self.sdk == '':
             xcrun = cmd_in_path('xcrun')
             if xcrun is None:
@@ -95,6 +96,7 @@ class LuzBuild:
     
     def build(self):
         """Build the project."""
+        print('here (build)')
         start = time()
         with ThreadPool() as pool:
             for result in pool.map(lambda x: x.compile(rootless=self.rootless), self.modules.values()):
@@ -115,6 +117,7 @@ class LuzBuild:
   
     def __pack(self):
         """Pack up the .deb file."""
+        print('here (pack)')
         # layout
         if path.exists('layout'):
             copytree('layout', self.dir + '/stage')
