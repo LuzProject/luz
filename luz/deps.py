@@ -84,7 +84,7 @@ def clone_libraries(update: bool = False) -> str:
     
     :return: Path to libraries dir
     """
-    libraries_url = 'https://github.com/elihwyma/lib/tree/rootless'
+    libraries_url = '--branch rootless https://github.com/elihwyma/lib'
     git = cmd_in_path('git')
     storage = get_luz_storage()
     # if git doesnt exist, exit
@@ -94,8 +94,7 @@ def clone_libraries(update: bool = False) -> str:
     # if it doesn't exist, clone logos
     if not path.exists(f'{storage}/lib'):
         log_stdout('Cloning libraries...')
-        check_output(f'{git} clone {libraries_url} {storage}/lib --recursive'.split(' '),
-                     stdin=DEVNULL, stderr=DEVNULL)
+        check_output(f'{git} clone {libraries_url} {storage}/lib --recursive'.split(' '), stdin=DEVNULL, stderr=DEVNULL)
         remove_log_stdout('Cloning libraries...')
     # update
     if update:

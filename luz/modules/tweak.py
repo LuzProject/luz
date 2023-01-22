@@ -91,20 +91,20 @@ class Tweak(Module):
         if not path.exists(self.dir + dirtomake):
             makedirs(self.dir + dirtomake)
         copytree(self.dir + '/dylib', self.dir + dirtocopy)
-        with open(f'{self.dir}{dirtomake}{self.name}.plist', 'w') as f:
-            filtermsg = 'Filter = { '
+        with open(f'{self.dir}{dirtocopy}/{self.name}.plist', 'w') as f:
+            filtermsg = 'Filter = {\n'
             # bundle filters
             if self.filter.get('bundles') is not None:
-                filtermsg += 'Bundles = ( '
+                filtermsg += '    Bundles = ( '
                 for filter in self.filter.get('bundles'):
                     filtermsg += f'"{filter}", '
-                filtermsg = filtermsg[:-2] + ' ); '
+                filtermsg = filtermsg[:-2] + ' );\n'
             # executables filters
             if self.filter.get('executables') is not None:
-                filtermsg += 'Executables = ( '
+                filtermsg += '    Executables = ( '
                 for executable in self.filter.get('executables'):
                     filtermsg += f'"{executable}", '
-                filtermsg = filtermsg[:-2] + ' ); '
+                filtermsg = filtermsg[:-2] + ' );\n'
             filtermsg += '};'
             f.write(filtermsg)
 
