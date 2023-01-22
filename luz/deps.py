@@ -35,19 +35,19 @@ def logos(files: list) -> list:
         # declare output var
         output = f'{dir}/logos-processed/{file.split("/")[-1]}'
         # match to case
-        match file.split('/')[-1].split('.')[-1]:
-            case 'x':
-                log_stdout(f'Processing {file} with Logos...')
-                system(f'{logos_exec} {file} > {output}.m')
-                new_files.append(f'{output}.m')
-                remove_log_stdout(f'Processing {file} with Logos...')
-            case 'xm':
-                log_stdout(f'Processing {file} with Logos...')
-                system(f'{logos_exec} {file} > {output}.mm')
-                new_files.append(f'{output}.mm')
-                remove_log_stdout(f'Processing {file} with Logos...')
-            case _:
-                new_files.append(file)
+        file_formatted = file.split('/')[-1].split('.')[-1]
+        if file_formatted == 'x':
+            log_stdout(f'Processing {file} with Logos...')
+            system(f'{logos_exec} {file} > {output}.m')
+            new_files.append(f'{output}.m')
+            remove_log_stdout(f'Processing {file} with Logos...')
+        elif file_formatted == 'xm':
+            log_stdout(f'Processing {file} with Logos...')
+            system(f'{logos_exec} {file} > {output}.mm')
+            new_files.append(f'{output}.mm')
+            remove_log_stdout(f'Processing {file} with Logos...')
+        else:
+            new_files.append(file)
 
     # return files
     return new_files
