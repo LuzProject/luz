@@ -1,7 +1,7 @@
 name: Build package
 
 env:
-  zip-link: https://cdn.discordapp.com/attachments/921967527356170240/1066823273679167508/tweak.zip
+  zip-link: https://cdn.discordapp.com/attachments/883431899882749983/1066833307519688755/tweak.zip
 
 on:
   release:
