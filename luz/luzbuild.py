@@ -1,7 +1,9 @@
 # module imports
 from multiprocessing.pool import ThreadPool
+from os import path
 from pyclang import CCompiler
 from pydeb import Pack
+from shutil import copytree
 from time import time
 from yaml import safe_load
 
@@ -81,5 +83,8 @@ class LuzBuild:
         """Pack up the .deb file."""
         # dir
         dir = setup_luz_dir()
+        # layout
+        if path.exists('layout'):
+            copytree('layout', dir + '/stage')
         # pack
         Pack(dir + '/stage')
