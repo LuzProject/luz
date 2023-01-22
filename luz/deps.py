@@ -84,7 +84,7 @@ def clone_libraries(update: bool = False) -> str:
     
     :return: Path to libraries dir
     """
-    libraries_url = 'https://github.com/theos/lib'
+    libraries_url = 'https://github.com/elihwyma/lib/tree/rootless'
     git = cmd_in_path('git')
     storage = get_luz_storage()
     # if git doesnt exist, exit
