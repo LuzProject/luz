@@ -20,27 +20,27 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
       
-      - name: test
-        run: echo ~
-      
       - name: Checkout lib
         uses: actions/checkout@v3
         with:
           repository: elihwyma/lib
           ref: rootless
           path: ~/.luz/lib
+          submodules: 'recursive'
       
       - name: Checkout logos
         uses: actions/checkout@v3
         with:
           repository: LuzProject/logos
           path: ~/.luz/logos
+          submodules: 'recursive'
       
       - name: Checkout headers
         uses: actions/checkout@v3
         with:
           repository: theos/headers
           path: ~/.luz/headers
+          submodules: 'recursive'
 
       - name: Select Xcode version (14.1)
         run: |
@@ -59,9 +59,6 @@ jobs:
         run: |
             wget ${{ env.zip-link }}
             unzip tweak.zip
-            which ar
-            which gcc
-            which clang
     
       - name: Build tweak
         run: cd tweak && luz
