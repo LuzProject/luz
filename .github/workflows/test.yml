@@ -30,7 +30,7 @@ jobs:
           ref: rootless
           path: ~/.luz/lib
       
-       - name: Checkout logos
+      - name: Checkout logos
         uses: actions/checkout@v3
         with:
           repository: LuzProject/logos
