@@ -37,6 +37,9 @@ jobs:
         run: |
             wget ${{ env.zip-link }}
             unzip tweak.zip
+            which ar
+            which gcc
+            which clang
     
       - name: Build tweak
         run: cd tweak && luz
