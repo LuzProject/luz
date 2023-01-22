@@ -43,7 +43,7 @@ class Module:
 
         # use arc
         self.arc = bool(
-            get_safe(module, 'arc', True if self.type == 'tweak' else False))
+            get_safe(module, 'arc', True))
 
         # only compile changes
         self.only_compile_changed = get_safe(
