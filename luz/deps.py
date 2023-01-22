@@ -9,7 +9,6 @@ from .utils import cmd_in_path, setup_luz_dir
 
 def get_luz_storage() -> str:
     """Gets the Luz storage directory."""
-    print(environ.get('HOME'))
     if not path.exists(f'{environ.get("HOME")}/.luz'):
         log_stdout('Creating Luz storage directory...')
         mkdir(f'{environ.get("HOME")}/.luz')
@@ -23,7 +22,6 @@ def logos(files: list) -> list:
     :param list files: The files to use logos on.
     :return: The list of logos'd files.
     """
-    print('here (logos)')
     # storage dir
     dir = setup_luz_dir()
     # logos dir
@@ -86,7 +84,6 @@ def clone_libraries(update: bool = False) -> str:
     
     :return: Path to libraries dir
     """
-    print('here (clone lib)')
     libraries_url = '--branch rootless https://github.com/elihwyma/lib'
     git = cmd_in_path('git')
     storage = get_luz_storage()
@@ -114,7 +111,6 @@ def clone_headers(update: bool = False) -> str:
     
     :return: Path to headers dir
     """
-    print('here (clone headers)')
     headers_url = 'https://github.com/theos/headers'
     git = cmd_in_path('git')
     storage = get_luz_storage()
