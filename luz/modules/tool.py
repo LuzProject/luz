@@ -7,7 +7,7 @@ from time import time
 # local imports
 from ..logger import log
 from .module import Module
-from ..utils import exists, get_hash, setup_luz_dir
+from ..utils import exists, get_hash
 
 
 class Tool(Module):
@@ -16,20 +16,14 @@ class Tool(Module):
         
         :param dict module: Module dictionary to build
         :param str key: Module key name
-        :param CCompiler compiler: Compiler to use to build
         :param LuzBuild luzbuild: Luzbuild class
         """
         # kwargs parsing
         module = kwargs.get('module')
-        key = kwargs.get('key')
-        compiler = kwargs.get('compiler')
-        luzbuild = kwargs.get('luzbuild')
-        # get luz dir
-        self.dir = setup_luz_dir()
         # files
         files = module.get('files') if type(module.get(
             'files')) is list else [module.get('files')]
-        super().__init__(module, key, compiler, luzbuild)
+        super().__init__(module, kwargs.get('key'), kwargs.get('luzbuild'))
         self.files = self.__hash_files(files)
 
     def __hash_files(self, files: list) -> list:

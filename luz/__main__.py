@@ -3,9 +3,10 @@ from argparse import ArgumentParser
 from os import path
 
 # local imports
-from .logger import Error
+from .logger import error
 from .luzbuild import LuzBuild
 from .utils import get_version
+
 
 def main():
     parser = ArgumentParser()
@@ -23,16 +24,16 @@ def main():
     args = parser.parse_args()
 
     if args.command is None:
-		error('Please specify an operation.')
-		exit(1)
+        error('Please specify an operation.')
+        exit(1)
 
-	if args.command == 'build':
+    if args.command == 'build':
         if not path.exists('LuzBuild'):
             error('Could not find LuzBuild file in current directory.')
             exit(1)
-		LuzBuild().build()
-	else:
-		error(f'Unknown command "{args.command}".')
+        LuzBuild().build()
+    else:
+        error(f'Unknown command "{args.command}".')
         exit(1)
 
     

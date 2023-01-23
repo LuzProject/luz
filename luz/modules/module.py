@@ -1,11 +1,10 @@
 # module imports
-from pyclang import CCompiler
 from shutil import rmtree
 
 # local imports
 from ..deps import clone_headers, clone_libraries
 from ..logger import error
-from ..utils import exists
+from ..utils import exists, get_from_cfg, get_from_default
 
 
 def get_safe(module: dict, key: str, default: str = None) -> str:
@@ -20,110 +19,110 @@ def get_safe(module: dict, key: str, default: str = None) -> str:
 
 
 class Module:
-    def __init__(self, module: dict, key: str, compiler: CCompiler, luzbuild):
+    def __init__(self, module: dict, key: str, luzbuild):
         """Module superclass.
         
         :param dict module: Module dictionary to build
         :param str key: Module key name
-        :param CCompiler compiler: Compiler to use to build
         :param LuzBuild luzbuild: Luzbuild class
         """
+        # dir
+        self.dir = luzbuild.dir
+        
         # type
-        self.type = get_safe(module, 'type', 'tweak')
+        self.type = get_from_cfg(luzbuild, f'modules.{key}.type', 'modules.defaultType')
 
         # process
         self.filter = get_safe(
             module, 'filter', {'executables': ['SpringBoard']})
 
         # prefix
-        self.prefix = module.get('prefix')
+        self.prefix = luzbuild.prefix
         
         # compiler
-        self.compiler = compiler
+        self.compiler = luzbuild.compiler
+        
+        # archs
+        self.archs = luzbuild.archs
+        
+        # sdk
+        self.sdk = luzbuild.sdk
 
         # name
         self.name = key
-
-        # entry plist
-        self.entry = get_safe(module, 'entry', 'entry.plist')
+        
+        # frameworks
+        self.frameworks = ''
+        
+        # private frameworks
+        self.private_frameworks = ''
+        
+        # libraries
+        self.libraries = ''
+        
+        # library files dir
+        self.librarydirs = f'-L{clone_libraries()}'
+        
+        # include
+        self.include = f'-I{clone_headers()}'
         
         # use arc
-        self.arc = bool(
-            get_safe(module, 'arc', True if self.type == 'tweak' else False))
+        self.arc = bool(get_from_cfg(luzbuild, f'modules.{key}.useArc', f'modules.types.{self.type}.useArc'))
 
         # only compile changes
-        self.only_compile_changed = get_safe(
-            module, 'only_compile_changed', False)
+        self.only_compile_changed = bool(get_from_cfg(luzbuild, f'modules.{key}.onlyCompileChanged', f'modules.types.{self.type}.onlyCompileChanged'))
 
         # ensure files are defined
         if module.get('files') is None:
             error(f'No files specified for module {self.name}.')
             exit(1)
 
-        # set library files dir
-        self.librarydirs = f'-L{clone_libraries()}'
         # remove staging
         if exists(self.dir + '/stage'):
             rmtree(self.dir + '/stage')
 
         # define default values
-        frameworksA = '-framework CoreFoundation -framework Foundation'
-        private_frameworksA = ''
-        librariesA = '-lsubstrate -lobjc' if self.type == 'tweak' else ''
-        includesA = f'-I{clone_headers()}'
-        archsA = ''
-        sdkA = get_safe(module, 'sdk', '')
+        frameworksD = list(get_from_default(luzbuild, f'modules.types.{self.type}.frameworks'))
+        private_frameworksD = list(get_from_default(luzbuild, f'modules.types.{self.type}.private_frameworks'))
+        librariesD = list(get_from_default(luzbuild, f'modules.types.{self.type}.libraries'))
 
         # add module frameworks
         frameworks = get_safe(module, 'frameworks', [])
+        # default frameworks first
+        if frameworksD != []:
+            for framework in frameworksD:
+                self.frameworks += f' -framework {framework}'
         if frameworks != []:
             for framework in frameworks:
-                frameworksA += f' -framework {framework}'
-        # set
-        self.frameworks = frameworksA
+                self.frameworks += f' -framework {framework}'
         
         # add module private frameworks
         private_frameworks = get_safe(module, 'private_frameworks', [])
+        # default frameworks first
+        if private_frameworksD != []:
+            for framework in private_frameworksD:
+                self.private_frameworks += f' -framework {framework}'
         if private_frameworks != []:
             for framework in private_frameworks:
-                private_frameworksA += f' -framework {framework}'
-        # set
-        self.private_frameworks = private_frameworksA
+                self.private_frameworks += f' -framework {framework}'
 
         # add module libraries
         libraries = get_safe(module, 'libraries', [])
+        # default frameworks first
+        if librariesD != []:
+            for library in librariesD:
+                self.libraries += f' -l{library}'
         if libraries != []:
             for library in libraries:
-                librariesA += f' -l{library}'
-        # set
-        self.libraries = librariesA
+                self.libraries += f' -l{library}'
 
         # add module include directories
         include = get_safe(module, 'include', [])
         if include != []:
             for include in include:
-                includesA += f' -I{include}'
-        # set
-        self.include = includesA
+                self.include += f' -I{include}'
 
-        # add module architectures
-        archs = get_safe(module, 'archs', ['arm64', 'arm64e'])
-        if archs != []:
-            for arch in archs:
-                archsA += f' -arch {arch}'
-        # set
-        self.archs = archsA
-
-        # attempt to manually find an sdk
-        if sdkA == '':
-            if self.private_frameworks != '':
-                error(f'No SDK specified. Private Frameworks will not be found.')
-                exit(1)
-            sdkA = luzbuild.get_sdk()
-        else:
-            # ensure sdk exists
-            if not exists(sdkA):
-                error(f'Specified SDK path "{sdkA}" does not exist.')
-                exit(1)
-        # set
-        self.sdk = sdkA
+        # warn about private frameworks
+        if self.private_frameworks != '' and self.sdk.startswith('/Applications'):
+            error(f'No SDK specified. Xcode will be used, and private frameworks will not be found.')
+            exit(1)

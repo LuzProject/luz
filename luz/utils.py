@@ -8,6 +8,35 @@ from subprocess import getoutput
 from typing import Union
 
 
+def chained_dict_get(dictionary, key: str):
+    """Get a value nested in a dictionary by its nested path."""
+    value_path = key.split('.')
+    dict_chain = dictionary
+    while value_path:
+        try:
+            dict_chain = dict_chain.get(value_path.pop(0))
+        except AttributeError:
+            return None
+    return dict_chain
+
+
+def get_from_default(luzbuild, key): return chained_dict_get(luzbuild.defaults, key)
+
+
+def get_from_luzbuild(luzbuild, key): return chained_dict_get(luzbuild.luzbuild, key)
+
+
+def get_from_cfg(luzbuild, key, default_look_path: str = None):
+    """Get the specified value from either the LuzBuild or the default config file."""
+    value = get_from_luzbuild(luzbuild, key)
+    if value is None:
+        if default_look_path is not None:
+            value = get_from_default(luzbuild, default_look_path)
+        else:
+            value = get_from_default(luzbuild, key)
+    return value
+
+
 def format_path(file: str) -> str:
     new_file = ''
     for f in file.split('/'):

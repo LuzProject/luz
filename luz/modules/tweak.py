@@ -11,7 +11,7 @@ from time import time
 from ..deps import logos
 from ..logger import log, error
 from .module import Module
-from ..utils import cmd_in_path, exists, get_hash, setup_luz_dir
+from ..utils import cmd_in_path, exists, get_hash
 
 
 class Tweak(Module):
@@ -20,20 +20,14 @@ class Tweak(Module):
         
         :param dict module: Module dictionary to build
         :param str key: Module key name
-        :param CCompiler compiler: Compiler to use to build
         :param LuzBuild luzbuild: Luzbuild class
         """
         # kwargs parsing
         module = kwargs.get('module')
-        key = kwargs.get('key')
-        compiler = kwargs.get('compiler')
-        luzbuild = kwargs.get('luzbuild')
-        # get luz dir
-        self.dir = setup_luz_dir()
         # files
         files = module.get('files') if type(module.get(
             'files')) is list else [module.get('files')]
-        super().__init__(module, key, compiler, luzbuild)
+        super().__init__(module, kwargs.get('key'), kwargs.get('luzbuild'))
         self.files = self.__hash_files(files)
     
 
@@ -67,7 +61,7 @@ class Tweak(Module):
         # old hashes
         old_hashlist = {}
         # check if hashlist exists
-        if exists(self.dir + '/hashlist.json'):
+        if path.exists(self.dir + '/hashlist.json'):
             with open(self.dir + '/hashlist.json', 'r') as f:
                 old_hashlist = loads(f.read())
 
@@ -76,8 +70,9 @@ class Tweak(Module):
             for file in files_to_compile:
                 # get file hash
                 fhash = old_hashlist.get(file)
+                new_hash = get_hash(file)
                 # check if the file has changes
-                if (fhash is not None and fhash != get_hash(file)) or (not exists(f'{self.dir}/obj/{path.basename(file)}.mm.o') and not exists(f'{self.dir}/obj/{path.basename(file)}.m.o')):
+                if (fhash is not None and fhash != new_hash) or (not path.exists(f'{self.dir}/obj/{path.basename(file)}.mm.o') and not path.exists(f'{self.dir}/obj/{path.basename(file)}.m.o') and not path.exists(f'{self.dir}/obj/{path.basename(file)}.o')):
                     changed.append(file)
             # write new hashes
             f.write(str({file: get_hash(file)

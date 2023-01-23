@@ -1,0 +1,49 @@
+meta:
+  # default sdk path
+  sdk: ''
+  # default toolchain path
+  prefix: ''
+  # default cc
+  cc: clang
+  # rootless
+  rootless: True
+  # architectures
+  archs:
+    - arm64
+    - arm64e
+
+modules:
+  # default module type
+  defaultType: tweak
+  # module types
+  types:
+    # tweak
+    tweak:
+      # use arc by default
+      useArc: True
+      # only compile changed by default
+      onlyCompileChanged: True
+      # frameworks
+      frameworks:
+        - CoreFoundation
+        - Foundation
+      # private frameworks
+      private_frameworks: []
+      # libraries
+      libraries:
+        - substrate
+        - objc
+    # tool
+    tool:
+      # use arc by default
+      useArc: True
+      # only compile changed by default
+      onlyCompileChanged: False
+      # frameworks
+      frameworks:
+        - CoreFoundation
+        - Foundation
+      # private frameworks
+      private_frameworks: []
+      # libraries
+      libraries: []
