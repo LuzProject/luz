@@ -1,13 +1,13 @@
 # module imports
 from glob import glob
-from os import makedirs, mkdir, path
+from os import makedirs, mkdir
 from shutil import copytree
 from time import time
 
 # local imports
 from ..logger import log
 from .module import Module
-from ..utils import get_hash, setup_luz_dir
+from ..utils import exists, get_hash, setup_luz_dir
 
 
 class Tool(Module):
@@ -38,7 +38,7 @@ class Tool(Module):
         :return: The list of changed files.
         """
         # make dirs
-        if not path.exists(self.dir + '/bin'):
+        if not exists(self.dir + '/bin'):
             mkdir(self.dir + '/bin')
         
         # globbing
@@ -62,7 +62,7 @@ class Tool(Module):
         dirtomake = '/stage/usr/' if not rootless else '/stage/var/jb/usr/'
         dirtocopy = '/stage/usr/bin/' if not rootless else '/stage/var/jb/usr/bin/'
         # make proper dirs
-        if not path.exists(self.dir + dirtomake):
+        if not exists(self.dir + dirtomake):
             makedirs(self.dir + dirtomake)
         copytree(self.dir + '/bin', self.dir + dirtocopy)
         

@@ -1,6 +1,6 @@
 # module imports
 from multiprocessing.pool import ThreadPool
-from os import makedirs, path
+from os import makedirs
 from pyclang import CCompiler
 from pydeb import Pack
 from shutil import copytree
@@ -11,18 +11,18 @@ from yaml import safe_load
 # local imports
 from .logger import error, log, log_stdout, remove_log_stdout
 from .modules.modules import assign_module
-from .utils import cmd_in_path, setup_luz_dir
+from .utils import cmd_in_path, exists, format_path, setup_luz_dir
 
 
 class LuzBuild:
-    def __init__(self, path: str = 'LuzBuild'):
+    def __init__(self, path_to_file: str = 'LuzBuild'):
         """Parse the luzbuild file.
         
-        :param str path: The path to the luzbuild file.
+        :param str path_to_file: The path to the luzbuild file.
         """
         
         # open and parse luzbuild file
-        with open(path) as f:
+        with open(path_to_file) as f:
             self.luzbuild = safe_load(f)
         
         # exit if failed
@@ -32,6 +32,9 @@ class LuzBuild:
             
         # control
         self.control_raw = ''
+        
+        # prefix
+        self.prefix = None
         
         # rootless
         self.rootless = True
@@ -55,15 +58,27 @@ class LuzBuild:
                     elif k == 'rootless':
                         self.rootless = bool(v)
                     elif k == 'cc':
+                        if self.prefix is not None:
+                            prefix_path = cmd_in_path(self.prefix + '/' + v)
+                            if not prefix_path:
+                                error('Specified compiler is not in the prefix path.')
+                                exit(1)
+                            v = prefix_path
                         self.compiler = CCompiler().set_compiler(v)
                     elif k == 'archs':
                         self.archs = v
+                    elif k == 'prefix':
+                        if not exists(v):
+                            error('Specified prefix path does not exist.')
+                            exit(1)
+                        self.prefix = format_path(v)
             
             # handle modules
             if key == 'modules':
                 for m in value:
                     v = value.get(m)
                     v['archs'] = self.archs
+                    v['prefix'] = self.prefix
                     self.modules[m] = assign_module(v, m, self.compiler, self)
             
             # control assignments
@@ -131,7 +146,7 @@ class LuzBuild:
                     exit(1)
         log_stdout('Packing up .deb file...')
         # make staging dirs
-        if not path.exists(self.dir + '/stage/DEBIAN'):
+        if not exists(self.dir + '/stage/DEBIAN'):
             makedirs(self.dir + '/stage/DEBIAN')
         # write control
         with open(self.dir + '/stage/DEBIAN/control', 'w') as f:
@@ -144,7 +159,7 @@ class LuzBuild:
     def __pack(self):
         """Pack up the .deb file."""
         # layout
-        if path.exists('layout'):
+        if exists('layout'):
             copytree('layout', self.dir + '/stage')
         # pack
         Pack(self.dir + '/stage')

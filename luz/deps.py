@@ -1,15 +1,15 @@
 # module imports
-from os import environ, mkdir, path, system
+from os import environ, mkdir, system
 from subprocess import check_output, DEVNULL
 
 # local imports
 from .logger import log_stdout, error, remove_log_stdout
-from .utils import cmd_in_path, setup_luz_dir
+from .utils import cmd_in_path, exists, setup_luz_dir
 
 
 def get_luz_storage() -> str:
     """Gets the Luz storage directory."""
-    if not path.exists(f'{environ.get("HOME")}/.luz'):
+    if not exists(f'{environ.get("HOME")}/.luz'):
         log_stdout('Creating Luz storage directory...')
         mkdir(f'{environ.get("HOME")}/.luz')
         remove_log_stdout('Creating Luz storage directory...')
@@ -66,7 +66,7 @@ def clone_logos(update: bool=False) -> str:
         error('Git is needed in order to use Luz.')
         exit(0)
     # if it doesn't exist, clone logos
-    if not path.exists(f'{storage}/logos'):
+    if not exists(f'{storage}/logos'):
         log_stdout('Cloning logos...')
         check_output(f'{git} clone {logos_url} {storage}/logos --recursive'.split(' '), stdin=DEVNULL, stderr=DEVNULL)
         remove_log_stdout('Cloning logos...')
@@ -92,7 +92,7 @@ def clone_libraries(update: bool = False) -> str:
         error('Git is needed in order to use Luz.')
         exit(0)
     # if it doesn't exist, clone logos
-    if not path.exists(f'{storage}/lib'):
+    if not exists(f'{storage}/lib'):
         log_stdout('Cloning libraries...')
         check_output(f'{git} clone {libraries_url} {storage}/lib --recursive'.split(' '), stdin=DEVNULL, stderr=DEVNULL)
         remove_log_stdout('Cloning libraries...')
@@ -119,7 +119,7 @@ def clone_headers(update: bool = False) -> str:
         error('Git is needed in order to use Luz.')
         exit(0)
     # if it doesn't exist, clone logos
-    if not path.exists(f'{storage}/headers'):
+    if not exists(f'{storage}/headers'):
         log_stdout('Cloning headers...')
         check_output(f'{git} clone {headers_url} {storage}/headers --recursive'.split(' '),
                      stdin=DEVNULL, stderr=DEVNULL)

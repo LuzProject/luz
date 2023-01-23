@@ -1,11 +1,11 @@
 # module imports
-from os import path
 from pyclang import CCompiler
 from shutil import rmtree
 
 # local imports
 from ..deps import clone_headers, clone_libraries
 from ..logger import error
+from ..utils import exists
 
 
 def get_safe(module: dict, key: str, default: str = None) -> str:
@@ -35,6 +35,9 @@ class Module:
         self.filter = get_safe(
             module, 'filter', {'executables': ['SpringBoard']})
 
+        # prefix
+        self.prefix = module.get('prefix')
+        
         # compiler
         self.compiler = compiler
 
@@ -57,7 +60,7 @@ class Module:
         # set library files dir
         self.librarydirs = f'-L{clone_libraries()}'
         # remove staging
-        if path.exists(self.dir + '/stage'):
+        if exists(self.dir + '/stage'):
             rmtree(self.dir + '/stage')
 
         # define default values
@@ -104,7 +107,7 @@ class Module:
             sdkA = luzbuild.get_sdk()
         else:
             # ensure sdk exists
-            if not path.exists(sdkA):
+            if not exists(sdkA):
                 error(f'Specified SDK path "{sdkA}" does not exist.')
                 exit(1)
         # set

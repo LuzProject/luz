@@ -11,7 +11,7 @@ from time import time
 from ..deps import logos
 from ..logger import log, error
 from .module import Module
-from ..utils import cmd_in_path, get_hash, setup_luz_dir
+from ..utils import cmd_in_path, exists, get_hash, setup_luz_dir
 
 
 class Tweak(Module):
@@ -43,13 +43,13 @@ class Tweak(Module):
         :return: The list of changed files.
         """
         # make dirs
-        if not path.exists(self.dir + '/obj'):
+        if not exists(self.dir + '/obj'):
             mkdir(self.dir + '/obj')
 
-        if not path.exists(self.dir + '/logos-processed'):
+        if not exists(self.dir + '/logos-processed'):
             mkdir(self.dir + '/logos-processed')
 
-        if not path.exists(self.dir + '/dylib'):
+        if not exists(self.dir + '/dylib'):
             mkdir(self.dir + '/dylib')
             
         # globbing
@@ -64,7 +64,7 @@ class Tweak(Module):
         # old hashes
         old_hashlist = {}
         # check if hashlist exists
-        if path.exists(self.dir + '/hashlist.json'):
+        if exists(self.dir + '/hashlist.json'):
             with open(self.dir + '/hashlist.json', 'r') as f:
                 old_hashlist = loads(f.read())
 
@@ -74,7 +74,7 @@ class Tweak(Module):
                 # get file hash
                 fhash = old_hashlist.get(file)
                 # check if the file has changes
-                if (fhash is not None and fhash != get_hash(file)) or (not path.exists(f'{self.dir}/obj/{path.basename(file)}.mm.o') and not path.exists(f'{self.dir}/obj/{path.basename(file)}.m.o')):
+                if (fhash is not None and fhash != get_hash(file)) or (not exists(f'{self.dir}/obj/{path.basename(file)}.mm.o') and not exists(f'{self.dir}/obj/{path.basename(file)}.m.o')):
                     changed.append(file)
             # write new hashes
             f.write(str({file: get_hash(file)
@@ -98,7 +98,7 @@ class Tweak(Module):
         dirtomake = '/stage/Library/MobileSubstrate/' if not rootless else '/stage/var/jb/usr/lib/'
         dirtocopy = '/stage/Library/MobileSubstrate/DynamicLibraries/' if not rootless else '/stage/var/jb/usr/lib/TweakInject'
         # make proper dirs
-        if not path.exists(self.dir + dirtomake):
+        if not exists(self.dir + dirtomake):
             makedirs(self.dir + dirtomake)
         copytree(self.dir + '/dylib', self.dir + dirtocopy)
         with open(f'{self.dir}{dirtocopy}/{self.name}.plist', 'w') as f:
@@ -125,7 +125,7 @@ class Tweak(Module):
         self.compiler.compile(files, f'{self.dir}/dylib/{self.name}.dylib', ['-fobjc-arc' if self.arc else '', f'-isysroot {self.sdk}', '-Wall', '-O2', '-dynamiclib',
                               '-Xlinker', '-segalign', '-Xlinker 4000', self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.archs])
         # rpath
-        install_tool = cmd_in_path('install_name_tool')
+        install_tool = cmd_in_path(f'{(self.prefix + "/") if self.prefix is not None else ""}install_name_tool')
         if install_tool is None:
             error('install_name_tool_not found.')
             exit(1)
@@ -133,7 +133,7 @@ class Tweak(Module):
         rpath = '/var/jb/Library/Frameworks/' if rootless else '/Library/Frameworks'
         check_output(f'{install_tool} -add_rpath {rpath} {self.dir}/dylib/{self.name}.dylib', shell=True)
         # ldid
-        ldid = cmd_in_path('ldid')
+        ldid = cmd_in_path(f'{(self.prefix + "/") if self.prefix is not None else ""}ldid')
         if ldid is None:
             error('ldid not found.')
             exit(1)

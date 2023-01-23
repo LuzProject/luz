@@ -1,8 +1,21 @@
 # module imports
 from hashlib import md5
-from os import getcwd, mkdir, path
+from os import environ, getcwd, mkdir, path
 from shutil import which
 from typing import Union
+
+
+def format_path(file: str) -> str:
+    new_file = ''
+    for f in file.split('/'):
+        if f.startswith('$'):
+            new_file += environ.get(f[1:]) + '/'
+        else:
+            new_file += f + '/'
+    return new_file
+
+
+def exists(file: str) -> bool: return path.exists(format_path(file))
 
 
 def get_hash(filepath: str):
@@ -23,7 +36,7 @@ def get_hash(filepath: str):
 def setup_luz_dir() -> str:
     """Setup the tmp directory."""
     dir = getcwd() + '/.luz'
-    if not path.exists(dir):
+    if not exists(dir):
         mkdir(dir)
 
     return dir
