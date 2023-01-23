@@ -126,7 +126,7 @@ class Tweak(Module):
         log(f'Linking compiled files to {self.name}.dylib...')
         files = ' '.join(glob(f'{self.dir}/obj/*.o'))
         self.compiler.compile(files, f'{self.dir}/dylib/{self.name}.dylib', ['-fobjc-arc' if self.arc else '', f'-isysroot {self.sdk}', '-Wall', '-O2', '-dynamiclib',
-                              '-Xlinker', '-segalign', '-Xlinker 4000', self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.archs])
+                              '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.archs])
         # rpath
         install_tool = cmd_in_path(f'{(self.prefix + "/") if self.prefix is not None else ""}install_name_tool')
         if install_tool is None:

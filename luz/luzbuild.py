@@ -79,6 +79,7 @@ class LuzBuild:
                     v = value.get(m)
                     v['archs'] = self.archs
                     v['prefix'] = self.prefix
+                    v['sdk'] = self.sdk
                     self.modules[m] = assign_module(v, m, self.compiler, self)
             
             # control assignments

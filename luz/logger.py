@@ -62,6 +62,11 @@ def debug(message, dbg):
 		      colors['yellow'] + '#' + colors['bold'] + colors['darkgrey'] + '] ' + colors['reset'] + f'{message}')
 
 
+def warn(message):
+	print(colors['bold'] + colors['darkgrey'] + '[' + colors['reset'] + colors['bold'] +
+		colors['yellow'] + '%' + colors['bold'] + colors['darkgrey'] + '] ' + colors['reset'] + f'{message}')
+
+
 def error(message):
 	print(colors['bold'] + colors['darkgrey'] + '[' + colors['reset'] + colors['bold'] +
 	      colors['lightred'] + '!' + colors['bold'] + colors['darkgrey'] + '] ' + colors['reset'] + f'{message}')

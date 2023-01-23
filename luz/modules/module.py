@@ -44,6 +44,9 @@ class Module:
         # name
         self.name = key
 
+        # entry plist
+        self.entry = get_safe(module, 'entry', 'entry.plist')
+        
         # use arc
         self.arc = bool(
             get_safe(module, 'arc', True if self.type == 'tweak' else False))
@@ -65,6 +68,7 @@ class Module:
 
         # define default values
         frameworksA = '-framework CoreFoundation -framework Foundation'
+        private_frameworksA = ''
         librariesA = '-lsubstrate -lobjc' if self.type == 'tweak' else ''
         includesA = f'-I{clone_headers()}'
         archsA = ''
@@ -77,6 +81,14 @@ class Module:
                 frameworksA += f' -framework {framework}'
         # set
         self.frameworks = frameworksA
+        
+        # add module private frameworks
+        private_frameworks = get_safe(module, 'private_frameworks', [])
+        if private_frameworks != []:
+            for framework in private_frameworks:
+                private_frameworksA += f' -framework {framework}'
+        # set
+        self.private_frameworks = private_frameworksA
 
         # add module libraries
         libraries = get_safe(module, 'libraries', [])
@@ -104,6 +116,9 @@ class Module:
 
         # attempt to manually find an sdk
         if sdkA == '':
+            if self.private_frameworks != '':
+                error(f'No SDK specified. Private Frameworks will not be found.')
+                exit(1)
             sdkA = luzbuild.get_sdk()
         else:
             # ensure sdk exists
