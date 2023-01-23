@@ -40,34 +40,59 @@ class LuzBuild:
         
         # sdk
         self.sdk = ''
-        
-        if self.luzbuild.get('CC') is not None:
-            self.compiler = CCompiler().set_compiler(self.luzbuild.get('CC'))
-        else:
-            self.compiler = CCompiler
 
         for key in self.luzbuild:
+            key = str(key).lower()
             value = self.luzbuild.get(key)
-            # rootless
-            if key == 'rootless':
-                self.rootless = bool(value)
+            
+            # handle compiler metadata
+            if key == 'meta':
+                for k in value:
+                    v = value.get(k)
+                    k = str(k).lower()
+                    if k == 'sdk':
+                        self.sdk = v
+                    elif k == 'rootless':
+                        self.rootless = bool(v)
+                    elif k == 'cc':
+                        self.compiler = CCompiler().set_compiler(v)
+            
+            # handle modules
+            if key == 'modules':
+                for m in value:
+                    v = value.get(m)
+                    self.modules[m] = assign_module(v, m, self.compiler, self)
+            
             # control assignments
-            if key in ['name', 'id', 'depends', 'architecture', 'version', 'maintainer', 'description', 'section', 'author', 'homepage', 'icon', 'priority', 'size', 'tags', 'replaces', 'provides', 'conflicts', 'installed-size', 'depiction']:
-                if type(value) is str:
-                    if key == 'architecture' and self.rootless:
-                        self.control_raw += 'Architecture: iphoneos-arm64\n'
-                    elif key == 'id':
-                        self.control_raw += f'Package: {value}\n'
-                    else:
-                        self.control_raw += f'{key.capitalize()}: {value}\n'
-            # add modules
-            if type(value) is dict:
-                self.modules[key] = assign_module(value, key, self.compiler, self)
+            if key == 'control':
+                for c in value:
+                    v = value.get(c)
+                    c = str(c).lower()
+                    # control assignments
+                    if c in ['name', 'id', 'depends', 'architecture', 'version', 'maintainer', 'description', 'section', 'author', 'icon', 'priority', 'size', 'tags', 'replaces', 'provides', 'conflicts', 'installed-size', 'depiction', 'tag', 'package', 'sileodepiction']:
+                        if type(v) is str:
+                            # rootless architecture patch
+                            if c == 'architecture' and self.rootless:
+                                self.control_raw += 'Architecture: iphoneos-arm64\n'
+                            # id patch
+                            elif c == 'id':
+                                self.control_raw += f'Package: {v}\n'
+                            # sileodepiction patch
+                            elif c == 'sileodepiction':
+                                self.control_raw += f'SileoDepiction: {v}\n'
+                            # installed-size patch
+                            elif c == 'installed-size':
+                                self.control_raw += f'Installed-Size: {v}\n'
+                            # other values
+                            else:
+                                self.control_raw += f'{c.capitalize()}: {v}\n'
         
         # ensure modules exist
         if self.modules == {}:
             error('No modules found in LuzBuild file.')
             exit(1)
+        
+        if self.compiler is None: self.compiler = CCompiler()
         
         # luzdir
         self.dir = setup_luz_dir()
@@ -85,7 +110,7 @@ class LuzBuild:
                 log_stdout('Finding an SDK...')
                 sdkA = getoutput(
                     f'{xcrun} --show-sdk-path --sdk iphoneos').split('\n')[-1]
-                if sdkA == '':
+                if sdkA == '' or not sdkA.startswith('/'):
                     error('Could not find an SDK. Please specify one manually.')
                     exit(1)
                 remove_log_stdout('Finding an SDK...')
