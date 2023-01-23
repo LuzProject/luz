@@ -52,12 +52,15 @@ class Tweak(Module):
         if not exists(self.dir + '/dylib'):
             mkdir(self.dir + '/dylib')
             
+        files_to_compile = []
+            
         # globbing
         for file in files:
             if '*' in file:
-                files.remove(file)
                 for f in glob(file):
-                    files.append(f)
+                    files_to_compile.append(f)
+            else:
+                files_to_compile.append(file)
                 
         # changed files
         changed = []
@@ -70,7 +73,7 @@ class Tweak(Module):
 
         with open(self.dir + '/hashlist.json', 'w') as f:
             # loop files
-            for file in files:
+            for file in files_to_compile:
                 # get file hash
                 fhash = old_hashlist.get(file)
                 # check if the file has changes
@@ -78,10 +81,10 @@ class Tweak(Module):
                     changed.append(file)
             # write new hashes
             f.write(str({file: get_hash(file)
-                    for file in files}).replace("'", '"'))
+                    for file in files_to_compile}).replace("'", '"'))
 
         # files list
-        files = changed if self.only_compile_changed else files
+        files = changed if self.only_compile_changed else files_to_compile
         # logos files
         files = logos(files)
 
@@ -127,16 +130,22 @@ class Tweak(Module):
         # rpath
         install_tool = cmd_in_path(f'{(self.prefix + "/") if self.prefix is not None else ""}install_name_tool')
         if install_tool is None:
-            error('install_name_tool_not found.')
-            exit(1)
+            # fall back to path
+            install_tool = cmd_in_path('install_name_tool')
+            if install_tool is None:
+                error('install_name_tool_not found.')
+                exit(1)
         # fix rpath
         rpath = '/var/jb/Library/Frameworks/' if rootless else '/Library/Frameworks'
         check_output(f'{install_tool} -add_rpath {rpath} {self.dir}/dylib/{self.name}.dylib', shell=True)
         # ldid
         ldid = cmd_in_path(f'{(self.prefix + "/") if self.prefix is not None else ""}ldid')
         if ldid is None:
-            error('ldid not found.')
-            exit(1)
+            # fall back to path
+            ldid = cmd_in_path('ldid')
+            if ldid is None:
+                error('ldid not found.')
+                exit(1)
         # run ldid
         check_output(f'{ldid} -S {self.dir}/dylib/{self.name}.dylib', shell=True)
         
