@@ -160,6 +160,6 @@ class LuzBuild:
         """Pack up the .deb file."""
         # layout
         if exists('layout'):
-            copytree('layout', self.dir + '/stage')
+            copytree('layout', self.dir + '/stage', dirs_exist_ok=True)
         # pack
         Pack(self.dir + '/stage')
