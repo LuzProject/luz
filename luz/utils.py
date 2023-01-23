@@ -1,7 +1,10 @@
 # module imports
 from hashlib import md5
 from os import environ, getcwd, mkdir, path
+from pathlib import Path
+from pkg_resources import get_distribution
 from shutil import which
+from subprocess import getoutput
 from typing import Union
 
 
@@ -50,3 +53,12 @@ def cmd_in_path(cmd: str) -> Union[None, str]:
 		return None
 
 	return path
+
+
+def get_version() -> str:
+	# Check if running from a git repository,
+	# then, construct version in the following format: version-branch-hash
+	if Path('.git').exists():
+		return f'{get_distribution(__package__).version}-{getoutput("git rev-parse --abbrev-ref HEAD")}-{getoutput("git rev-parse --short HEAD")}'
+	else:
+		return get_distribution(__package__).version
