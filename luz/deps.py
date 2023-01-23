@@ -39,7 +39,7 @@ def logos(files: list) -> list:
         if file_formatted == 'x':
             log_stdout(f'Processing {file} with Logos...')
             system(f'{logos_exec} {file} > {output}.m')
-            {'logos': True, 'new_path': f'{output}.m', 'old_path': file}
+            new_files.append({'logos': True, 'new_path': f'{output}.m', 'old_path': file})
             remove_log_stdout(f'Processing {file} with Logos...')
         elif file_formatted == 'xm':
             log_stdout(f'Processing {file} with Logos...')

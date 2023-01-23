@@ -171,7 +171,7 @@ class Tweak(Module):
             path_to_compile = file.get('path')
             # set original path
             orig_path = file.get('path')
-        log(f'Compiling {path.basename(orig_path)}...')
+        log(f'Compiling {orig_path}...')
         outName = f'{self.dir}/obj/{path.basename(path_to_compile)}.o'
         # compile file
         try:
