@@ -143,12 +143,31 @@ class Tweak(Module):
 
     def __compile_tweak_file(self, file):
         """Compile a tweak file."""
-        log(f'Compiling {path.basename(file)}...')
-        outName = f'{self.dir}/obj/{path.basename(file)}.o'
+        path_to_compile = ''
+        orig_path = ''
+        # handle logos files
+        if file.get('logos') == True:
+            # set compile path
+            path_to_compile = file.get('new_path')
+            # set original path
+            orig_path = file.get('old_path')
+            # include path
+            include_path = '/'.join(orig_path.split('/')[:-1])
+            # add it to include if it's not already there
+            if include_path not in self.include:
+                self.include += ' -I' + include_path
+        # handle normal files
+        else:
+            # set compile path
+            path_to_compile = file.get('path')
+            # set original path
+            orig_path = file.get('path')
+        log(f'Compiling {path.basename(orig_path)}...')
+        outName = f'{self.dir}/obj/{path.basename(path_to_compile)}.o'
         # compile file
         try:
-            self.compiler.compile(file, outName, [
-                '-fobjc-arc' if self.arc else '', f'-isysroot {self.sdk}', '-Wall', '-O2', self.include, self.archs, '-c'])
+            self.compiler.compile(path_to_compile, outName, [
+                '-fobjc-arc' if self.arc else '', f'-isysroot {self.sdk}', '-Wall', '-O2', self.archs, self.include, '-c'])
         except Exception as e:
             print(e)
             exit(1)
