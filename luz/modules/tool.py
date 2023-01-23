@@ -1,4 +1,5 @@
 # module imports
+from glob import glob
 from os import makedirs, mkdir, path
 from shutil import copytree
 from time import time
@@ -39,6 +40,13 @@ class Tool(Module):
         # make dirs
         if not path.exists(self.dir + '/bin'):
             mkdir(self.dir + '/bin')
+        
+        # globbing
+        for file in files:
+            if '*' in file:
+                files.remove(file)
+                for f in glob(file):
+                    files.append(f)
 
         with open(self.dir + '/hashlist.json', 'w') as f:
             # write new hashes

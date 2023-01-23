@@ -51,7 +51,14 @@ class Tweak(Module):
 
         if not path.exists(self.dir + '/dylib'):
             mkdir(self.dir + '/dylib')
-
+            
+        # globbing
+        for file in files:
+            if '*' in file:
+                files.remove(file)
+                for f in glob(file):
+                    files.append(f)
+                
         # changed files
         changed = []
         # old hashes

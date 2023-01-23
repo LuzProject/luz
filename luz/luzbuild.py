@@ -56,11 +56,14 @@ class LuzBuild:
                         self.rootless = bool(v)
                     elif k == 'cc':
                         self.compiler = CCompiler().set_compiler(v)
+                    elif k == 'archs':
+                        self.archs = v
             
             # handle modules
             if key == 'modules':
                 for m in value:
                     v = value.get(m)
+                    v['archs'] = self.archs
                     self.modules[m] = assign_module(v, m, self.compiler, self)
             
             # control assignments
