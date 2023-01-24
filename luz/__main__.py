@@ -3,9 +3,9 @@ from argparse import ArgumentParser
 from os import path
 
 # local imports
-from .logger import error
-from .luzbuild import LuzBuild
-from .utils import get_version
+from .common.logger import error
+from .compiler.luzbuild import LuzBuild
+from .common.utils import get_version
 
 
 def main():

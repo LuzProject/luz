@@ -8,9 +8,9 @@ from time import time
 
 # local imports
 from ..deps import logos
-from ..logger import log, error, warn
+from ...common.logger import log, error, warn
 from .module import Module
-from ..utils import cmd_in_path, get_hash, resolve_path
+from ...common.utils import cmd_in_path, get_hash, resolve_path
 
 
 class Tweak(Module):

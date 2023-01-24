@@ -1,5 +1,5 @@
 # local imports
-from ..logger import error
+from ...common.logger import error
 from .tool import Tool
 from .tweak import Tweak
 

@@ -9,9 +9,9 @@ from time import time
 from yaml import safe_load
 
 # local imports
-from .logger import error, log, log_stdout, remove_log_stdout, warn
+from ..common.logger import error, log, log_stdout, remove_log_stdout, warn
 from .modules.modules import assign_module
-from .utils import cmd_in_path, get_from_cfg, get_from_luzbuild, get_luz_storage, resolve_path, setup_luz_dir
+from ..common.utils import cmd_in_path, get_from_cfg, get_from_luzbuild, get_luz_storage, resolve_path, setup_luz_dir
 
 
 class LuzBuild:

@@ -4,8 +4,8 @@ from pathlib import Path
 from subprocess import check_output, DEVNULL
 
 # local imports
-from .logger import log_stdout, error, remove_log_stdout
-from .utils import cmd_in_path, resolve_path
+from ..common.logger import log_stdout, error, remove_log_stdout
+from ..common.utils import cmd_in_path, resolve_path
 
 
 def clone_logos(module, update: bool=False) -> Path:

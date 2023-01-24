@@ -3,8 +3,8 @@ from shutil import rmtree
 
 # local imports
 from ..deps import clone_headers, clone_libraries
-from ..logger import error
-from ..utils import get_from_cfg, get_from_default, resolve_path
+from ...common.logger import error
+from ...common.utils import get_from_cfg, get_from_default, resolve_path
 
 
 def get_safe(module: dict, key: str, default: str = None) -> str:
