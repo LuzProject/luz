@@ -7,43 +7,6 @@ from .logger import log_stdout, error, remove_log_stdout
 from .utils import cmd_in_path, exists, setup_luz_dir
 
 
-def logos(module, files: list) -> list:
-    """Use logos on the specified files.
-    
-    :param Tweak module: The module to use logos on.
-    :param list files: The files to use logos on.
-    :return: The list of logos'd files.
-    """
-    dir = module.dir
-    # logos dir
-    logos = clone_logos(module)
-    # logos executable
-    logos_exec = f'{logos}/bin/logos.pl'
-    # new files
-    new_files = []
-
-    for file in files:
-        # declare output var
-        output = f'{dir}/logos-processed/{file.split("/")[-1]}'
-        # match to case
-        file_formatted = file.split('/')[-1].split('.')[-1]
-        if file_formatted == 'x':
-            log_stdout(f'Processing {file} with Logos...')
-            system(f'{logos_exec} {file} > {output}.m')
-            new_files.append({'logos': True, 'new_path': f'{output}.m', 'old_path': file})
-            remove_log_stdout(f'Processing {file} with Logos...')
-        elif file_formatted == 'xm':
-            log_stdout(f'Processing {file} with Logos...')
-            system(f'{logos_exec} {file} > {output}.mm')
-            new_files.append({'logos': True, 'new_path': f'{output}.mm', 'old_path': file})
-            remove_log_stdout(f'Processing {file} with Logos...')
-        else:
-            new_files.append({'logos': False, 'path': file})
-
-    # return files
-    return new_files
-
-
 def clone_logos(module, update: bool=False) -> str:
     """Clones logos.
     
@@ -129,3 +92,42 @@ def clone_headers(module, update: bool = False) -> str:
         remove_log_stdout('Updating headers...')
     # return path
     return f'{storage}/headers'
+
+
+def logos(module, files: list) -> list:
+    """Use logos on the specified files.
+    
+    :param Tweak module: The module to use logos on.
+    :param list files: The files to use logos on.
+    :return: The list of logos'd files.
+    """
+    dir = module.dir
+    # logos dir
+    logos = clone_logos(module)
+    # logos executable
+    logos_exec = f'{logos}/bin/logos.pl'
+    # new files
+    new_files = []
+
+    for file in files:
+        # declare output var
+        output = f'{dir}/logos-processed/{file.split("/")[-1]}'
+        # match to case
+        file_formatted = file.split('/')[-1].split('.')[-1]
+        if file_formatted == 'x':
+            log_stdout(f'Processing {file} with Logos...')
+            system(f'{logos_exec} {file} > {output}.m')
+            new_files.append(
+                {'logos': True, 'new_path': f'{output}.m', 'old_path': file})
+            remove_log_stdout(f'Processing {file} with Logos...')
+        elif file_formatted == 'xm':
+            log_stdout(f'Processing {file} with Logos...')
+            system(f'{logos_exec} {file} > {output}.mm')
+            new_files.append(
+                {'logos': True, 'new_path': f'{output}.mm', 'old_path': file})
+            remove_log_stdout(f'Processing {file} with Logos...')
+        else:
+            new_files.append({'logos': False, 'path': file})
+
+    # return files
+    return new_files

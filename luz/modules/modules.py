@@ -1,6 +1,3 @@
-# module imports
-from pyclang import CCompiler
-
 # local imports
 from ..logger import error
 from .tool import Tool
@@ -15,10 +12,12 @@ def assign_module(module: dict, key: str, luzbuild):
     :param LuzBuild luzbuild: The LuzBuild class.
     :return: The module object.
     """
+    # args
+    args = {'module': module, 'key': key, 'luzbuild': luzbuild}
     if module.get('type') == 'tool':
-        return Tool(module=module, key=key, luzbuild=luzbuild)
+        return Tool(**args)
     elif module.get('type') == 'tweak':
-        return Tweak(module=module, key=key, luzbuild=luzbuild)
+        return Tweak(**args)
     else:
         error(f'Unknown module type: {module.get("type")}')
         exit(1)

@@ -27,6 +27,10 @@ modules:
   types:
     # tweak
     tweak:
+      # filter
+      filter:
+        bundles:
+          - com.apple.SpringBoard
       # use arc by default
       useArc: True
       # only compile changed by default

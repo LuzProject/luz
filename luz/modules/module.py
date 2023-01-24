@@ -36,8 +36,7 @@ class Module:
         self.type = get_from_cfg(luzbuild, f'modules.{key}.type', 'modules.defaultType')
 
         # process
-        self.filter = get_safe(
-            module, 'filter', {'executables': ['SpringBoard']})
+        self.filter = get_from_cfg(luzbuild, f'modules.{key}.filter', f'modules.types.{self.type}.filter')
 
         # prefix
         self.prefix = luzbuild.prefix
@@ -125,7 +124,7 @@ class Module:
             for include in include:
                 self.include += f' -I{include}'
 
-        # warn about private frameworks
+        # xcode sdks dont include private frameworks
         if self.private_frameworks != '' and self.sdk.startswith('/Applications'):
             error(f'No SDK specified. Xcode will be used, and private frameworks will not be found.')
             exit(1)

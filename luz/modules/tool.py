@@ -68,8 +68,9 @@ class Tool(Module):
         # compile files
         log(f'Compiling to executable...')
         try:
-            self.compiler.compile(' '.join(self.files), f'{self.dir}/bin/{self.name}', [self.luzbuild.warnings, f'-O{self.luzbuild.optimization}',
-                                f'-isysroot {self.sdk}', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.include, self.libraries, self.archs])
+            build_flags = [self.luzbuild.warnings, f'-O{self.luzbuild.optimization}',
+                           f'-isysroot {self.sdk}', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.include, self.libraries, self.archs]
+            self.compiler.compile(' '.join(self.files), f'{self.dir}/bin/{self.name}', build_flags)
         except Exception as e:
             print(e)
             exit(1)

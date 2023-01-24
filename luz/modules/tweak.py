@@ -123,9 +123,13 @@ class Tweak(Module):
     def __linker(self):
         """Use a linker on the compiled files."""
         log(f'Linking compiled files to {self.name}.dylib...')
+        # get files by extension
         files = ' '.join(glob(f'{self.dir}/obj/*.o'))
-        self.compiler.compile(files, f'{self.dir}/dylib/{self.name}.dylib', ['-fobjc-arc' if self.arc else '', f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', '-dynamiclib',
-                              '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.archs])
+        # define build flags
+        build_flags = ['-fobjc-arc' if self.arc else '', f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', '-dynamiclib',
+                       '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.archs]
+        # compile with clang using build flags
+        self.compiler.compile(files, f'{self.dir}/dylib/{self.name}.dylib', build_flags)
         # rpath
         install_tool = cmd_in_path(f'{(self.prefix + "/") if self.prefix is not None else ""}install_name_tool')
         if install_tool is None:
@@ -177,10 +181,10 @@ class Tweak(Module):
         outName = f'{self.dir}/obj/{path.basename(path_to_compile)}.o'
         # compile file
         try:
-            self.compiler.compile(path_to_compile, outName, [
-                '-fobjc-arc' if self.arc else '', f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.archs, self.include, '-c'])
+            build_flags = ['-fobjc-arc' if self.arc else '',
+                           f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.archs, self.include, '-c']
+            self.compiler.compile(path_to_compile, outName, build_flags)
         except Exception as e:
-            print(e)
             exit(1)
 
     def compile(self):

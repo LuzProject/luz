@@ -30,7 +30,6 @@ class LuzBuild:
         with open(path_to_file) as f:
             self.luzbuild = safe_load(f)
         
-        
         # exit if failed
         if self.luzbuild is None or self.luzbuild == {}:
             error('Failed to parse LuzBuild file.')
@@ -87,7 +86,6 @@ class LuzBuild:
                 exit(1)
             self.cc = prefix_path
             
-        # sdk formatting
         # attempt to manually find an sdk
         if self.sdk == '':
             self.sdk = self.__get_sdk()
@@ -171,6 +169,15 @@ class LuzBuild:
         return self.sdk
     
     
+    def __pack(self):
+        """Pack up the .deb file."""
+        # layout
+        if exists('layout'):
+            copytree('layout', self.dir + '/stage', dirs_exist_ok=True)
+        # pack
+        Pack(self.dir + '/stage')
+    
+    
     def build(self):
         """Build the project."""
         start = time()
@@ -188,12 +195,3 @@ class LuzBuild:
         self.__pack()
         remove_log_stdout('Packing up .deb file...')
         log(f'Done in {round(time() - start, 2)} seconds.')
-          
-  
-    def __pack(self):
-        """Pack up the .deb file."""
-        # layout
-        if exists('layout'):
-            copytree('layout', self.dir + '/stage', dirs_exist_ok=True)
-        # pack
-        Pack(self.dir + '/stage')
