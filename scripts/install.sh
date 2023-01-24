@@ -8,4 +8,4 @@ fi
 
 cd $MY_PATH/..
 pip uninstall -y luz
-pip install .
+pip install . --no-dependencies
