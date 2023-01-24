@@ -42,24 +42,36 @@ class LuzBuild:
         # sdk
         self.sdk = get_from_cfg(self, 'meta.sdk')
         
-        # cc
-        self.cc = get_from_cfg(self, 'meta.cc')
-        
         # prefix
         self.prefix = get_from_cfg(self, 'meta.prefix')
+        
+        # cc
+        self.cc = get_from_cfg(self, 'meta.cc')
         
         # rootless
         self.rootless = get_from_cfg(self, 'meta.rootless')
         
-        # storage dir
-        self.storage = get_luz_storage()
+        # optimization
+        self.optimization = get_from_cfg(self, 'meta.optimization')
         
+        # warnings
+        self.warnings = get_from_cfg(self, 'meta.warnings')
+        
+        # entitlement flag
+        self.entflag = get_from_cfg(self, 'meta.entflag')
+        
+        # entitlement file
+        self.entfile = get_from_cfg(self, 'meta.entfile')
+                
         # archs
         self.archs = ''
         archs = get_from_cfg(self, 'meta.archs')
         
         for arch in archs:
             self.archs += f' -arch {arch}'
+            
+        # storage dir
+        self.storage = get_luz_storage()
         
         # ensure prefix exists
         if self.prefix is not '' and not exists(self.prefix):
