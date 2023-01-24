@@ -1,0 +1,44 @@
+name: Build test package
+
+env:
+  zip-link: https://cdn.discordapp.com/attachments/820399697125965844/1067555101704736788/tweak.zip
+
+on:
+  release:
+    types: [published]
+
+  workflow_dispatch:
+      
+  push:
+    paths-ignore:
+      - '**.md'
+
+jobs:
+  build:
+    name: Build
+    runs-on: macos-12
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        
+      - name: Select Xcode version (14.1)
+        run: |
+          sudo xcode-select --switch /Applications/Xcode_14.1.app
+
+      - name: Set up Python
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Build and install project
+        run: pip install .
+        
+      - name: Get tweak zip
+        run: |
+            wget ${{ env.zip-link }}
+            unzip tweak.zip
+    
+      - name: Build tweak
+        run: cd tweak && luz build
