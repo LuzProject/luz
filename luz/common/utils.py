@@ -115,16 +115,16 @@ def setup_luz_dir() -> Path:
 
 
 def cmd_in_path(cmd: str) -> Union[None, Path]:
-	"""Check if a command is in the path.
+    """Check if a command is in the path.
  
     :param str cmd: The command to check.
     :return: The path to the command, or None if it's not in the path."""
-	path = which(cmd)
+    path = which(cmd)
 
-	if path is None:
-		return None
+    if path is None:
+        return None
 
-	return resolve_path(path)
+    return resolve_path(path)
 
 
 def get_luz_storage() -> str:
@@ -135,9 +135,9 @@ def get_luz_storage() -> str:
 
 
 def get_version() -> str:
-	# Check if running from a git repository,
-	# then, construct version in the following format: version-branch-hash
-	if resolve_path('.git').exists():
-		return f'{get_distribution(__package__).version}-{getoutput("git rev-parse --abbrev-ref HEAD")}-{getoutput("git rev-parse --short HEAD")}'
-	else:
-		return get_distribution(__package__).version
+    # Check if running from a git repository,
+    # then, construct version in the following format: version-branch-hash
+    if resolve_path('.git').exists():
+        return f'{get_distribution(__package__).version}-{getoutput("git rev-parse --abbrev-ref HEAD")}-{getoutput("git rev-parse --short HEAD")}'
+    else:
+        return get_distribution(__package__.split('.')[0]).version
