@@ -1,6 +1,6 @@
 # module imports
 from multiprocessing.pool import ThreadPool
-from os import makedirs, path
+from os import makedirs
 from pyclang import CCompiler
 from pydeb import Pack
 from shutil import copytree
@@ -11,7 +11,7 @@ from yaml import safe_load
 # local imports
 from .logger import error, log, log_stdout, remove_log_stdout, warn
 from .modules.modules import assign_module
-from .utils import cmd_in_path, exists, get_from_cfg, get_luz_storage, setup_luz_dir
+from .utils import cmd_in_path, get_from_cfg, get_from_luzbuild, get_luz_storage, resolve_path, setup_luz_dir
 
 
 class LuzBuild:
@@ -21,14 +21,12 @@ class LuzBuild:
         :param str path_to_file: The path to the luzbuild file.
         """
         # module path
-        module_path = path.dirname(path.realpath(__file__))
+        module_path = resolve_path(resolve_path(__file__).absolute()).parent
         # read default config values
-        with open(module_path + '/config/defaults.yaml') as f:
-            self.defaults = safe_load(f)
+        with open(f'{module_path}/config/defaults.yaml') as f: self.defaults = safe_load(f)
         
         # open and parse luzbuild file
-        with open(path_to_file) as f:
-            self.luzbuild = safe_load(f)
+        with open(path_to_file) as f: self.luzbuild = safe_load(f)
         
         # exit if failed
         if self.luzbuild is None or self.luzbuild == {}:
@@ -39,13 +37,13 @@ class LuzBuild:
         self.control_raw = ''
         
         # sdk
-        self.sdk = get_from_cfg(self, 'meta.sdk')
+        self.sdk = resolve_path(get_from_cfg(self, 'meta.sdk'))
         
         # prefix
-        self.prefix = get_from_cfg(self, 'meta.prefix')
+        self.prefix = resolve_path(get_from_cfg(self, 'meta.prefix'))
         
         # cc
-        self.cc = get_from_cfg(self, 'meta.cc')
+        self.cc = resolve_path(get_from_cfg(self, 'meta.cc'))
         
         # rootless
         self.rootless = get_from_cfg(self, 'meta.rootless')
@@ -69,25 +67,24 @@ class LuzBuild:
         self.archs = ''
         archs = get_from_cfg(self, 'meta.archs')
         
-        for arch in archs:
-            self.archs += f' -arch {arch}'
+        for arch in archs: self.archs += f' -arch {arch}'
             
         # platform
         self.platform = get_from_cfg(self, 'meta.platform')
         
         # min version
-        self.minVers = get_from_cfg(self, 'meta.minVers')
+        self.min_vers = get_from_cfg(self, 'meta.minVers')
             
         # storage dir
         self.storage = get_luz_storage()
         
         # ensure prefix exists
-        if self.prefix is not '' and not exists(self.prefix):
+        if self.prefix is not '' and not self.prefix.exists():
             error('Specified prefix does not exist.')
             exit(1)
         
         # format cc with prefix
-        if self.prefix is not '' and not self.cc.startswith('/'):
+        if self.prefix is not '' and not self.cc.is_relative_to('/'):
             prefix_path = cmd_in_path(self.prefix + '/' + self.cc)
             if not prefix_path:
                 error(
@@ -96,26 +93,33 @@ class LuzBuild:
             self.cc = prefix_path
             
         # attempt to manually find an sdk
-        if self.sdk == '':
-            self.sdk = self.__get_sdk()
+        if self.sdk == '': self.sdk = self.__get_sdk()
         else:
             # ensure sdk exists
-            if not exists(self.sdk):
+            if not self.sdk.exists():
                 error(f'Specified SDK path "{self.sdk}" does not exist.')
                 exit(1)
         
         # modules
-        self.modules = {}
+        self.modules = get_from_luzbuild(self, 'modules')
+        
+        # parse modules
+        if self.modules is not None:
+            # dir
+            self.dir = setup_luz_dir()
+            # set compiler
+            self.compiler = CCompiler().set_compiler(self.cc)
+            for m in self.modules:
+                v = self.modules.get(m)
+                self.modules[m] = assign_module(v, m, self)
+        elif self.modules is None or self.modules == {}:
+            error('No modules found in LuzBuild file.')
+            exit(1)
 
         # parse luzbuild file
         with ThreadPool() as pool:
             for result in pool.map(lambda x: self.__handle_key(x), self.luzbuild):
                 pass
-        
-        # ensure modules exist
-        if self.modules == {}:
-            error('No modules found in LuzBuild file.')
-            exit(1)
         
         
     def __handle_key(self, key):
@@ -125,16 +129,6 @@ class LuzBuild:
         """
         key = str(key).lower()
         value = self.luzbuild.get(key)
-
-        # handle modules
-        if key == 'modules':
-            # dir
-            self.dir = setup_luz_dir()
-            # set compiler
-            self.compiler = CCompiler().set_compiler(self.cc)
-            for m in value:
-                v = value.get(m)
-                self.modules[m] = assign_module(v, m, self)
 
         # control assignments
         if key == 'control':
@@ -175,16 +169,16 @@ class LuzBuild:
                 exit(1)
             remove_log_stdout('Finding an SDK...')
             self.sdk = sdkA
-        return self.sdk
+        return resolve_path(self.sdk)
     
     
     def __pack(self):
         """Pack up the .deb file."""
         # layout
-        if exists('layout'):
-            copytree('layout', self.dir + '/stage', dirs_exist_ok=True)
+        layout_path = resolve_path('layout')
+        if layout_path.exists(): copytree(layout_path, f'{self.dir}/stage', dirs_exist_ok=True)
         # pack
-        Pack(self.dir + '/stage', algorithm=self.compression)
+        Pack(f'{self.dir}/stage', algorithm=self.compression)
     
     
     def build(self):
@@ -196,10 +190,10 @@ class LuzBuild:
                     error(result)
                     exit(1)
         # make staging dirs
-        if not exists(self.dir + '/stage/DEBIAN'):
-            makedirs(self.dir + '/stage/DEBIAN')
+        if not resolve_path(f'{self.dir}/stage/DEBIAN').exists():
+            makedirs(f'{self.dir}/stage/DEBIAN')
         # write control
-        with open(self.dir + '/stage/DEBIAN/control', 'w') as f:
+        with open(f'{self.dir}/stage/DEBIAN/control', 'w') as f:
             f.write(self.control_raw)
         self.__pack()
         remove_log_stdout('Packing up .deb file...')

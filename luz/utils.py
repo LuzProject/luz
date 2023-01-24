@@ -1,11 +1,26 @@
 # module imports
 from hashlib import md5
-from os import environ, getcwd, mkdir, path
+from os import environ, getcwd, mkdir
 from pathlib import Path
 from pkg_resources import get_distribution
 from shutil import which
 from subprocess import getoutput
 from typing import Union
+
+
+def resolve_path(path: str) -> Union[Path, list]:
+    """Resolve a Path from a String."""
+    # format env vars in path
+    if '$' in str(path): path = format_path(path)
+    # get path
+    p = Path(path)
+    # handle globbing
+    if "*" in str(path):
+        p = Path(path)
+        parts = p.parts[1:] if p.is_absolute() else p.parts
+        return list(Path(p.root).glob(str(Path('').joinpath(*parts))))
+    # return path
+    return p
 
 
 def chained_dict_get(dictionary, key: str):
@@ -76,15 +91,6 @@ def format_path(file: str) -> str:
     return new_file
 
 
-def exists(file: str) -> bool:
-    """Check if a path exists, but format it with format_path first.
-    
-    :param str file: Path to check.
-    :return: Whether the path exists.
-    """
-    return path.exists(format_path(file))
-
-
 def get_hash(filepath: str):
     """Gets the hash of a specified file.
     
@@ -100,16 +106,15 @@ def get_hash(filepath: str):
     return md5sum.hexdigest()
 
 
-def setup_luz_dir() -> str:
+def setup_luz_dir() -> Path:
     """Setup the tmp directory."""
-    dir = getcwd() + '/.luz'
-    if not exists(dir):
-        mkdir(dir)
+    luz_dir = resolve_path(f'{getcwd()}/.luz')
+    if not luz_dir.exists(): mkdir(luz_dir)
 
-    return dir
+    return luz_dir
 
 
-def cmd_in_path(cmd: str) -> Union[None, str]:
+def cmd_in_path(cmd: str) -> Union[None, Path]:
 	"""Check if a command is in the path.
  
     :param str cmd: The command to check.
@@ -119,20 +124,20 @@ def cmd_in_path(cmd: str) -> Union[None, str]:
 	if path is None:
 		return None
 
-	return path
+	return resolve_path(path)
 
 
 def get_luz_storage() -> str:
     """Gets the Luz storage directory."""
-    if not exists(f'{environ.get("HOME")}/.luz'):
-        mkdir(f'{environ.get("HOME")}/.luz')
-    return f'{environ.get("HOME")}/.luz'
+    storage_dir = resolve_path('$HOME/.luz')
+    if not storage_dir.exists(): mkdir(storage_dir)
+    return storage_dir
 
 
 def get_version() -> str:
 	# Check if running from a git repository,
 	# then, construct version in the following format: version-branch-hash
-	if Path('.git').exists():
+	if resolve_path('.git').exists():
 		return f'{get_distribution(__package__).version}-{getoutput("git rev-parse --abbrev-ref HEAD")}-{getoutput("git rev-parse --short HEAD")}'
 	else:
 		return get_distribution(__package__).version

@@ -1,13 +1,14 @@
 # module imports
-from os import environ, mkdir, system
+from os import system
+from pathlib import Path
 from subprocess import check_output, DEVNULL
 
 # local imports
 from .logger import log_stdout, error, remove_log_stdout
-from .utils import cmd_in_path, exists, setup_luz_dir
+from .utils import cmd_in_path, resolve_path
 
 
-def clone_logos(module, update: bool=False) -> str:
+def clone_logos(module, update: bool=False) -> Path:
     """Clones logos.
     
     :param Tweak module: The module to use logos on.
@@ -21,21 +22,23 @@ def clone_logos(module, update: bool=False) -> str:
     if git is None:
         error('Git is needed in order to use Luz.')
         exit(0)
+    # logos path
+    logos_path = resolve_path(f'{storage}/logos')
     # if it doesn't exist, clone logos
-    if not exists(f'{storage}/logos'):
+    if not logos_path.exists():
         log_stdout('Cloning logos...')
-        check_output(f'{git} clone {logos_url} {storage}/logos --recursive'.split(' '), stdin=DEVNULL, stderr=DEVNULL)
+        check_output(f'{git} clone {logos_url} {logos_path} --recursive'.split(' '), stdin=DEVNULL, stderr=DEVNULL)
         remove_log_stdout('Cloning logos...')
     # update
     if update:
         log_stdout('Updating logos...')
-        check_output(f'cd {storage}/logos && {git} pull'.split(' '), stdin=DEVNULL, stderr=DEVNULL)
+        check_output(f'cd {logos_path} && {git} pull'.split(' '), stdin=DEVNULL, stderr=DEVNULL)
         remove_log_stdout('Updating logos...')
     # return path
-    return f'{storage}/logos'
+    return logos_path
 
 
-def clone_libraries(module, update: bool = False) -> str:
+def clone_libraries(module, update: bool = False) -> Path:
     """Clones the default Theos libraries.
     
     :param Module module: The module to clone libraries for
@@ -49,22 +52,24 @@ def clone_libraries(module, update: bool = False) -> str:
     if git is None:
         error('Git is needed in order to use Luz.')
         exit(0)
+    # libraries path
+    libraries_path = resolve_path(f'{storage}/lib')
     # if it doesn't exist, clone logos
-    if not exists(f'{storage}/lib'):
+    if not libraries_path.exists():
         log_stdout('Cloning libraries...')
-        check_output(f'{git} clone {libraries_url} {storage}/lib --recursive'.split(' '), stdin=DEVNULL, stderr=DEVNULL)
+        check_output(f'{git} clone {libraries_url} {libraries_path} --recursive'.split(' '), stdin=DEVNULL, stderr=DEVNULL)
         remove_log_stdout('Cloning libraries...')
     # update
     if update:
         log_stdout('Updating libraries...')
         check_output(
-            f'cd {storage}/lib && {git} pull'.split(' '), stdin=DEVNULL, stderr=DEVNULL)
+            f'cd {libraries_path} && {git} pull'.split(' '), stdin=DEVNULL, stderr=DEVNULL)
         remove_log_stdout('Updating libraries...')
     # return path
-    return f'{storage}/lib'
+    return libraries_path
 
 
-def clone_headers(module, update: bool = False) -> str:
+def clone_headers(module, update: bool = False) -> Path:
     """Clones the default Theos headers.
     
     :param Module module: The module to clone headers for.
@@ -78,20 +83,22 @@ def clone_headers(module, update: bool = False) -> str:
     if git is None:
         error('Git is needed in order to use Luz.')
         exit(0)
+    # headers path
+    headers_path = resolve_path(f'{storage}/headers')
     # if it doesn't exist, clone logos
-    if not exists(f'{storage}/headers'):
+    if not headers_path.exists():
         log_stdout('Cloning headers...')
-        check_output(f'{git} clone {headers_url} {storage}/headers --recursive'.split(' '),
+        check_output(f'{git} clone {headers_url} {headers_path} --recursive'.split(' '),
                      stdin=DEVNULL, stderr=DEVNULL)
         remove_log_stdout('Cloning headers...')
     # update
     if update:
         log_stdout('Updating headers...')
         check_output(
-            f'cd {storage}/headers && {git} pull'.split(' '), stdin=DEVNULL, stderr=DEVNULL)
+            f'cd {headers_path} && {git} pull'.split(' '), stdin=DEVNULL, stderr=DEVNULL)
         remove_log_stdout('Updating headers...')
     # return path
-    return f'{storage}/headers'
+    return headers_path
 
 
 def logos(module, files: list) -> list:
@@ -111,9 +118,9 @@ def logos(module, files: list) -> list:
 
     for file in files:
         # declare output var
-        output = f'{dir}/logos-processed/{file.split("/")[-1]}'
+        output = f'{dir}/logos-processed/{str(file).split("/")[-1]}'
         # match to case
-        file_formatted = file.split('/')[-1].split('.')[-1]
+        file_formatted = str(file).split('/')[-1].split('.')[-1]
         if file_formatted == 'x':
             log_stdout(f'Processing {file} with Logos...')
             system(f'{logos_exec} {file} > {output}.m')

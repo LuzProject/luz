@@ -4,7 +4,7 @@ from shutil import rmtree
 # local imports
 from ..deps import clone_headers, clone_libraries
 from ..logger import error
-from ..utils import exists, get_from_cfg, get_from_default
+from ..utils import get_from_cfg, get_from_default, resolve_path
 
 
 def get_safe(module: dict, key: str, default: str = None) -> str:
@@ -32,6 +32,12 @@ class Module:
         # dir
         self.dir = luzbuild.dir
         
+        # hash file
+        self.hash_file = resolve_path(f'{self.dir}/hashlist.json')
+        
+        # stage dir
+        self.stage_dir = resolve_path(f'{self.dir}/stage')
+        
         # type
         self.type = get_from_cfg(luzbuild, f'modules.{key}.type', 'modules.defaultType')
 
@@ -39,7 +45,7 @@ class Module:
         self.filter = get_from_cfg(luzbuild, f'modules.{key}.filter', f'modules.types.{self.type}.filter')
         
         # install_dir
-        self.install_dir = get_from_cfg(luzbuild, f'modules.{key}.installDir', f'modules.types.{self.type}.installDir')
+        self.install_dir = resolve_path(get_from_cfg(luzbuild, f'modules.{key}.installDir', f'modules.types.{self.type}.installDir'))
 
         # prefix
         self.prefix = luzbuild.prefix
@@ -56,8 +62,8 @@ class Module:
         # platform
         self.platform = luzbuild.platform
         
-        # minVers
-        self.minVers = luzbuild.minVers
+        # min_vers
+        self.min_vers = luzbuild.min_vers
 
         # name
         self.name = key
@@ -89,8 +95,8 @@ class Module:
             exit(1)
 
         # remove staging
-        if exists(self.dir + '/stage'):
-            rmtree(self.dir + '/stage')
+        if self.stage_dir.exists():
+            rmtree(self.stage_dir)
 
         # define default values
         frameworksD = list(get_from_default(luzbuild, f'modules.types.{self.type}.frameworks'))
