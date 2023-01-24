@@ -9,7 +9,7 @@ from time import time
 
 # local imports
 from ..deps import logos
-from ..logger import log, error
+from ..logger import log, error, warn
 from .module import Module
 from ..utils import cmd_in_path, exists, get_hash
 
@@ -97,8 +97,14 @@ class Tweak(Module):
     def __stage(self):
         """Stage a deb to be packaged."""
         # dirs to make
-        dirtomake = '/stage/Library/MobileSubstrate/' if not self.luzbuild.rootless else '/stage/var/jb/usr/lib/'
-        dirtocopy = '/stage/Library/MobileSubstrate/DynamicLibraries/' if not self.luzbuild.rootless else '/stage/var/jb/usr/lib/TweakInject'
+        if self.install_dir is None:
+            dirtomake = '/stage/Library/MobileSubstrate/' if not self.luzbuild.rootless else '/stage/var/jb/usr/lib/'
+            dirtocopy = '/stage/Library/MobileSubstrate/DynamicLibraries/' if not self.luzbuild.rootless else '/stage/var/jb/usr/lib/TweakInject'
+        else:
+            if self.luzbuild.rootless: warn('Custom install directory specified, and rootless is enabled. Prefixing path with /var/jb.')
+            dir = self.install_dir.split('/')
+            dirtomake = f'/stage/${dir[:-1]}' if not self.luzbuild.rootless else f'/stage/var/jb/${dir[:-1]}'
+            dirtocopy = f'/stage/{dir}' if not self.luzbuild.rootless else f'/stage/var/jb/{dir}'
         # make proper dirs
         if not exists(self.dir + dirtomake):
             makedirs(self.dir + dirtomake)
@@ -127,7 +133,7 @@ class Tweak(Module):
         files = ' '.join(glob(f'{self.dir}/obj/*.o'))
         # define build flags
         build_flags = ['-fobjc-arc' if self.arc else '', f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', '-dynamiclib',
-                       '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.archs]
+                       '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.archs, f'-m{self.platform}-version-min={self.minVers}']
         # compile with clang using build flags
         self.compiler.compile(files, f'{self.dir}/dylib/{self.name}.dylib', build_flags)
         # rpath
@@ -182,7 +188,7 @@ class Tweak(Module):
         # compile file
         try:
             build_flags = ['-fobjc-arc' if self.arc else '',
-                           f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.archs, self.include, '-c']
+                           f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.archs, self.include, f'-m{self.platform}-version-min={self.minVers}',  '-c']
             self.compiler.compile(path_to_compile, outName, build_flags)
         except Exception as e:
             exit(1)

@@ -21,6 +21,10 @@ meta:
   archs:
     - arm64
     - arm64e
+  # platform
+  platform: iphoneos
+  # minVers
+  minVers: 13.0
 
 modules:
   # default module type

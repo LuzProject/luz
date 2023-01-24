@@ -37,6 +37,9 @@ class Module:
 
         # process
         self.filter = get_from_cfg(luzbuild, f'modules.{key}.filter', f'modules.types.{self.type}.filter')
+        
+        # install_dir
+        self.install_dir = get_from_cfg(luzbuild, f'modules.{key}.installDir', f'modules.types.{self.type}.installDir')
 
         # prefix
         self.prefix = luzbuild.prefix
@@ -49,6 +52,12 @@ class Module:
         
         # sdk
         self.sdk = luzbuild.sdk
+        
+        # platform
+        self.platform = luzbuild.platform
+        
+        # minVers
+        self.minVers = luzbuild.minVers
 
         # name
         self.name = key

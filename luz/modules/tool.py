@@ -2,12 +2,13 @@
 from glob import glob
 from os import makedirs, mkdir
 from shutil import copytree
+from subprocess import check_output
 from time import time
 
 # local imports
-from ..logger import log
+from ..logger import log, error, warn
 from .module import Module
-from ..utils import exists, get_hash
+from ..utils import cmd_in_path, exists, get_hash
 
 
 class Tool(Module):
@@ -53,8 +54,14 @@ class Tool(Module):
     def __stage(self):
         """Stage a deb to be packaged."""
         # dirs to make
-        dirtomake = '/stage/usr/' if not self.luzbuild.rootless else '/stage/var/jb/usr/'
-        dirtocopy = '/stage/usr/bin/' if not self.luzbuild.rootless else '/stage/var/jb/usr/bin/'
+        if self.install_dir is None:
+            dirtomake = '/stage/usr/' if not self.luzbuild.rootless else '/stage/var/jb/usr/'
+            dirtocopy = '/stage/usr/bin/' if not self.luzbuild.rootless else '/stage/var/jb/usr/bin/'
+        else:
+            if self.luzbuild.rootless: warn('Custom install directory specified, and rootless is enabled. Prefixing path with /var/jb.')
+            dir = self.install_dir.split('/')
+            dirtomake = f'/stage/${dir[:-1]}' if not self.luzbuild.rootless else f'/stage/var/jb/${dir[:-1]}'
+            dirtocopy = f'/stage/{dir}' if not self.luzbuild.rootless else f'/stage/var/jb/{dir}'
         # make proper dirs
         if not exists(self.dir + dirtomake):
             makedirs(self.dir + dirtomake)
@@ -69,8 +76,33 @@ class Tool(Module):
         log(f'Compiling to executable...')
         try:
             build_flags = [self.luzbuild.warnings, f'-O{self.luzbuild.optimization}',
-                           f'-isysroot {self.sdk}', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.include, self.libraries, self.archs]
+                           f'-isysroot {self.sdk}', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.include, self.libraries, self.archs, f'-m{self.platform}-version-min={self.minVers}']
             self.compiler.compile(' '.join(self.files), f'{self.dir}/bin/{self.name}', build_flags)
+            # rpath
+            install_tool = cmd_in_path(
+                f'{(self.prefix + "/") if self.prefix is not None else ""}install_name_tool')
+            if install_tool is None:
+                # fall back to path
+                install_tool = cmd_in_path('install_name_tool')
+                if install_tool is None:
+                    error('install_name_tool_not found.')
+                    exit(1)
+            # fix rpath
+            rpath = '/var/jb/Library/Frameworks/' if self.luzbuild.rootless else '/Library/Frameworks'
+            check_output(
+                f'{install_tool} -add_rpath {rpath} {self.dir}/dylib/{self.name}.dylib', shell=True)
+            # ldid
+            ldid = cmd_in_path(
+                f'{(self.prefix + "/") if self.prefix is not None else ""}ldid')
+            if ldid is None:
+                # fall back to path
+                ldid = cmd_in_path('ldid')
+                if ldid is None:
+                    error('ldid not found.')
+                    exit(1)
+            # run ldid
+            check_output(
+                f'{ldid} {self.luzbuild.entflag}{self.luzbuild.entfile} {self.dir}/bin/{self.name}', shell=True)
         except Exception as e:
             print(e)
             exit(1)

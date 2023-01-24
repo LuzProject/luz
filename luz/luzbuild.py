@@ -72,6 +72,12 @@ class LuzBuild:
         for arch in archs:
             self.archs += f' -arch {arch}'
             
+        # platform
+        self.platform = get_from_cfg(self, 'meta.platform')
+        
+        # min version
+        self.minVers = get_from_cfg(self, 'meta.minVers')
+            
         # storage dir
         self.storage = get_luz_storage()
         
