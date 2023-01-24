@@ -50,23 +50,19 @@ class Tool(Module):
         # return files
         return files
 
-    def __stage(self, rootless: bool = False):
+    def __stage(self):
         """Stage a deb to be packaged."""
         # dirs to make
-        dirtomake = '/stage/usr/' if not rootless else '/stage/var/jb/usr/'
-        dirtocopy = '/stage/usr/bin/' if not rootless else '/stage/var/jb/usr/bin/'
+        dirtomake = '/stage/usr/' if not self.luzbuild.rootless else '/stage/var/jb/usr/'
+        dirtocopy = '/stage/usr/bin/' if not self.luzbuild.rootless else '/stage/var/jb/usr/bin/'
         # make proper dirs
         if not exists(self.dir + dirtomake):
             makedirs(self.dir + dirtomake)
         copytree(self.dir + '/bin', self.dir + dirtocopy)
         
 
-    def compile(self, rootless: bool = False):
-        """Compile the specified self.
-
-        :param CCompiler compiler: The compiler to use.
-        """
-
+    def compile(self):
+        """Compile the specified self."""
         start = time()
 
         # compile files
@@ -79,6 +75,6 @@ class Tool(Module):
             exit(1)
 
         # stage deb
-        self.__stage(rootless=rootless)
+        self.__stage()
         log(
             f'Finished compiling module "{self.name}" in {round(time() - start, 2)} seconds.')

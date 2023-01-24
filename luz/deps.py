@@ -7,25 +7,16 @@ from .logger import log_stdout, error, remove_log_stdout
 from .utils import cmd_in_path, exists, setup_luz_dir
 
 
-def get_luz_storage() -> str:
-    """Gets the Luz storage directory."""
-    if not exists(f'{environ.get("HOME")}/.luz'):
-        log_stdout('Creating Luz storage directory...')
-        mkdir(f'{environ.get("HOME")}/.luz')
-        remove_log_stdout('Creating Luz storage directory...')
-    return f'{environ.get("HOME")}/.luz'
-
-
-def logos(files: list) -> list:
+def logos(module, files: list) -> list:
     """Use logos on the specified files.
     
+    :param Tweak module: The module to use logos on.
     :param list files: The files to use logos on.
     :return: The list of logos'd files.
     """
-    # storage dir
-    dir = setup_luz_dir()
+    dir = module.dir
     # logos dir
-    logos = clone_logos()
+    logos = clone_logos(module)
     # logos executable
     logos_exec = f'{logos}/bin/logos.pl'
     # new files
@@ -53,14 +44,16 @@ def logos(files: list) -> list:
     return new_files
 
 
-def clone_logos(update: bool=False) -> str:
+def clone_logos(module, update: bool=False) -> str:
     """Clones logos.
     
+    :param Tweak module: The module to use logos on.
+    :param bool update: Whether to update logos or not.
     :return: Path to logos dir
     """
     logos_url = 'https://github.com/LuzProject/logos'
     git = cmd_in_path('git')
-    storage = get_luz_storage()
+    storage = module.storage
     # if git doesnt exist, exit
     if git is None:
         error('Git is needed in order to use Luz.')
@@ -79,14 +72,16 @@ def clone_logos(update: bool=False) -> str:
     return f'{storage}/logos'
 
 
-def clone_libraries(update: bool = False) -> str:
+def clone_libraries(module, update: bool = False) -> str:
     """Clones the default Theos libraries.
     
+    :param Module module: The module to clone libraries for
+    :param bool update: Whether to update libraries or not.
     :return: Path to libraries dir
     """
     libraries_url = '--branch rootless https://github.com/elihwyma/lib'
     git = cmd_in_path('git')
-    storage = get_luz_storage()
+    storage = module.storage
     # if git doesnt exist, exit
     if git is None:
         error('Git is needed in order to use Luz.')
@@ -106,14 +101,16 @@ def clone_libraries(update: bool = False) -> str:
     return f'{storage}/lib'
 
 
-def clone_headers(update: bool = False) -> str:
+def clone_headers(module, update: bool = False) -> str:
     """Clones the default Theos headers.
     
+    :param Module module: The module to clone headers for.
+    :param bool update: Whether to update headers or not.
     :return: Path to headers dir
     """
     headers_url = 'https://github.com/theos/headers'
     git = cmd_in_path('git')
-    storage = get_luz_storage()
+    storage = module.storage
     # if git doesnt exist, exit
     if git is None:
         error('Git is needed in order to use Luz.')

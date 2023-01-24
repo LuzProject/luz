@@ -34,6 +34,7 @@ class Tweak(Module):
     def __hash_files(self, files: list) -> list:
         """Hash the files of the module, and compare them to their old hashes.
 
+        :param list files: Files to hash.
         :return: The list of changed files.
         """
         # make dirs
@@ -80,21 +81,24 @@ class Tweak(Module):
 
         # files list
         files = changed if self.only_compile_changed else files_to_compile
-        # logos files
-        files = logos(files)
-
+        
+        # handle files not needing compilation
         if len(files) == 0:
             log(f'Nothing to compile for module {self.name}.')
             return []
+        
+        # use logos files if necessary
+        if filter(lambda x: '.x' in x, files):
+            files = logos(self.luzbuild, files)
 
         # return files
         return files
 
-    def __stage(self, rootless: bool = False):
+    def __stage(self):
         """Stage a deb to be packaged."""
         # dirs to make
-        dirtomake = '/stage/Library/MobileSubstrate/' if not rootless else '/stage/var/jb/usr/lib/'
-        dirtocopy = '/stage/Library/MobileSubstrate/DynamicLibraries/' if not rootless else '/stage/var/jb/usr/lib/TweakInject'
+        dirtomake = '/stage/Library/MobileSubstrate/' if not self.luzbuild.rootless else '/stage/var/jb/usr/lib/'
+        dirtocopy = '/stage/Library/MobileSubstrate/DynamicLibraries/' if not self.luzbuild.rootless else '/stage/var/jb/usr/lib/TweakInject'
         # make proper dirs
         if not exists(self.dir + dirtomake):
             makedirs(self.dir + dirtomake)
@@ -116,7 +120,7 @@ class Tweak(Module):
             filtermsg += '};'
             f.write(filtermsg)
 
-    def __linker(self, rootless: bool = False):
+    def __linker(self):
         """Use a linker on the compiled files."""
         log(f'Linking compiled files to {self.name}.dylib...')
         files = ' '.join(glob(f'{self.dir}/obj/*.o'))
@@ -131,7 +135,7 @@ class Tweak(Module):
                 error('install_name_tool_not found.')
                 exit(1)
         # fix rpath
-        rpath = '/var/jb/Library/Frameworks/' if rootless else '/Library/Frameworks'
+        rpath = '/var/jb/Library/Frameworks/' if self.luzbuild.rootless else '/Library/Frameworks'
         check_output(f'{install_tool} -add_rpath {rpath} {self.dir}/dylib/{self.name}.dylib', shell=True)
         # ldid
         ldid = cmd_in_path(f'{(self.prefix + "/") if self.prefix is not None else ""}ldid')
@@ -146,7 +150,10 @@ class Tweak(Module):
         
 
     def __compile_tweak_file(self, file):
-        """Compile a tweak file."""
+        """Compile a tweak file.
+        
+        :param str file: The file to compile.
+        """
         path_to_compile = ''
         orig_path = ''
         # handle logos files
@@ -176,11 +183,8 @@ class Tweak(Module):
             print(e)
             exit(1)
 
-    def compile(self, rootless: bool = False):
-        """Compile the specified self.
-
-        :param CCompiler compiler: The compiler to use.
-        """
+    def compile(self):
+        """Compile."""
 
         start = time()
 
@@ -191,6 +195,6 @@ class Tweak(Module):
         self.__linker()
 
         # stage deb
-        self.__stage(rootless=rootless)
+        self.__stage()
         log(
             f'Finished compiling module "{self.name}" in {round(time() - start, 2)} seconds.')

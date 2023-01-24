@@ -26,6 +26,9 @@ class Module:
         :param str key: Module key name
         :param LuzBuild luzbuild: Luzbuild class
         """
+        # luzbuild
+        self.luzbuild = luzbuild
+        
         # dir
         self.dir = luzbuild.dir
         
@@ -61,10 +64,10 @@ class Module:
         self.libraries = ''
         
         # library files dir
-        self.librarydirs = f'-L{clone_libraries()}'
+        self.librarydirs = f'-L{clone_libraries(luzbuild)}'
         
         # include
-        self.include = f'-I{clone_headers()}'
+        self.include = f'-I{clone_headers(luzbuild)}'
         
         # use arc
         self.arc = bool(get_from_cfg(luzbuild, f'modules.{key}.useArc', f'modules.types.{self.type}.useArc'))

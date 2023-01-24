@@ -9,9 +9,9 @@ from time import time
 from yaml import safe_load
 
 # local imports
-from .logger import error, log, log_stdout, remove_log_stdout
+from .logger import error, log, log_stdout, remove_log_stdout, warn
 from .modules.modules import assign_module
-from .utils import cmd_in_path, exists, get_from_cfg, setup_luz_dir
+from .utils import cmd_in_path, exists, get_from_cfg, get_luz_storage, setup_luz_dir
 
 
 class LuzBuild:
@@ -51,6 +51,9 @@ class LuzBuild:
         # rootless
         self.rootless = get_from_cfg(self, 'meta.rootless')
         
+        # storage dir
+        self.storage = get_luz_storage()
+        
         # archs
         self.archs = ''
         archs = get_from_cfg(self, 'meta.archs')
@@ -87,7 +90,7 @@ class LuzBuild:
 
         # parse luzbuild file
         with ThreadPool() as pool:
-            for result in pool.map(lambda x: self.__hash_key(x), self.luzbuild):
+            for result in pool.map(lambda x: self.__handle_key(x), self.luzbuild):
                 pass
         
         # ensure modules exist
@@ -96,7 +99,11 @@ class LuzBuild:
             exit(1)
         
         
-    def __hash_key(self, key):
+    def __handle_key(self, key):
+        """Handle a key in the LuzBuild file.
+        
+        :param str key: The key to handle.
+        """
         key = str(key).lower()
         value = self.luzbuild.get(key)
 
@@ -133,13 +140,14 @@ class LuzBuild:
 
     
     def __get_sdk(self):
-        """Get a default SDK using xcrun."""
+        """Get an SDK from Xcode using xcrun."""
         xcrun = cmd_in_path('xcrun')
         if xcrun is None:
             error(
                 'Xcode does not appear to be installed. Please specify an SDK manually.')
             exit(1)
         else:
+            warn('Looking for default SDK. This will add time to the build process.')
             log_stdout('Finding an SDK...')
             sdkA = getoutput(
                 f'{xcrun} --show-sdk-path --sdk iphoneos').split('\n')[-1]
@@ -155,7 +163,7 @@ class LuzBuild:
         """Build the project."""
         start = time()
         with ThreadPool() as pool:
-            for result in pool.map(lambda x: x.compile(rootless=self.rootless), self.modules.values()):
+            for result in pool.map(lambda x: x.compile(), self.modules.values()):
                 if result is not None:
                     error(result)
                     exit(1)

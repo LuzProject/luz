@@ -12,6 +12,7 @@ def assign_module(module: dict, key: str, luzbuild):
 
     :param dict module: The module dict.
     :param str key: The key of the module.
+    :param LuzBuild luzbuild: The LuzBuild class.
     :return: The module object.
     """
     if module.get('type') == 'tool':

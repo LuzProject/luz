@@ -9,7 +9,12 @@ from typing import Union
 
 
 def chained_dict_get(dictionary, key: str):
-    """Get a value nested in a dictionary by its nested path."""
+    """Get a value nested in a dictionary by its nested path.
+    
+    :param dict dictionary: Dictionary to operate on.
+    :param str key: The key to get.
+    :return: The value of the key.
+    """
     value_path = key.split('.')
     dict_chain = dictionary
     while value_path:
@@ -20,14 +25,33 @@ def chained_dict_get(dictionary, key: str):
     return dict_chain
 
 
-def get_from_default(luzbuild, key): return chained_dict_get(luzbuild.defaults, key)
+def get_from_default(luzbuild, key):
+    """Get the specified value from the default config file.
+    
+    :param LuzBuild luzbuild: The LuzBuild class.
+    :param str key: The key to get.
+    :return: The value of the key.
+    """
+    return chained_dict_get(luzbuild.defaults, key)
 
 
-def get_from_luzbuild(luzbuild, key): return chained_dict_get(luzbuild.luzbuild, key)
+def get_from_luzbuild(luzbuild, key):
+    """Get the specified value from the LuzBuild config file.
+    
+    :param LuzBuild luzbuild: The LuzBuild class.
+    :param str key: The key to get.
+    :return: The value of the key.
+    """
+    return chained_dict_get(luzbuild.luzbuild, key)
 
 
 def get_from_cfg(luzbuild, key, default_look_path: str = None):
-    """Get the specified value from either the LuzBuild or the default config file."""
+    """Get the specified value from either the LuzBuild or the default config file.
+    
+    :param LuzBuild luzbuild: The LuzBuild class.
+    :param str key: The key to get.
+    :param str default_look_path: The path to look for in the default config file. Defaults to the value of `key`.
+    :return: The value of the key."""
     value = get_from_luzbuild(luzbuild, key)
     if value is None:
         if default_look_path is not None:
@@ -38,6 +62,11 @@ def get_from_cfg(luzbuild, key, default_look_path: str = None):
 
 
 def format_path(file: str) -> str:
+    """Format a path that contains environment variables.
+    
+    :param str file: Path to format.
+    :return: The formatted path.
+    """
     new_file = ''
     for f in file.split('/'):
         if f.startswith('$'):
@@ -47,7 +76,13 @@ def format_path(file: str) -> str:
     return new_file
 
 
-def exists(file: str) -> bool: return path.exists(format_path(file))
+def exists(file: str) -> bool:
+    """Check if a path exists, but format it with format_path first.
+    
+    :param str file: Path to check.
+    :return: Whether the path exists.
+    """
+    return path.exists(format_path(file))
 
 
 def get_hash(filepath: str):
@@ -75,13 +110,23 @@ def setup_luz_dir() -> str:
 
 
 def cmd_in_path(cmd: str) -> Union[None, str]:
-	'''Check if command is in PATH'''
+	"""Check if a command is in the path.
+ 
+    :param str cmd: The command to check.
+    :return: The path to the command, or None if it's not in the path."""
 	path = which(cmd)
 
 	if path is None:
 		return None
 
 	return path
+
+
+def get_luz_storage() -> str:
+    """Gets the Luz storage directory."""
+    if not exists(f'{environ.get("HOME")}/.luz'):
+        mkdir(f'{environ.get("HOME")}/.luz')
+    return f'{environ.get("HOME")}/.luz'
 
 
 def get_version() -> str:
