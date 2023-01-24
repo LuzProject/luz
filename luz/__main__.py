@@ -1,10 +1,9 @@
 # module imports
 from argparse import ArgumentParser
-from os import path
 
 # local imports
 from .common.logger import ask, error
-from .common.utils import get_version
+from .common.utils import get_version, resolve_path
 from .compiler.luzbuild import LuzBuild
 from .luzgen.modules.modules import assign_module
 
@@ -20,11 +19,11 @@ def main():
     # build
     parser_build = sub_parsers.add_parser(
         'build', help='compile a luz project using a LuzBuild')
+    parser_build.add_argument('-c', '--clean', action='store_true', help='clean the project before building', required=False)
 
     # gen
     parser_gen = sub_parsers.add_parser(
         'gen', help='generate a luz project using LuzGen')
-    
     parser_gen.add_argument('-t', '--type', action='store', help='the type of project to generate', choices=['tool', 'tweak'], required=False)
 
     # args
@@ -35,10 +34,10 @@ def main():
         exit(1)
 
     if args.command == 'build':
-        if not path.exists('LuzBuild'):
+        if not resolve_path('LuzBuild').exists():
             error('Could not find LuzBuild file in current directory.')
             exit(1)
-        LuzBuild().build()
+        LuzBuild(args.clean).build()
     elif args.command == 'gen':
         if args.type is None:
             args.type = ask('What type of project would you like to generate? (tool/tweak) (enter for "tweak")')

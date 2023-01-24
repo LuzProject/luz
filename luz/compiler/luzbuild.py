@@ -3,7 +3,7 @@ from multiprocessing.pool import ThreadPool
 from os import makedirs
 from pyclang import CCompiler
 from pydeb import Pack
-from shutil import copytree
+from shutil import copytree, rmtree
 from subprocess import getoutput
 from time import time
 from yaml import safe_load
@@ -15,7 +15,7 @@ from ..common.utils import cmd_in_path, get_from_cfg, get_from_luzbuild, get_luz
 
 
 class LuzBuild:
-    def __init__(self, path_to_file: str = 'LuzBuild'):
+    def __init__(self, clean: bool = False, path_to_file: str = 'LuzBuild'):
         """Parse the luzbuild file.
         
         :param str path_to_file: The path to the luzbuild file.
@@ -32,6 +32,10 @@ class LuzBuild:
         if self.luzbuild is None or self.luzbuild == {}:
             error('Failed to parse LuzBuild file.')
             exit(1)
+        
+        # clean
+        if clean:
+            rmtree('.luz', ignore_errors=True)
             
         # control
         self.control_raw = ''
