@@ -62,6 +62,9 @@ class LuzBuild:
         # entitlement file
         self.entfile = get_from_cfg(self, 'meta.entfile')
                 
+        # compression
+        self.compression = get_from_cfg(self, 'meta.compression')
+        
         # archs
         self.archs = ''
         archs = get_from_cfg(self, 'meta.archs')
@@ -175,7 +178,7 @@ class LuzBuild:
         if exists('layout'):
             copytree('layout', self.dir + '/stage', dirs_exist_ok=True)
         # pack
-        Pack(self.dir + '/stage')
+        Pack(self.dir + '/stage', algorithm=self.compression)
     
     
     def build(self):
