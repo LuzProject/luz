@@ -1,7 +1,7 @@
 # module imports
 from json import loads
 from multiprocessing.pool import ThreadPool
-from os import makedirs, mkdir, path
+from os import makedirs, mkdir
 from shutil import copytree
 from subprocess import check_output
 from time import time
@@ -111,6 +111,7 @@ class Tweak(Module):
             dirtocopy = resolve_path(f'{self.dir}/stage/Library/MobileSubstrate/DynamicLibraries/') if not self.luzbuild.rootless else resolve_path(f'{self.dir}/stage/var/jb/usr/lib/TweakInject')
         else:
             if self.luzbuild.rootless: warn('Custom install directory specified, and rootless is enabled. Prefixing path with /var/jb.')
+            self.install_dir = resolve_path(self.install_dir)
             dirtomake = resolve_path(f'{self.dir}/stage/{self.install_dir.parent}') if not self.luzbuild.rootless else resolve_path(f'{self.dir}/stage/var/jb/{self.install_dir.parent}')
             dirtocopy = resolve_path(f'{self.dir}/stage/{self.install_dir}') if not self.luzbuild.rootless else resolve_path(f'{self.dir}/stage/var/jb/{self.install_dir}')
         # make proper dirs
@@ -197,12 +198,13 @@ class Tweak(Module):
             # set original path
             orig_path = file.get('path')
         log(f'Compiling {orig_path}...')
-        outName = f'{self.dir}/obj/{path.basename(path_to_compile)}.o'
+        outName = f'{self.dir}/obj/{resolve_path(path_to_compile).name}.o'
         # compile file
         try:
             build_flags = ['-fobjc-arc' if self.arc else '',
                            f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.archs, self.include, f'-m{self.platform}-version-min={self.min_vers}',  '-c']
-            self.compiler.compile(path_to_compile, outName, build_flags)
+            check_output(f'{self.luzbuild.cc} {path_to_compile} -o {outName} {" ".join(build_flags)}', shell=True)
+            #self.compiler.compile(path_to_compile, outName, build_flags)
         except Exception as e:
             exit(1)
 

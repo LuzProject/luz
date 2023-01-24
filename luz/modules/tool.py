@@ -80,6 +80,7 @@ class Tool(Module):
             dirtocopy = resolve_path(f'{self.dir}/stage/usr/bin') if not self.luzbuild.rootless else resolve_path(f'{self.dir}/stage/var/jb/usr/bin')
         else:
             if self.luzbuild.rootless: warn('Custom install directory specified, and rootless is enabled. Prefixing path with /var/jb.')
+            self.install_dir = resolve_path(self.install_dir)
             dirtomake = resolve_path(f'{self.dir}/stage/{self.install_dir.parent}') if not self.luzbuild.rootless else resolve_path(f'{self.dir}/stage/var/jb/{self.install_dir.parent}')
             dirtocopy = resolve_path(f'{self.dir}/stage/{self.install_dir}') if not self.luzbuild.rootless else resolve_path(f'{self.dir}/stage/var/jb/{self.install_dir}')
         # make proper dirs

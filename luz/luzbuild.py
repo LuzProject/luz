@@ -37,13 +37,13 @@ class LuzBuild:
         self.control_raw = ''
         
         # sdk
-        self.sdk = resolve_path(get_from_cfg(self, 'meta.sdk'))
+        self.sdk = get_from_cfg(self, 'meta.sdk')
         
         # prefix
-        self.prefix = resolve_path(get_from_cfg(self, 'meta.prefix'))
+        self.prefix = get_from_cfg(self, 'meta.prefix')
         
         # cc
-        self.cc = resolve_path(get_from_cfg(self, 'meta.cc'))
+        self.cc = get_from_cfg(self, 'meta.cc')
         
         # rootless
         self.rootless = get_from_cfg(self, 'meta.rootless')
@@ -79,13 +79,15 @@ class LuzBuild:
         self.storage = get_luz_storage()
         
         # ensure prefix exists
-        if self.prefix is not '' and not self.prefix.exists():
-            error('Specified prefix does not exist.')
-            exit(1)
+        if self.prefix is not '':
+            self.prefix = resolve_path(self.prefix)
+            if not self.prefix.exists():
+                error('Specified prefix does not exist.')
+                exit(1)
         
         # format cc with prefix
-        if self.prefix is not '' and not self.cc.is_relative_to('/'):
-            prefix_path = cmd_in_path(self.prefix + '/' + self.cc)
+        if self.prefix is not '' and not resolve_path(self.cc).is_relative_to('/'):
+            prefix_path = cmd_in_path(f'{self.prefix}/{self.cc}')
             if not prefix_path:
                 error(
                     f'Compiler "{self.cc}" not in prefix path.')
@@ -96,6 +98,7 @@ class LuzBuild:
         if self.sdk == '': self.sdk = self.__get_sdk()
         else:
             # ensure sdk exists
+            self.sdk = resolve_path(self.sdk)
             if not self.sdk.exists():
                 error(f'Specified SDK path "{self.sdk}" does not exist.')
                 exit(1)

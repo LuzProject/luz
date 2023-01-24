@@ -45,7 +45,7 @@ class Module:
         self.filter = get_from_cfg(luzbuild, f'modules.{key}.filter', f'modules.types.{self.type}.filter')
         
         # install_dir
-        self.install_dir = resolve_path(get_from_cfg(luzbuild, f'modules.{key}.installDir', f'modules.types.{self.type}.installDir'))
+        self.install_dir = get_safe(module, 'installDir', None)
 
         # prefix
         self.prefix = luzbuild.prefix
