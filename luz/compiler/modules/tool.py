@@ -201,9 +201,7 @@ class Tool(Module):
     def compile(self):
         """Compile the specified self."""
         start = time()
-
-        # compile files
-        log(f'Compiling to executable...')
+        
         # compile files
         with ThreadPool() as pool:
             pool.map(self.__compile_tool_file, self.files)

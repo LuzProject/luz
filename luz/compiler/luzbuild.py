@@ -10,7 +10,7 @@ from time import time
 from yaml import safe_load
 
 # local imports
-from ..common.logger import error, log, log_stdout, remove_log_stdout, warn
+from ..common.logger import error, log, log_stdout, remove_log_stdout
 from .modules.modules import assign_module
 from ..common.utils import cmd_in_path, get_from_cfg, get_from_luzbuild, get_luz_storage, resolve_path, setup_luz_dir
 
@@ -188,7 +188,6 @@ class LuzBuild:
                 'Xcode does not appear to be installed. Please specify an SDK manually.')
             exit(1)
         else:
-            warn('Looking for default SDK. This will add time to the build process.')
             log_stdout('Finding an SDK...')
             sdkA = getoutput(
                 f'{xcrun} --show-sdk-path --sdk {self.platform}').split('\n')[-1]
