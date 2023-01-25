@@ -5,6 +5,8 @@ meta:
   prefix: ''
   # default cc
   cc: clang
+  # swift
+  swiftc: swiftc
   # rootless
   rootless: True
   # optimization
@@ -24,7 +26,7 @@ meta:
   # platform
   platform: iphoneos
   # minVers
-  minVers: 13.0
+  minVers: 14.0
 
 modules:
   # default module type

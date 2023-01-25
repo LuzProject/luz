@@ -8,4 +8,4 @@ fi
 
 bash $MY_PATH/install.sh
 cd $MY_PATH/../tweak
-luz build
+luz build -c

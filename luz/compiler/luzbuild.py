@@ -134,9 +134,6 @@ class LuzBuild:
                 if type(self.swift) is not Path:
                     for f in v.get('files'):
                         if '.swift' in f:
-                            if not resolve_path(f'{cmd_in_path(self.cc).parent}/../lib/swift').exists():
-                                error(f'Cannot compile swift, because swift libraries weren\'t found in {resolve_path(f"{cmd_in_path(self.cc).parent}/../lib/swift").absolute()}.')
-                                exit(1)
                             self.swift = cmd_in_path(self.swift)
                             if self.swift is None:
                                 error('Swift compiler not found.')
@@ -194,7 +191,7 @@ class LuzBuild:
             warn('Looking for default SDK. This will add time to the build process.')
             log_stdout('Finding an SDK...')
             sdkA = getoutput(
-                f'{xcrun} --show-sdk-path --sdk iphoneos').split('\n')[-1]
+                f'{xcrun} --show-sdk-path --sdk {self.platform}').split('\n')[-1]
             if sdkA == '' or not sdkA.startswith('/'):
                 error('Could not find an SDK. Please specify one manually.')
                 exit(1)
@@ -214,6 +211,7 @@ class LuzBuild:
     
     def build(self):
         """Build the project."""
+        log(f'Compiling for target "{self.platform}:{self.min_vers}"...')
         start = time()
         with ThreadPool() as pool:
             for result in pool.map(lambda x: x.compile(), self.modules.values()):

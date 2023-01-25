@@ -28,7 +28,7 @@ class Tweak(Module):
             'files')) is list else [module.get('files')]
         super().__init__(module, kwargs.get('key'), kwargs.get('luzbuild'))
         # directories
-        self.obj_dir = resolve_path(f'{self.dir}/obj')
+        self.obj_dir = resolve_path(f'{self.dir}/obj/{self.name}')
         self.logos_dir = resolve_path(f'{self.dir}/logos-processed')
         self.dylib_dir = resolve_path(f'{self.dir}/dylib')
         self.files = self.__hash_files(files)
@@ -42,13 +42,13 @@ class Tweak(Module):
         """
         # make dirs
         if not self.obj_dir.exists():
-            mkdir(self.obj_dir)
+            makedirs(self.obj_dir)
         
         if not self.logos_dir.exists():
-            mkdir(self.logos_dir)
+            makedirs(self.logos_dir)
         
         if not self.dylib_dir.exists():
-            mkdir(self.dylib_dir)
+            makedirs(self.dylib_dir)
             
         files_to_compile = []
             
@@ -80,7 +80,7 @@ class Tweak(Module):
                 new_hash = get_hash(file)
                 # check if the file has changes
                 file_path = resolve_path(file)
-                if (fhash is not None and fhash != new_hash) or (not resolve_path(f'{self.dir}/obj/{file_path.name}.mm.o').exists() and not resolve_path(f'{self.dir}/obj/{file_path.name}.m.o').exists() and not resolve_path(f'{self.dir}/obj/{file_path.name}.o').exists()):
+                if (fhash is not None and fhash != new_hash) or (not resolve_path(f'{self.dir}/obj/{self.name}/{file_path.name}.mm.o').exists() and not resolve_path(f'{self.dir}/obj/{self.name}/{file_path.name}.m.o').exists() and not resolve_path(f'{self.dir}/obj/{self.name}/{file_path.name}.o').exists()):
                     changed.append(file)
                 # add to new hashes
                 new_hashes[str(file)] = new_hash
@@ -138,18 +138,52 @@ class Tweak(Module):
     def __linker(self):
         """Use a linker on the compiled files."""
         log(f'Linking compiled files to {self.name}.dylib...')
+        # lipo
+        lipod = False
         # get files by extension
         files = ''
-        o_files = resolve_path(f'{self.dir}/obj/*.o')
-        for file in o_files:
-            if files != '': files += ' '
-            files += f'{str(file)}'
+        new_files = []
+        for file in resolve_path(f'{self.dir}/obj/{self.name}/*.o'):
+            if '.swift.' in str(file) and not lipod:
+                lipo = cmd_in_path(
+                    f'{(str(self.prefix) + "/") if self.prefix is not None else ""}lipo')
+                if lipo is None:
+                    # fall back to path
+                    lipo = cmd_in_path('lipo')
+                    if lipo is None:
+                        error('lipo not found.')
+                        exit(1)
+                check_output(f'{lipo} -create -output {self.dir}/obj/{self.name}/{self.name}-swift-lipo {self.dir}/obj/{self.name}/*.swift.*.o', shell=True)
+                new_files.append(f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo')
+                lipod = True
+            elif not '.swift.' in str(file):
+                new_files.append(file)
         
-        # define build flags
-        build_flags = ['-fobjc-arc' if self.arc else '', f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', '-dynamiclib',
-                       '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.archs, f'-m{self.platform}-version-min={self.min_vers}']
-        # compile with clang using build flags
-        self.compiler.compile(files, f'{self.dir}/dylib/{self.name}.dylib', build_flags)
+        for file in new_files:
+            if files != '': files += ' '
+            files += str(file)
+        
+        if f'{self.name}-swift-lipo' in files:
+            # define build flags
+            build_flags = [f'-sdk {self.sdk}',
+                           '-Xlinker', '-segalign', '-Xlinker 4000', '-emit-library', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs]
+            platform = 'ios' if self.platform == 'iphoneos' else self.platform
+            for arch in self.archs.split(' -arch '):
+                if arch == '':
+                    continue
+                outName = f'{self.dir}/dylib/{self.name}_{arch.replace(" ", "")}.dylib'
+                arch_formatted = f' -target {arch.replace(" ", "")}-apple-{platform}{self.min_vers}'
+                check_output(f'{self.luzbuild.swift} {files} -o {outName} {arch_formatted} {" ".join(build_flags)}', shell=True)
+            
+            check_output(f'{lipo} -create -output {self.dir}/dylib/{self.name}.dylib {self.dir}/dylib/{self.name}_*.dylib && rm -rf {self.dir}/dylib/{self.name}_*.dylib', shell=True)
+        else:
+            # define build flags
+            build_flags = ['-fobjc-arc' if self.arc else '', f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', '-dynamiclib',
+                           '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.archs, f'-m{self.platform}-version-min={self.min_vers}']
+            # compile with clang using build flags
+            check_output(
+                f'{self.luzbuild.cc} -o {self.dir}/dylib/{self.name}.dylib {files} {" ".join(build_flags)}', shell=True)
+        
         # rpath
         install_tool = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}install_name_tool')
         if install_tool is None:
@@ -198,12 +232,26 @@ class Tweak(Module):
             # set original path
             orig_path = file.get('path')
         log(f'Compiling {orig_path}...')
-        outName = f'{self.dir}/obj/{resolve_path(path_to_compile).name}.o'
+        outName = f'{self.dir}/obj/{self.name}/{resolve_path(path_to_compile).name}.o'
         # compile file
         try:
-            build_flags = ['-fobjc-arc' if self.arc else '',
-                           f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.archs, self.include, f'-m{self.platform}-version-min={self.min_vers}',  '-c']
-            check_output(f'{self.luzbuild.cc} {path_to_compile} -o {outName} {" ".join(build_flags)}', shell=True)
+            is_swift = str(orig_path.name).endswith('swift')
+            if is_swift:
+                platform = 'ios' if self.platform == 'iphoneos' else self.platform
+                build_flags = [f'-sdk {self.sdk}', self.include,  '-c', '-emit-object']
+                for arch in self.archs.split(' -arch '):
+                    if arch == '':
+                        continue
+                    outName = f'{self.dir}/obj/{self.name}/{resolve_path(path_to_compile).name}.{arch.replace(" ", "")}.o'
+                    arch_formatted = f' -target {arch.replace(" ", "")}-apple-{platform}{self.min_vers}'
+                    check_output(
+                        f'{self.luzbuild.swift} {path_to_compile} -o {outName} {arch_formatted} {" ".join(build_flags)}', shell=True)
+            else:
+                outName = f'{self.dir}/obj/{self.name}/{resolve_path(path_to_compile).name}.o'
+                build_flags = ['-fobjc-arc' if self.arc else '',
+                               f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.archs, self.include, f'-m{self.platform}-version-min={self.min_vers}',  '-c']
+                check_output(
+                    f'{self.luzbuild.cc} {path_to_compile} -o {outName} {" ".join(build_flags)}', shell=True)
             #self.compiler.compile(path_to_compile, outName, build_flags)
         except Exception as e:
             exit(1)
@@ -218,7 +266,6 @@ class Tweak(Module):
             pool.map(self.__compile_tweak_file, self.files)
         # link files
         self.__linker()
-
         # stage deb
         self.__stage()
         log(
