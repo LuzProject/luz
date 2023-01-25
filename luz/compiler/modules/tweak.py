@@ -21,6 +21,8 @@ class Tweak(Module):
         :param str key: Module key name
         :param LuzBuild luzbuild: Luzbuild class
         """
+        # current time
+        self.now = time()
         # kwargs parsing
         module = kwargs.get('module')
         # files
@@ -157,7 +159,7 @@ class Tweak(Module):
                         error('lipo not found.')
                         exit(1)
                 # combine swift files into one file for specific arch
-                check_output(f'{lipo} -create -output {self.dir}/obj/{self.name}/{self.name}-swift-lipo {self.dir}/obj/{self.name}/*.swift.*.o', shell=True)
+                check_output(f'{lipo} -create -output {self.dir}/obj/{self.name}/{self.name}-swift-lipo {self.dir}/obj/{self.name}/*.swift.*-{self.now}.o && rm -rf {self.dir}/obj/{self.name}/*.swift.*-{self.now}.o', shell=True)
                 # add lipo file to files list
                 new_files.append(f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo')
                 # let the compiler know that we lipod
@@ -169,7 +171,7 @@ class Tweak(Module):
             if files != '': files += ' '
             files += str(file)
         
-        if f'{self.name}-swift-lipo' in files:
+        if f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo' in files:
             # define build flags
             build_flags = [f'-sdk {self.sdk}',
                            '-Xlinker', '-segalign', '-Xlinker 4000', '-emit-library', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.luzbuild.swiftflags]
@@ -253,7 +255,7 @@ class Tweak(Module):
                     # skip empty archs
                     if arch == '':
                         continue
-                    outName = f'{self.dir}/obj/{self.name}/{resolve_path(path_to_compile).name}.{arch.replace(" ", "")}.o'
+                    outName = f'{self.dir}/obj/{self.name}/{resolve_path(path_to_compile).name}.{arch.replace(" ", "")}-{self.now}.o'
                     # format arch
                     arch_formatted = f' -target {arch.replace(" ", "")}-apple-{platform}{self.min_vers}'
                     # use swiftc to compile
