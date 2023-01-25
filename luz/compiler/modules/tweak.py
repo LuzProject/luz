@@ -172,7 +172,7 @@ class Tweak(Module):
         if f'{self.name}-swift-lipo' in files:
             # define build flags
             build_flags = [f'-sdk {self.sdk}',
-                           '-Xlinker', '-segalign', '-Xlinker 4000', '-emit-library', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs]
+                           '-Xlinker', '-segalign', '-Xlinker 4000', '-emit-library', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.luzbuild.swiftflags]
             platform = 'ios' if self.platform == 'iphoneos' else self.platform
             for arch in self.archs.split(' -arch '):
                 if arch == '':
@@ -187,7 +187,7 @@ class Tweak(Module):
         else:
             # define build flags
             build_flags = ['-fobjc-arc' if self.arc else '', f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', '-dynamiclib',
-                           '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.archs, f'-m{self.platform}-version-min={self.min_vers}']
+                           '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.archs, f'-m{self.platform}-version-min={self.min_vers}', self.luzbuild.cflags]
             # compile with clang using build flags
             check_output(
                 f'{self.luzbuild.cc} -o {self.dir}/dylib/{self.name}.dylib {files} {" ".join(build_flags)}', shell=True)
@@ -248,7 +248,7 @@ class Tweak(Module):
                 # format platform
                 platform = 'ios' if self.platform == 'iphoneos' else self.platform
                 # define build args
-                build_flags = [f'-sdk {self.sdk}', self.include,  '-c', '-emit-object']
+                build_flags = [f'-sdk {self.sdk}', self.include,  '-c', '-emit-object', self.luzbuild.swiftflags]
                 for arch in self.archs.split(' -arch '):
                     # skip empty archs
                     if arch == '':
@@ -262,7 +262,7 @@ class Tweak(Module):
             else:
                 outName = f'{self.dir}/obj/{self.name}/{resolve_path(path_to_compile).name}.o'
                 build_flags = ['-fobjc-arc' if self.arc else '',
-                               f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.archs, self.include, f'-m{self.platform}-version-min={self.min_vers}',  '-c']
+                               f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.archs, self.include, f'-m{self.platform}-version-min={self.min_vers}',  '-c', self.luzbuild.cflags]
                 # use clang to compile
                 check_output(
                     f'{self.luzbuild.cc} {path_to_compile} -o {outName} {" ".join(build_flags)}', shell=True)

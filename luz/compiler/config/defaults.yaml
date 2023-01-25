@@ -5,8 +5,12 @@ meta:
   prefix: ''
   # default cc
   cc: clang
+  # cflags
+  cflags: ''
   # swift
   swiftc: swiftc
+  # swiftflags
+  swiftflags: ''
   # rootless
   rootless: True
   # optimization

@@ -50,8 +50,14 @@ class LuzBuild:
         # cc
         self.cc = get_from_cfg(self, 'meta.cc')
         
+        # cflags
+        self.cflags = get_from_cfg(self, 'meta.cflags')
+        
         # swiftc
         self.swift = get_from_cfg(self, 'meta.swiftc')
+        
+        # swiftflags
+        self.swiftflags = get_from_cfg(self, 'meta.swiftflags')
         
         # rootless
         self.rootless = get_from_cfg(self, 'meta.rootless')
