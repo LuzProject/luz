@@ -85,8 +85,11 @@ class Tool(Module):
         # get files by extension
         files = ''
         new_files = []
+        # loop through files that were compiled
         for file in resolve_path(f'{self.dir}/obj/{self.name}/*.o'):
+            # handle swift files
             if '.swift.' in str(file) and not lipod:
+                # prepare lipo command
                 lipo = cmd_in_path(
                     f'{(str(self.prefix) + "/") if self.prefix is not None else ""}lipo')
                 if lipo is None:
@@ -95,8 +98,11 @@ class Tool(Module):
                     if lipo is None:
                         error('lipo not found.')
                         exit(1)
+                # combine swift files into one file for specific arch
                 check_output(f'{lipo} -create -output {self.dir}/obj/{self.name}/{self.name}-swift-lipo {self.dir}/obj/{self.name}/*.swift.*.o', shell=True)
+                # add lipo file to files list
                 new_files.append(f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo')
+                # let the compiler know that we lipod
                 lipod = True
             elif not '.swift.' in str(file):
                 new_files.append(file)
@@ -115,8 +121,10 @@ class Tool(Module):
                     continue
                 outName = f'{self.dir}/bin/{self.name}_{arch.replace(" ", "")}'
                 arch_formatted = f' -target {arch.replace(" ", "")}-apple-{platform}{self.min_vers}'
+                # compile with swiftc using build flags
                 check_output(f'{self.luzbuild.swift} {files} -o {outName} {arch_formatted} {" ".join(build_flags)}', shell=True)
             
+            # lipo compiled files
             check_output(f'{lipo} -create -output {self.dir}/bin/{self.name} {self.dir}/bin/{self.name}_* && rm -rf {self.dir}/bin/{self.name}_*', shell=True)
         else:
             # define build flags
@@ -161,20 +169,25 @@ class Tool(Module):
         try:
             is_swift = str(file.name).endswith('swift')
             if is_swift:
+                # format platform
                 platform = 'ios' if self.platform == 'iphoneos' else self.platform
-                build_flags = [f'-sdk {self.sdk}',
-                               self.include,  '-c', '-emit-object']
+                # define build flags
+                build_flags = [f'-sdk {self.sdk}', self.include,  '-c', '-emit-object']
                 for arch in self.archs.split(' -arch '):
+                    # skip empty archs
                     if arch == '':
                         continue
                     outName = f'{self.dir}/obj/{self.name}/{resolve_path(file).name}.{arch.replace(" ", "")}.o'
+                    # format arch
                     arch_formatted = f' -target {arch.replace(" ", "")}-apple-{platform}{self.min_vers}'
+                    # compile with swiftc using build flags
                     check_output(
                         f'{self.luzbuild.swift} {file} -o {outName} {arch_formatted} {" ".join(build_flags)}', shell=True)
             else:
                 outName = f'{self.dir}/obj/{self.name}/{resolve_path(file).name}.o'
                 build_flags = ['-fobjc-arc' if self.arc else '',
                                f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.archs, self.include, f'-m{self.platform}-version-min={self.min_vers}',  '-c']
+                # compile with clang using build flags
                 check_output(
                     f'{self.luzbuild.cc} {file} -o {outName} {" ".join(build_flags)}', shell=True)
             #self.compiler.compile(path_to_compile, outName, build_flags)

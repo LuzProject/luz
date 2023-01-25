@@ -143,8 +143,11 @@ class Tweak(Module):
         # get files by extension
         files = ''
         new_files = []
+        # loop through files that were compiled
         for file in resolve_path(f'{self.dir}/obj/{self.name}/*.o'):
+            # handle swift files
             if '.swift.' in str(file) and not lipod:
+                # prepare lipo command
                 lipo = cmd_in_path(
                     f'{(str(self.prefix) + "/") if self.prefix is not None else ""}lipo')
                 if lipo is None:
@@ -153,8 +156,11 @@ class Tweak(Module):
                     if lipo is None:
                         error('lipo not found.')
                         exit(1)
+                # combine swift files into one file for specific arch
                 check_output(f'{lipo} -create -output {self.dir}/obj/{self.name}/{self.name}-swift-lipo {self.dir}/obj/{self.name}/*.swift.*.o', shell=True)
+                # add lipo file to files list
                 new_files.append(f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo')
+                # let the compiler know that we lipod
                 lipod = True
             elif not '.swift.' in str(file):
                 new_files.append(file)
@@ -173,8 +179,10 @@ class Tweak(Module):
                     continue
                 outName = f'{self.dir}/dylib/{self.name}_{arch.replace(" ", "")}.dylib'
                 arch_formatted = f' -target {arch.replace(" ", "")}-apple-{platform}{self.min_vers}'
+                # compile with swiftc using build flags
                 check_output(f'{self.luzbuild.swift} {files} -o {outName} {arch_formatted} {" ".join(build_flags)}', shell=True)
             
+            # lipo the dylibs
             check_output(f'{lipo} -create -output {self.dir}/dylib/{self.name}.dylib {self.dir}/dylib/{self.name}_*.dylib && rm -rf {self.dir}/dylib/{self.name}_*.dylib', shell=True)
         else:
             # define build flags
@@ -237,19 +245,25 @@ class Tweak(Module):
         try:
             is_swift = str(orig_path.name).endswith('swift')
             if is_swift:
+                # format platform
                 platform = 'ios' if self.platform == 'iphoneos' else self.platform
+                # define build args
                 build_flags = [f'-sdk {self.sdk}', self.include,  '-c', '-emit-object']
                 for arch in self.archs.split(' -arch '):
+                    # skip empty archs
                     if arch == '':
                         continue
                     outName = f'{self.dir}/obj/{self.name}/{resolve_path(path_to_compile).name}.{arch.replace(" ", "")}.o'
+                    # format arch
                     arch_formatted = f' -target {arch.replace(" ", "")}-apple-{platform}{self.min_vers}'
+                    # use swiftc to compile
                     check_output(
                         f'{self.luzbuild.swift} {path_to_compile} -o {outName} {arch_formatted} {" ".join(build_flags)}', shell=True)
             else:
                 outName = f'{self.dir}/obj/{self.name}/{resolve_path(path_to_compile).name}.o'
                 build_flags = ['-fobjc-arc' if self.arc else '',
                                f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.archs, self.include, f'-m{self.platform}-version-min={self.min_vers}',  '-c']
+                # use clang to compile
                 check_output(
                     f'{self.luzbuild.cc} {path_to_compile} -o {outName} {" ".join(build_flags)}', shell=True)
             #self.compiler.compile(path_to_compile, outName, build_flags)
