@@ -1,21 +1,22 @@
 # module imports
 from multiprocessing.pool import ThreadPool
 from os import makedirs
+from pathlib import Path
 from pyclang import CCompiler
 from pydeb import Pack
-from shutil import copytree
+from shutil import copytree, rmtree
 from subprocess import getoutput
 from time import time
 from yaml import safe_load
 
 # local imports
-from ..common.logger import error, log, log_stdout, remove_log_stdout, warn
+from ..common.logger import error, log, log_stdout, remove_log_stdout
 from .modules.modules import assign_module
 from ..common.utils import cmd_in_path, get_from_cfg, get_from_luzbuild, get_luz_storage, resolve_path, setup_luz_dir
 
 
 class LuzBuild:
-    def __init__(self, path_to_file: str = 'LuzBuild'):
+    def __init__(self, clean: bool = False, path_to_file: str = 'LuzBuild'):
         """Parse the luzbuild file.
         
         :param str path_to_file: The path to the luzbuild file.
@@ -32,6 +33,13 @@ class LuzBuild:
         if self.luzbuild is None or self.luzbuild == {}:
             error('Failed to parse LuzBuild file.')
             exit(1)
+        
+        # clean
+        if clean:
+            rmtree('.luz', ignore_errors=True)
+            
+        # pool
+        self.pool = ThreadPool()
             
         # control
         self.control_raw = ''
@@ -44,6 +52,15 @@ class LuzBuild:
         
         # cc
         self.cc = get_from_cfg(self, 'meta.cc')
+        
+        # cflags
+        self.cflags = get_from_cfg(self, 'meta.cflags')
+        
+        # swiftc
+        self.swift = get_from_cfg(self, 'meta.swiftc')
+        
+        # swiftflags
+        self.swiftflags = get_from_cfg(self, 'meta.swiftflags')
         
         # rootless
         self.rootless = get_from_cfg(self, 'meta.rootless')
@@ -90,9 +107,18 @@ class LuzBuild:
             prefix_path = cmd_in_path(f'{self.prefix}/{self.cc}')
             if not prefix_path:
                 error(
-                    f'Compiler "{self.cc}" not in prefix path.')
+                    f'C compiler "{self.cc}" not in prefix path.')
                 exit(1)
             self.cc = prefix_path
+        
+        # format swift with prefix
+        if self.prefix is not '' and not resolve_path(self.swift).is_relative_to('/'):
+            prefix_path = cmd_in_path(f'{self.prefix}/{self.swift}')
+            if not prefix_path:
+                error(
+                    f'Swift compiler "{self.swift}" not in prefix path.')
+                exit(1)
+            self.swift = prefix_path
             
         # attempt to manually find an sdk
         if self.sdk == '': self.sdk = self.__get_sdk()
@@ -114,15 +140,22 @@ class LuzBuild:
             self.compiler = CCompiler().set_compiler(self.cc)
             for m in self.modules:
                 v = self.modules.get(m)
+                if type(self.swift) is not Path:
+                    for f in v.get('files'):
+                        if '.swift' in f:
+                            self.swift = cmd_in_path(self.swift)
+                            if self.swift is None:
+                                error('Swift compiler not found.')
+                                exit(1)
+                            break
                 self.modules[m] = assign_module(v, m, self)
         elif self.modules is None or self.modules == {}:
             error('No modules found in LuzBuild file.')
             exit(1)
 
         # parse luzbuild file
-        with ThreadPool() as pool:
-            for result in pool.map(lambda x: self.__handle_key(x), self.luzbuild):
-                pass
+        for result in self.pool.map(lambda x: self.__handle_key(x), self.luzbuild):
+            pass
         
         
     def __handle_key(self, key):
@@ -163,10 +196,9 @@ class LuzBuild:
                 'Xcode does not appear to be installed. Please specify an SDK manually.')
             exit(1)
         else:
-            warn('Looking for default SDK. This will add time to the build process.')
             log_stdout('Finding an SDK...')
             sdkA = getoutput(
-                f'{xcrun} --show-sdk-path --sdk iphoneos').split('\n')[-1]
+                f'{xcrun} --show-sdk-path --sdk {self.platform}').split('\n')[-1]
             if sdkA == '' or not sdkA.startswith('/'):
                 error('Could not find an SDK. Please specify one manually.')
                 exit(1)
@@ -186,12 +218,12 @@ class LuzBuild:
     
     def build(self):
         """Build the project."""
+        log(f'Compiling for target "{self.platform}:{self.min_vers}"...')
         start = time()
-        with ThreadPool() as pool:
-            for result in pool.map(lambda x: x.compile(), self.modules.values()):
-                if result is not None:
-                    error(result)
-                    exit(1)
+        for result in self.pool.map(lambda x: x.compile(), self.modules.values()):
+            if result is not None:
+                error(result)
+                exit(1)
         # make staging dirs
         if not resolve_path(f'{self.dir}/stage/DEBIAN').exists():
             makedirs(f'{self.dir}/stage/DEBIAN')

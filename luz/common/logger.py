@@ -73,4 +73,4 @@ def error(message):
 
 
 def ask(message):
-	return input(colors['bold'] + colors['darkgrey'] + '[' + colors['reset'] + colors['bold'] + colors['orange'] + '?' + colors['bold'] + colors['darkgrey'] + '] ' + colors['reset'] + f'{message}')
+	return input(colors['bold'] + colors['darkgrey'] + '[' + colors['reset'] + colors['bold'] + colors['orange'] + '?' + colors['bold'] + colors['darkgrey'] + '] ' + colors['reset'] + f'{message} -> ')

@@ -125,16 +125,16 @@ def logos(module, files: list) -> list:
             log_stdout(f'Processing {file} with Logos...')
             system(f'{logos_exec} {file} > {output}.m')
             new_files.append(
-                {'logos': True, 'new_path': f'{output}.m', 'old_path': file})
+                {'logos': True, 'new_path': resolve_path(f'{output}.m'), 'old_path': resolve_path(file)})
             remove_log_stdout(f'Processing {file} with Logos...')
         elif file_formatted == 'xm':
             log_stdout(f'Processing {file} with Logos...')
             system(f'{logos_exec} {file} > {output}.mm')
             new_files.append(
-                {'logos': True, 'new_path': f'{output}.mm', 'old_path': file})
+                {'logos': True, 'new_path': resolve_path(f'{output}.mm'), 'old_path': resolve_path(file)})
             remove_log_stdout(f'Processing {file} with Logos...')
         else:
-            new_files.append({'logos': False, 'path': file})
+            new_files.append({'logos': False, 'path': resolve_path(file)})
 
     # return files
     return new_files
