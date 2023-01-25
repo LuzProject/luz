@@ -20,9 +20,9 @@ class Module:
         self.control['id'] = self.ask_for('id')
         self.control['name'] = self.ask_for('name', self.control['id'])
         self.control['version'] = self.ask_for('version', '1.0.0')
-        self.control['maintainer'] = self.ask_for('maintainer')
-        self.control['author'] = self.ask_for('author', self.control['maintainer'])
-        self.control['depends'] = self.ask_for('dependencies', 'mobilesubstrate')
+        self.control['maintainer'] = self.ask_for('maintainer', dsc='Who')
+        self.control['author'] = self.ask_for('author', self.control['maintainer'], dsc='Who')
+        self.control['depends'] = self.ask_for('dependencies', 'mobilesubstrate', dsc1='are')
         self.control['architecture'] = self.ask_for('architecture', 'iphoneos-arm64')
         
         # add control to dict
@@ -42,18 +42,20 @@ class Module:
             dump(self.dict, f)
     
     
-    def ask_for(self, key: str, default: str = None) -> str:
+    def ask_for(self, key: str, default: str = None, dsc: str = 'What', dsc1: str = 'is') -> str:
         """Ask for a value.
         
         :param str key: The key to ask for.
         :param str default: The default value.
+        :param str dsc: The descriptor of the question.
+        :param str dsc1: The descriptor of the question.
         :return: The value.
         """
         if default is not None:
-            val = ask(f'What is this project\'s {key}? (enter for "{default}")')
+            val = ask(f'{dsc} {dsc1} this project\'s {key}? (enter for "{default}")')
             if val == '': return default
         else:
-            val = ask(f'What is this project\'s {key}?')
+            val = ask(f'{dsc} {dsc1} this project\'s {key}?')
             if val == '':
                 error('You must enter a value.')
                 exit(1)

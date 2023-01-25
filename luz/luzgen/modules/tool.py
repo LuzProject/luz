@@ -20,18 +20,20 @@ class Tool(Module):
         self.write_to_file(folder)
         
     
-    def __ask_for(self, key: str, default: str = None) -> str:
+    def __ask_for(self, key: str, default: str = None, dsc: str = 'What', dsc1: str = 'is') -> str:
         """Ask for a value.
         
         :param str key: The key to ask for.
         :param str default: The default value.
+        :param str dsc: The descriptor of the question.
+        :param str dsc1: The descriptor of the question.
         :return: The value.
         """
         if default is not None:
-            val = ask(f'What is this {self.type}\'s {key}? (enter for "{default}")')
+            val = ask(f'{dsc} {dsc1} this {self.type}\'s {key}? (enter for "{default}")')
             if val == '': return default
         else:
-            val = ask(f'What is this {self.type}\'s {key}?')
+            val = ask(f'{dsc} {dsc1} this {self.type}\'s {key}?')
             if val == '':
                 error('You must enter a value.')
                 exit(1)
