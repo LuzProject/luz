@@ -1,7 +1,6 @@
 # module imports
 from json import loads
-from multiprocessing.pool import ThreadPool
-from os import makedirs, mkdir
+from os import makedirs
 from shutil import copytree
 from subprocess import check_output
 from time import time
@@ -112,54 +111,69 @@ class Tool(Module):
         for file in new_files:
             if files != '': files += ' '
             files += str(file)
-            
-        if f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo' in files:
-            # define build flags
-            build_flags = [f'-sdk {self.sdk}',
-                           '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.luzbuild.swiftflags]
-            platform = 'ios' if self.platform == 'iphoneos' else self.platform
-            for arch in self.archs.split(' -arch '):
-                if arch == '':
-                    continue
-                outName = f'{self.dir}/bin/{self.name}_{arch.replace(" ", "")}'
-                arch_formatted = f' -target {arch.replace(" ", "")}-apple-{platform}{self.min_vers}'
-                # compile with swiftc using build flags
-                check_output(f'{self.luzbuild.swift} {files} -o {outName} {arch_formatted} {" ".join(build_flags)}', shell=True)
-            
-            # lipo compiled files
-            check_output(f'{lipo} -create -output {self.dir}/bin/{self.name} {self.dir}/bin/{self.name}_* && rm -rf {self.dir}/bin/{self.name}_*', shell=True)
-        else:
-            # define build flags
-            build_flags = ['-fobjc-arc' if self.arc else '', f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}',
-                           '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.archs, f'-m{self.platform}-version-min={self.min_vers}', self.luzbuild.cflags]
-            # compile with clang using build flags
-            check_output(
-                f'{self.luzbuild.cc} -o {self.dir}/bin/{self.name} {files} {" ".join(build_flags)}', shell=True)
-        # rpath
-        install_tool = cmd_in_path(
-            f'{(str(self.prefix) + "/") if self.prefix is not None else ""}install_name_tool')
-        if install_tool is None:
-            # fall back to path
-            install_tool = cmd_in_path('install_name_tool')
+        
+        try:
+            if f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo' in files:
+                # define build flags
+                build_flags = [f'-sdk {self.sdk}',
+                            '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.luzbuild.swiftflags]
+                platform = 'ios' if self.platform == 'iphoneos' else self.platform
+                for arch in self.archs.split(' -arch '):
+                    if arch == '':
+                        continue
+                    outName = f'{self.dir}/bin/{self.name}_{arch.replace(" ", "")}'
+                    arch_formatted = f' -target {arch.replace(" ", "")}-apple-{platform}{self.min_vers}'
+                    # compile with swiftc using build flags
+                    check_output(f'{self.luzbuild.swift} {files} -o {outName} {arch_formatted} {" ".join(build_flags)}', shell=True)
+                
+                # lipo compiled files
+                check_output(f'{lipo} -create -output {self.dir}/bin/{self.name} {self.dir}/bin/{self.name}_* && rm -rf {self.dir}/bin/{self.name}_*', shell=True)
+            else:
+                # define build flags
+                build_flags = ['-fobjc-arc' if self.arc else '', f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}',
+                            '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.archs, f'-m{self.platform}-version-min={self.min_vers}', self.luzbuild.cflags]
+                # compile with clang using build flags
+                check_output(
+                    f'{self.luzbuild.cc} -o {self.dir}/bin/{self.name} {files} {" ".join(build_flags)}', shell=True)
+        except:
+            error(f'An error occured when attempting to link the compiled files. ({self.name})')
+            exit(1)
+        
+        try:
+            # rpath
+            install_tool = cmd_in_path(
+                f'{(str(self.prefix) + "/") if self.prefix is not None else ""}install_name_tool')
             if install_tool is None:
-                error('install_name_tool_not found.')
-                exit(1)
-        # fix rpath
-        rpath = '/var/jb/Library/Frameworks/' if self.luzbuild.rootless else '/Library/Frameworks'
-        check_output(
-            f'{install_tool} -add_rpath {rpath} {self.dir}/bin/{self.name}', shell=True)
-        # ldid
-        ldid = cmd_in_path(
-            f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ldid')
-        if ldid is None:
-            # fall back to path
-            ldid = cmd_in_path('ldid')
+                # fall back to path
+                install_tool = cmd_in_path('install_name_tool')
+                if install_tool is None:
+                    error('install_name_tool_not found.')
+                    exit(1)
+            # fix rpath
+            rpath = '/var/jb/Library/Frameworks/' if self.luzbuild.rootless else '/Library/Frameworks'
+            check_output(
+                f'{install_tool} -add_rpath {rpath} {self.dir}/bin/{self.name}', shell=True)
+        except:
+            error(f'An error occured when trying to add rpath to "{self.dir}/bin/{self.name}". ({self.name})')
+            exit(1)
+        
+        try:
+            # ldid
+            ldid = cmd_in_path(
+                f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ldid')
             if ldid is None:
-                error('ldid not found.')
-                exit(1)
-        # run ldid
-        check_output(
-            f'{ldid} {self.luzbuild.entflag}{self.luzbuild.entfile} {self.dir}/bin/{self.name}', shell=True)
+                # fall back to path
+                ldid = cmd_in_path('ldid')
+                if ldid is None:
+                    error('ldid not found.')
+                    exit(1)
+            # run ldid
+            check_output(
+                f'{ldid} {self.luzbuild.entflag}{self.luzbuild.entfile} {self.dir}/bin/{self.name}', shell=True)
+        except:
+            error(f'An error occured when trying to add rpath to "{self.dir}/bin/{self.name}". ({self.name})')
+            exit(1)
+            
 
     def __compile_tool_file(self, file):
         """Compile a tool file.
@@ -218,8 +232,7 @@ class Tool(Module):
         start = time()
         
         # compile files
-        with ThreadPool() as pool:
-            pool.map(self.__compile_tool_file, self.files)
+        self.luzbuild.pool.map(self.__compile_tool_file, self.files)
         # link files
         self.__linker()
         # stage deb

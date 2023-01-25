@@ -38,6 +38,9 @@ class LuzBuild:
         if clean:
             rmtree('.luz', ignore_errors=True)
             
+        # pool
+        self.pool = ThreadPool()
+            
         # control
         self.control_raw = ''
         
@@ -151,9 +154,8 @@ class LuzBuild:
             exit(1)
 
         # parse luzbuild file
-        with ThreadPool() as pool:
-            for result in pool.map(lambda x: self.__handle_key(x), self.luzbuild):
-                pass
+        for result in self.pool.map(lambda x: self.__handle_key(x), self.luzbuild):
+            pass
         
         
     def __handle_key(self, key):
@@ -218,11 +220,10 @@ class LuzBuild:
         """Build the project."""
         log(f'Compiling for target "{self.platform}:{self.min_vers}"...')
         start = time()
-        with ThreadPool() as pool:
-            for result in pool.map(lambda x: x.compile(), self.modules.values()):
-                if result is not None:
-                    error(result)
-                    exit(1)
+        for result in self.pool.map(lambda x: x.compile(), self.modules.values()):
+            if result is not None:
+                error(result)
+                exit(1)
         # make staging dirs
         if not resolve_path(f'{self.dir}/stage/DEBIAN').exists():
             makedirs(f'{self.dir}/stage/DEBIAN')
