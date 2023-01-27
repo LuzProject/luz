@@ -142,7 +142,6 @@ class Tweak(Module):
         # lipo
         lipod = False
         # get files by extension
-        files = ''
         new_files = []
         # loop through files that were compiled
         for file in resolve_path(f'{self.dir}/obj/{self.name}/*.o'):
@@ -160,39 +159,34 @@ class Tweak(Module):
                 # combine swift files into one file for specific arch
                 check_output(f'{lipo} -create -output {self.dir}/obj/{self.name}/{self.name}-swift-lipo {self.dir}/obj/{self.name}/*.swift.*-{self.now}.o && rm -rf {self.dir}/obj/{self.name}/*.swift.*-{self.now}.o', shell=True)
                 # add lipo file to files list
-                new_files.append(f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo')
+                new_files.append(resolve_path(f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo'))
                 # let the compiler know that we lipod
                 lipod = True
             elif not '.swift.' in str(file):
-                new_files.append(file)
-        
-        for file in new_files:
-            if files != '': files += ' '
-            files += str(file)
+                new_files.append(resolve_path(file))
         
         try:
-            if f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo' in files:
+            if lipod:
                 # define build flags
-                build_flags = [f'-sdk {self.sdk}',
-                            '-Xlinker', '-segalign', '-Xlinker 4000', '-emit-library', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.luzbuild.swiftflags]
                 platform = 'ios' if self.platform == 'iphoneos' else self.platform
                 for arch in self.archs.split(' -arch '):
                     if arch == '':
                         continue
                     outName = f'{self.dir}/dylib/{self.name}_{arch.replace(" ", "")}.dylib'
-                    arch_formatted = f' -target {arch.replace(" ", "")}-apple-{platform}{self.min_vers}'
+                    # define build flags
+                    build_flags = [f'-sdk {self.sdk}',
+                            '-Xlinker', '-segalign', '-Xlinker 4000', '-emit-library', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in new_files else '', self.include, self.librarydirs, self.luzbuild.swiftflags, f'-target {arch.replace(" ", "")}-apple-{platform}{self.min_vers}']
                     # compile with swiftc using build flags
-                    check_output(f'{self.luzbuild.swift} {files} -o {outName} {arch_formatted} {" ".join(build_flags)}', shell=True)
+                    self.luzbuild.swiftcompiler.compile(new_files, outName, build_flags)
                 
                 # lipo the dylibs
                 check_output(f'{lipo} -create -output {self.dir}/dylib/{self.name}.dylib {self.dir}/dylib/{self.name}_*.dylib && rm -rf {self.dir}/dylib/{self.name}_*.dylib', shell=True)
             else:
                 # define build flags
                 build_flags = ['-fobjc-arc' if self.arc else '', f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', '-dynamiclib',
-                            '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in files else '', self.include, self.librarydirs, self.archs, f'-m{self.platform}-version-min={self.min_vers}', self.luzbuild.cflags]
+                            '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in new_files else '', self.include, self.librarydirs, self.archs, f'-m{self.platform}-version-min={self.min_vers}', self.luzbuild.cflags]
                 # compile with clang using build flags
-                check_output(
-                    f'{self.luzbuild.cc} -o {self.dir}/dylib/{self.name}.dylib {files} {" ".join(build_flags)}', shell=True)
+                self.luzbuild.ccompiler.compile(new_files, f'{self.dir}/dylib/{self.name}.dylib', build_flags)
         except:
             error(f'An error occured when attempting to link the compiled files. ({self.name})')
             exit(1)
@@ -271,16 +265,14 @@ class Tweak(Module):
                     # format arch
                     arch_formatted = f' -target {arch.replace(" ", "")}-apple-{platform}{self.min_vers}'
                     # use swiftc to compile
-                    check_output(
-                        f'{self.luzbuild.swift} {path_to_compile} -o {outName} {arch_formatted} {" ".join(build_flags)}', shell=True)
+                    self.luzbuild.swiftcompiler.compile(file, outName, build_flags.append(arch_formatted))
             else:
                 outName = f'{self.dir}/obj/{self.name}/{resolve_path(path_to_compile).name}.o'
                 build_flags = ['-fobjc-arc' if self.arc else '',
                                f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.archs, self.include, f'-m{self.platform}-version-min={self.min_vers}',  '-c', self.luzbuild.cflags]
                 # use clang to compile
-                check_output(
-                    f'{self.luzbuild.cc} {path_to_compile} -o {outName} {" ".join(build_flags)}', shell=True)
-            #self.compiler.compile(path_to_compile, outName, build_flags)
+                self.luzbuild.cccompiler.compile(file, outName, build_flags)
+
         except Exception as e:
             exit(1)
 

@@ -2,7 +2,7 @@
 from multiprocessing.pool import ThreadPool
 from os import makedirs
 from pathlib import Path
-from pyclang import CCompiler
+from pyclang import CCompiler, SwiftCompiler
 from pydeb import Pack
 from shutil import copytree, rmtree
 from subprocess import getoutput
@@ -137,7 +137,7 @@ class LuzBuild:
             # dir
             self.dir = setup_luz_dir()
             # set compiler
-            self.compiler = CCompiler().set_compiler(self.cc)
+            self.ccompiler = CCompiler().set_compiler(self.cc)
             for m in self.modules:
                 v = self.modules.get(m)
                 if type(self.swift) is not Path:
@@ -147,6 +147,7 @@ class LuzBuild:
                             if self.swift is None:
                                 error('Swift compiler not found.')
                                 exit(1)
+                            self.swiftcompiler = SwiftCompiler().set_compiler(self.swift)
                             break
                 self.modules[m] = assign_module(v, m, self)
         elif self.modules is None or self.modules == {}:

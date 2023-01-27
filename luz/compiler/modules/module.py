@@ -50,9 +50,6 @@ class Module:
         # prefix
         self.prefix = luzbuild.prefix
         
-        # compiler
-        self.compiler = luzbuild.compiler
-        
         # archs
         self.archs = luzbuild.archs
         
