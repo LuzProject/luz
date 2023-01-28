@@ -226,17 +226,17 @@ class Tweak(Module):
         # dirs to make
         if self.install_dir is None:
             dirtomake = resolve_path(
-                f'{self.dir}/stage/Library/MobileSubstrate/') if not self.luzbuild.rootless else resolve_path(f'{self.dir}/stage/var/jb/usr/lib/')
-            dirtocopy = resolve_path(f'{self.dir}/stage/Library/MobileSubstrate/DynamicLibraries/') if not self.luzbuild.rootless else resolve_path(
-                f'{self.dir}/stage/var/jb/usr/lib/TweakInject')
+                f'{self.dir}/_/Library/MobileSubstrate/') if not self.luzbuild.rootless else resolve_path(f'{self.dir}/_/var/jb/usr/lib/')
+            dirtocopy = resolve_path(f'{self.dir}/_/Library/MobileSubstrate/DynamicLibraries/') if not self.luzbuild.rootless else resolve_path(
+                f'{self.dir}/_/var/jb/usr/lib/TweakInject')
         else:
             if self.luzbuild.rootless:
                 warn(f'Custom install directory for module "{self.name}" was specified, and rootless is enabled. Prefixing path with /var/jb.')
             self.install_dir = resolve_path(self.install_dir)
-            dirtomake = resolve_path(f'{self.dir}/stage/{self.install_dir.parent}') if not self.luzbuild.rootless else resolve_path(
-                f'{self.dir}/stage/var/jb/{self.install_dir.parent}')
-            dirtocopy = resolve_path(f'{self.dir}/stage/{self.install_dir}') if not self.luzbuild.rootless else resolve_path(
-                f'{self.dir}/stage/var/jb/{self.install_dir}')
+            dirtomake = resolve_path(f'{self.dir}/_/{self.install_dir.parent}') if not self.luzbuild.rootless else resolve_path(
+                f'{self.dir}/_/var/jb/{self.install_dir.parent}')
+            dirtocopy = resolve_path(f'{self.dir}/_/{self.install_dir}') if not self.luzbuild.rootless else resolve_path(
+                f'{self.dir}/_/var/jb/{self.install_dir}')
         # make proper dirs
         if not dirtomake.exists():
             makedirs(dirtomake, exist_ok=True)

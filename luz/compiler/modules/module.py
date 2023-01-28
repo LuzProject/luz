@@ -36,7 +36,7 @@ class Module:
         self.hash_file = resolve_path(f'{self.dir}/hashlist.json')
         
         # stage dir
-        self.stage_dir = resolve_path(f'{self.dir}/stage')
+        self.stage_dir = resolve_path(f'{self.dir}/_')
         
         # type
         self.type = get_from_cfg(luzbuild, f'modules.{key}.type', 'modules.defaultType')

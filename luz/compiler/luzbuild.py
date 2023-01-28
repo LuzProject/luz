@@ -261,9 +261,9 @@ class LuzBuild:
         """Pack up the .deb file."""
         # layout
         layout_path = resolve_path('layout')
-        if layout_path.exists(): copytree(layout_path, f'{self.dir}/stage', dirs_exist_ok=True)
+        if layout_path.exists(): copytree(layout_path, f'{self.dir}/_', dirs_exist_ok=True)
         # pack
-        Pack(f'{self.dir}/stage', algorithm=self.compression)
+        Pack(f'{self.dir}/_', algorithm=self.compression)
     
     
     def build(self):
@@ -275,10 +275,10 @@ class LuzBuild:
                 error(result)
                 exit(1)
         # make staging dirs
-        if not resolve_path(f'{self.dir}/stage/DEBIAN').exists():
-            makedirs(f'{self.dir}/stage/DEBIAN')
+        if not resolve_path(f'{self.dir}/_/DEBIAN').exists():
+            makedirs(f'{self.dir}/_/DEBIAN')
         # write control
-        with open(f'{self.dir}/stage/DEBIAN/control', 'w') as f:
+        with open(f'{self.dir}/_/DEBIAN/control', 'w') as f:
             f.write(self.control_raw)
         self.__pack()
         remove_log_stdout('Packing up .deb file...')
