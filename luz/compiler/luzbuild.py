@@ -11,8 +11,8 @@ from yaml import safe_load
 
 # local imports
 from ..common.logger import error, log, log_stdout, remove_log_stdout
-from .modules.modules import assign_module
 from ..common.utils import cmd_in_path, get_from_cfg, get_from_luzbuild, get_luz_storage, resolve_path, setup_luz_dir
+from .modules.modules import assign_module
 
 
 class LuzBuild:
@@ -95,12 +95,24 @@ class LuzBuild:
         # storage dir
         self.storage = get_luz_storage()
         
+        # modules
+        self.modules = get_from_luzbuild(self, 'modules')
+        
+        # swift
+        self.compile_for_swift = '.swift' in str(self.modules)
+        
         # ensure prefix exists
         if self.prefix is not '':
             self.prefix = resolve_path(self.prefix)
             if not self.prefix.exists():
                 error('Specified prefix does not exist.')
                 exit(1)
+        
+        # get git
+        self.git = cmd_in_path('git')
+        if self.git is None:
+            error('Git is needed in order to use Luz.')
+            exit(1)
         
         # format cc with prefix
         if self.prefix is not '' and not resolve_path(self.cc).is_relative_to('/'):
@@ -119,6 +131,37 @@ class LuzBuild:
                     f'Swift compiler "{self.swift}" not in prefix path.')
                 exit(1)
             self.swift = prefix_path
+        
+        # format install_name_tool with prefix
+        self.install_name_tool = cmd_in_path(
+            f'{(str(self.prefix) + "/") if self.prefix is not None else ""}install_name_tool')
+        if self.install_name_tool is None:
+            # fall back to path
+            self.install_name_tool = cmd_in_path('install_name_tool')
+            if self.install_name_tool is None:
+                error('Could not find install_name_tool.')
+                exit(1)
+        
+        # format ldid with prefix
+        self.ldid = cmd_in_path(
+            f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ldid')
+        if self.ldid is None:
+            # fall back to path
+            self.ldid = cmd_in_path('ldid')
+            if self.ldid is None:
+                error('Could not find ldid.')
+                exit(1)
+                
+        # format lipo with prefix
+        if self.compile_for_swift:
+            self.lipo = cmd_in_path(
+                f'{(str(self.prefix) + "/") if self.prefix is not None else ""}lipo')
+            if self.lipo is None:
+                # fall back to path
+                self.lipo = cmd_in_path('lipo')
+                if self.lipo is None:
+                    error('Could not find lipo.')
+                    exit(1)
             
         # attempt to manually find an sdk
         if self.sdk == '': self.sdk = self.__get_sdk()
@@ -128,35 +171,37 @@ class LuzBuild:
             if not self.sdk.exists():
                 error(f'Specified SDK path "{self.sdk}" does not exist.')
                 exit(1)
-        
-        # modules
-        self.modules = get_from_luzbuild(self, 'modules')
-        
+                
         # parse modules
         if self.modules is not None:
             # dir
             self.dir = setup_luz_dir()
             # set compiler
             self.ccompiler = CCompiler().set_compiler(self.cc)
+            # get modules
             for m in self.modules:
+                # get module data
                 v = self.modules.get(m)
-                if type(self.swift) is not Path:
-                    for f in v.get('files'):
-                        if '.swift' in f:
-                            self.swift = cmd_in_path(self.swift)
-                            if self.swift is None:
-                                error('Swift compiler not found.')
-                                exit(1)
-                            self.swiftcompiler = SwiftCompiler().set_compiler(self.swift)
-                            break
+                # make sure files is a list
+                if type(v.get('files')) is not list:
+                    v['files'] = [v['files']]
+                # look for swift
+                if '.swift' in str(v.get('files')):
+                    self.compile_for_swift = True
+                    if type(self.swift) is not Path:
+                        self.swift = cmd_in_path(self.swift)
+                        if self.swift is None:
+                            error('Swift compiler not found.')
+                            exit(1)
+                        self.swiftcompiler = SwiftCompiler().set_compiler(self.swift)
+                # assign module
                 self.modules[m] = assign_module(v, m, self)
         elif self.modules is None or self.modules == {}:
             error('No modules found in LuzBuild file.')
             exit(1)
 
         # parse luzbuild file
-        for result in self.pool.map(lambda x: self.__handle_key(x), self.luzbuild):
-            pass
+        self.pool.map(lambda x: self.__handle_key(x), self.luzbuild)
         
         
     def __handle_key(self, key):

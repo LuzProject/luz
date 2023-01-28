@@ -1,11 +1,10 @@
 # module imports
-from os import system
 from pathlib import Path
-from subprocess import check_output, DEVNULL
+from subprocess import getoutput
 
 # local imports
-from ..common.logger import log_stdout, error, remove_log_stdout
-from ..common.utils import cmd_in_path, resolve_path
+from ..common.logger import log_stdout, remove_log_stdout
+from ..common.utils import resolve_path
 
 
 def clone_logos(module, update: bool=False) -> Path:
@@ -16,23 +15,18 @@ def clone_logos(module, update: bool=False) -> Path:
     :return: Path to logos dir
     """
     logos_url = 'https://github.com/LuzProject/logos'
-    git = cmd_in_path('git')
     storage = module.storage
-    # if git doesnt exist, exit
-    if git is None:
-        error('Git is needed in order to use Luz.')
-        exit(0)
     # logos path
     logos_path = resolve_path(f'{storage}/logos')
     # if it doesn't exist, clone logos
     if not logos_path.exists():
         log_stdout('Cloning logos...')
-        check_output(f'{git} clone {logos_url} {logos_path} --recursive'.split(' '), stdin=DEVNULL, stderr=DEVNULL)
+        getoutput(f'{module.git} clone {logos_url} {logos_path} --recursive')
         remove_log_stdout('Cloning logos...')
     # update
     if update:
         log_stdout('Updating logos...')
-        check_output(f'cd {logos_path} && {git} pull'.split(' '), stdin=DEVNULL, stderr=DEVNULL)
+        getoutput(f'cd {logos_path} && {module.git} pull')
         remove_log_stdout('Updating logos...')
     # return path
     return logos_path
@@ -46,24 +40,18 @@ def clone_libraries(module, update: bool = False) -> Path:
     :return: Path to libraries dir
     """
     libraries_url = '--branch rootless https://github.com/elihwyma/lib'
-    git = cmd_in_path('git')
     storage = module.storage
-    # if git doesnt exist, exit
-    if git is None:
-        error('Git is needed in order to use Luz.')
-        exit(0)
     # libraries path
     libraries_path = resolve_path(f'{storage}/lib')
     # if it doesn't exist, clone logos
     if not libraries_path.exists():
         log_stdout('Cloning libraries...')
-        check_output(f'{git} clone {libraries_url} {libraries_path} --recursive'.split(' '), stdin=DEVNULL, stderr=DEVNULL)
+        getoutput(f'{module.git} clone {libraries_url} {libraries_path} --recursive')
         remove_log_stdout('Cloning libraries...')
     # update
     if update:
         log_stdout('Updating libraries...')
-        check_output(
-            f'cd {libraries_path} && {git} pull'.split(' '), stdin=DEVNULL, stderr=DEVNULL)
+        getoutput(f'cd {libraries_path} && {module.git} pull')
         remove_log_stdout('Updating libraries...')
     # return path
     return libraries_path
@@ -77,25 +65,18 @@ def clone_headers(module, update: bool = False) -> Path:
     :return: Path to headers dir
     """
     headers_url = 'https://github.com/theos/headers'
-    git = cmd_in_path('git')
     storage = module.storage
-    # if git doesnt exist, exit
-    if git is None:
-        error('Git is needed in order to use Luz.')
-        exit(0)
     # headers path
     headers_path = resolve_path(f'{storage}/headers')
     # if it doesn't exist, clone logos
     if not headers_path.exists():
         log_stdout('Cloning headers...')
-        check_output(f'{git} clone {headers_url} {headers_path} --recursive'.split(' '),
-                     stdin=DEVNULL, stderr=DEVNULL)
+        getoutput(f'{module.git} clone {headers_url} {headers_path} --recursive')
         remove_log_stdout('Cloning headers...')
     # update
     if update:
         log_stdout('Updating headers...')
-        check_output(
-            f'cd {headers_path} && {git} pull'.split(' '), stdin=DEVNULL, stderr=DEVNULL)
+        getoutput(f'cd {headers_path} && {module.git} pull')
         remove_log_stdout('Updating headers...')
     # return path
     return headers_path
@@ -123,13 +104,13 @@ def logos(module, files: list) -> list:
         file_formatted = str(file).split('/')[-1].split('.')[-1]
         if file_formatted == 'x':
             log_stdout(f'Processing {file} with Logos...')
-            system(f'{logos_exec} {file} > {output}.m')
+            getoutput(f'{logos_exec} {file} > {output}.m')
             new_files.append(
                 {'logos': True, 'new_path': resolve_path(f'{output}.m'), 'old_path': resolve_path(file)})
             remove_log_stdout(f'Processing {file} with Logos...')
         elif file_formatted == 'xm':
             log_stdout(f'Processing {file} with Logos...')
-            system(f'{logos_exec} {file} > {output}.mm')
+            getoutput(f'{logos_exec} {file} > {output}.mm')
             new_files.append(
                 {'logos': True, 'new_path': resolve_path(f'{output}.mm'), 'old_path': resolve_path(file)})
             remove_log_stdout(f'Processing {file} with Logos...')

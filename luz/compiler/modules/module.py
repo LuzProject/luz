@@ -87,8 +87,8 @@ class Module:
         self.only_compile_changed = bool(get_from_cfg(luzbuild, f'modules.{key}.onlyCompileChanged', f'modules.types.{self.type}.onlyCompileChanged'))
 
         # ensure files are defined
-        if module.get('files') is None:
-            error(f'No files specified for module {self.name}.')
+        if module.get('files') is None or module.get('files') is [] or module.get('files') is '':
+            error(f'No files specified for module "{self.name}".')
             exit(1)
 
         # remove staging

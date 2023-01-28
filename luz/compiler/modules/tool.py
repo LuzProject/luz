@@ -80,7 +80,7 @@ class Tool(Module):
 
     def __linker(self):
         """Use a linker on the compiled files."""
-        log(f'Linking compiled files to {self.name}...')
+        log(f'Linking compiled files to executable "{self.name}"...')
         # lipo
         lipod = False
         # get files by extension
@@ -89,17 +89,8 @@ class Tool(Module):
         for file in resolve_path(f'{self.dir}/obj/{self.name}/*.o'):
             # handle swift files
             if '.swift.' in str(file) and not lipod:
-                # prepare lipo command
-                lipo = cmd_in_path(
-                    f'{(str(self.prefix) + "/") if self.prefix is not None else ""}lipo')
-                if lipo is None:
-                    # fall back to path
-                    lipo = cmd_in_path('lipo')
-                    if lipo is None:
-                        error('lipo not found.')
-                        exit(1)
                 # combine swift files into one file for specific arch
-                check_output(f'{lipo} -create -output {self.dir}/obj/{self.name}/{self.name}-swift-lipo {self.dir}/obj/{self.name}/*.swift.*-{self.now}.o && rm -rf {self.dir}/obj/{self.name}/*.swift.*-{self.now}.o', shell=True)
+                check_output(f'{self.luzbuild.lipo} -create -output {self.dir}/obj/{self.name}/{self.name}-swift-lipo {self.dir}/obj/{self.name}/*.swift.*-{self.now}.o && rm -rf {self.dir}/obj/{self.name}/*.swift.*-{self.now}.o', shell=True)
                 # add lipo file to files list
                 new_files.append(resolve_path(f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo'))
                 # let the compiler know that we lipod
@@ -121,7 +112,7 @@ class Tool(Module):
                     self.luzbuild.swiftcompiler.compile(new_files, outName, build_flags)
                 
                 # lipo compiled files
-                check_output(f'{lipo} -create -output {self.dir}/bin/{self.name} {self.dir}/bin/{self.name}_* && rm -rf {self.dir}/bin/{self.name}_*', shell=True)
+                check_output(f'{self.luzbuild.lipo} -create -output {self.dir}/bin/{self.name} {self.dir}/bin/{self.name}_* && rm -rf {self.dir}/bin/{self.name}_*', shell=True)
             else:
                 # define build flags
                 build_flags = ['-fobjc-arc' if self.arc else '', f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}',
@@ -133,38 +124,20 @@ class Tool(Module):
             exit(1)
         
         try:
-            # rpath
-            install_tool = cmd_in_path(
-                f'{(str(self.prefix) + "/") if self.prefix is not None else ""}install_name_tool')
-            if install_tool is None:
-                # fall back to path
-                install_tool = cmd_in_path('install_name_tool')
-                if install_tool is None:
-                    error('install_name_tool_not found.')
-                    exit(1)
             # fix rpath
             rpath = '/var/jb/Library/Frameworks/' if self.luzbuild.rootless else '/Library/Frameworks'
             check_output(
-                f'{install_tool} -add_rpath {rpath} {self.dir}/bin/{self.name}', shell=True)
+                f'{self.luzbuild.install_name_tool} -add_rpath {rpath} {self.dir}/bin/{self.name}', shell=True)
         except:
             error(f'An error occured when trying to add rpath to "{self.dir}/bin/{self.name}". ({self.name})')
             exit(1)
         
         try:
-            # ldid
-            ldid = cmd_in_path(
-                f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ldid')
-            if ldid is None:
-                # fall back to path
-                ldid = cmd_in_path('ldid')
-                if ldid is None:
-                    error('ldid not found.')
-                    exit(1)
             # run ldid
             check_output(
-                f'{ldid} {self.luzbuild.entflag}{self.luzbuild.entfile} {self.dir}/bin/{self.name}', shell=True)
+                f'{self.luzbuild.ldid} {self.luzbuild.entflag}{self.luzbuild.entfile} {self.dir}/bin/{self.name}', shell=True)
         except:
-            error(f'An error occured when trying to add rpath to "{self.dir}/bin/{self.name}". ({self.name})')
+            error(f'An error occured when trying codesign "{self.dir}/bin/{self.name}". ({self.name})')
             exit(1)
             
 
@@ -173,7 +146,7 @@ class Tool(Module):
         
         :param str file: The file to compile.
         """
-        log(f'Compiling {file}...')
+        log(f'Compiling "{file}"...')
         # compile file
         try:
             is_swift = str(file.name).endswith('swift')
@@ -206,13 +179,13 @@ class Tool(Module):
             dirtomake = resolve_path(f'{self.dir}/stage/usr') if not self.luzbuild.rootless else resolve_path(f'{self.dir}/stage/var/jb/usr')
             dirtocopy = resolve_path(f'{self.dir}/stage/usr/bin') if not self.luzbuild.rootless else resolve_path(f'{self.dir}/stage/var/jb/usr/bin')
         else:
-            if self.luzbuild.rootless: warn('Custom install directory specified, and rootless is enabled. Prefixing path with /var/jb.')
+            if self.luzbuild.rootless: warn(f'Custom install directory for module "{self.name}" was specified, and rootless is enabled. Prefixing path with /var/jb.')
             self.install_dir = resolve_path(self.install_dir)
             dirtomake = resolve_path(f'{self.dir}/stage/{self.install_dir.parent}') if not self.luzbuild.rootless else resolve_path(f'{self.dir}/stage/var/jb/{self.install_dir.parent}')
             dirtocopy = resolve_path(f'{self.dir}/stage/{self.install_dir}') if not self.luzbuild.rootless else resolve_path(f'{self.dir}/stage/var/jb/{self.install_dir}')
         # make proper dirs
         if not dirtomake.exists():
-            makedirs(dirtomake)
+            makedirs(dirtomake, exist_ok=True)
         copytree(self.bin_dir, dirtocopy, dirs_exist_ok=True)
         
 
@@ -226,5 +199,3 @@ class Tool(Module):
         self.__linker()
         # stage deb
         self.__stage()
-        log(
-            f'Finished compiling module "{self.name}" in {round(time() - start, 2)} seconds.')

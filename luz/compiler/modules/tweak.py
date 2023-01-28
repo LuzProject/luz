@@ -94,7 +94,7 @@ class Tweak(Module):
         
         # handle files not needing compilation
         if len(files) == 0:
-            log(f'Nothing to compile for module {self.name}.')
+            log(f'Nothing to compile for module "{self.name}".')
             return []
         
         # use logos files if necessary
@@ -104,41 +104,10 @@ class Tweak(Module):
         # return files
         return files
 
-    def __stage(self):
-        """Stage a deb to be packaged."""
-        # dirs to make
-        if self.install_dir is None:
-            dirtomake = resolve_path(f'{self.dir}/stage/Library/MobileSubstrate/') if not self.luzbuild.rootless else resolve_path(f'{self.dir}/stage/var/jb/usr/lib/')
-            dirtocopy = resolve_path(f'{self.dir}/stage/Library/MobileSubstrate/DynamicLibraries/') if not self.luzbuild.rootless else resolve_path(f'{self.dir}/stage/var/jb/usr/lib/TweakInject')
-        else:
-            if self.luzbuild.rootless: warn('Custom install directory specified, and rootless is enabled. Prefixing path with /var/jb.')
-            self.install_dir = resolve_path(self.install_dir)
-            dirtomake = resolve_path(f'{self.dir}/stage/{self.install_dir.parent}') if not self.luzbuild.rootless else resolve_path(f'{self.dir}/stage/var/jb/{self.install_dir.parent}')
-            dirtocopy = resolve_path(f'{self.dir}/stage/{self.install_dir}') if not self.luzbuild.rootless else resolve_path(f'{self.dir}/stage/var/jb/{self.install_dir}')
-        # make proper dirs
-        if not dirtomake.exists():
-            makedirs(dirtomake)
-        copytree(f'{self.dir}/dylib', dirtocopy, dirs_exist_ok=True)
-        with open(f'{dirtocopy}/{self.name}.plist', 'w') as f:
-            filtermsg = 'Filter = {\n'
-            # bundle filters
-            if self.filter.get('bundles') is not None:
-                filtermsg += '    Bundles = ( '
-                for filter in self.filter.get('bundles'):
-                    filtermsg += f'"{filter}", '
-                filtermsg = filtermsg[:-2] + ' );\n'
-            # executables filters
-            if self.filter.get('executables') is not None:
-                filtermsg += '    Executables = ( '
-                for executable in self.filter.get('executables'):
-                    filtermsg += f'"{executable}", '
-                filtermsg = filtermsg[:-2] + ' );\n'
-            filtermsg += '};'
-            f.write(filtermsg)
 
     def __linker(self):
         """Use a linker on the compiled files."""
-        log(f'Linking compiled files to {self.name}.dylib...')
+        log(f'Linking compiled files to "{self.name}.dylib"...')
         # lipo
         lipod = False
         # get files by extension
@@ -147,17 +116,8 @@ class Tweak(Module):
         for file in resolve_path(f'{self.dir}/obj/{self.name}/*.o'):
             # handle swift files
             if '.swift.' in str(file) and not lipod:
-                # prepare lipo command
-                lipo = cmd_in_path(
-                    f'{(str(self.prefix) + "/") if self.prefix is not None else ""}lipo')
-                if lipo is None:
-                    # fall back to path
-                    lipo = cmd_in_path('lipo')
-                    if lipo is None:
-                        error('lipo not found.')
-                        exit(1)
                 # combine swift files into one file for specific arch
-                check_output(f'{lipo} -create -output {self.dir}/obj/{self.name}/{self.name}-swift-lipo {self.dir}/obj/{self.name}/*.swift.*-{self.now}.o && rm -rf {self.dir}/obj/{self.name}/*.swift.*-{self.now}.o', shell=True)
+                check_output(f'{self.luzbuild.lipo} -create -output {self.dir}/obj/{self.name}/{self.name}-swift-lipo {self.dir}/obj/{self.name}/*.swift.*-{self.now}.o && rm -rf {self.dir}/obj/{self.name}/*.swift.*-{self.now}.o', shell=True)
                 # add lipo file to files list
                 new_files.append(resolve_path(f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo'))
                 # let the compiler know that we lipod
@@ -180,7 +140,7 @@ class Tweak(Module):
                     self.luzbuild.swiftcompiler.compile(new_files, outName, build_flags)
                 
                 # lipo the dylibs
-                check_output(f'{lipo} -create -output {self.dir}/dylib/{self.name}.dylib {self.dir}/dylib/{self.name}_*.dylib && rm -rf {self.dir}/dylib/{self.name}_*.dylib', shell=True)
+                check_output(f'{self.luzbuild.lipo} -create -output {self.dir}/dylib/{self.name}.dylib {self.dir}/dylib/{self.name}_*.dylib && rm -rf {self.dir}/dylib/{self.name}_*.dylib', shell=True)
             else:
                 # define build flags
                 build_flags = ['-fobjc-arc' if self.arc else '', f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', '-dynamiclib',
@@ -192,34 +152,18 @@ class Tweak(Module):
             exit(1)
         
         try:
-            # rpath
-            install_tool = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}install_name_tool')
-            if install_tool is None:
-                # fall back to path
-                install_tool = cmd_in_path('install_name_tool')
-                if install_tool is None:
-                    error('install_name_tool_not found.')
-                    exit(1)
             # fix rpath
             rpath = '/var/jb/Library/Frameworks/' if self.luzbuild.rootless else '/Library/Frameworks'
-            check_output(f'{install_tool} -add_rpath {rpath} {self.dir}/dylib/{self.name}.dylib', shell=True)
+            check_output(f'{self.luzbuild.install_name_tool} -add_rpath {rpath} {self.dir}/dylib/{self.name}.dylib', shell=True)
         except:
             error(f'An error occured when trying to add rpath to "{self.dir}/dylib/{self.name}.dylib". ({self.name})')
             exit(1)
         
         try:
-            # ldid
-            ldid = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ldid')
-            if ldid is None:
-                # fall back to path
-                ldid = cmd_in_path('ldid')
-                if ldid is None:
-                    error('ldid not found.')
-                    exit(1)
             # run ldid
-            check_output(f'{ldid} {self.luzbuild.entflag}{self.luzbuild.entfile} {self.dir}/dylib/{self.name}.dylib', shell=True)
+            check_output(f'{self.luzbuild.ldid} {self.luzbuild.entflag}{self.luzbuild.entfile} {self.dir}/dylib/{self.name}.dylib', shell=True)
         except:
-            error(f'An error occured when trying to add rpath to "{self.dir}/dylib/{self.name}.dylib". ({self.name})')
+            error(f'An error occured when trying to codesign "{self.dir}/dylib/{self.name}.dylib". ({self.name})')
             exit(1)
         
 
@@ -247,7 +191,7 @@ class Tweak(Module):
             path_to_compile = file.get('path')
             # set original path
             orig_path = file.get('path')
-        log(f'Compiling {orig_path}...')
+        log(f'Compiling "{orig_path}"...')
         outName = f'{self.dir}/obj/{self.name}/{resolve_path(path_to_compile).name}.o'
         # compile file
         try:
@@ -275,6 +219,45 @@ class Tweak(Module):
 
         except Exception as e:
             exit(1)
+            
+            
+    def __stage(self):
+        """Stage a deb to be packaged."""
+        # dirs to make
+        if self.install_dir is None:
+            dirtomake = resolve_path(
+                f'{self.dir}/stage/Library/MobileSubstrate/') if not self.luzbuild.rootless else resolve_path(f'{self.dir}/stage/var/jb/usr/lib/')
+            dirtocopy = resolve_path(f'{self.dir}/stage/Library/MobileSubstrate/DynamicLibraries/') if not self.luzbuild.rootless else resolve_path(
+                f'{self.dir}/stage/var/jb/usr/lib/TweakInject')
+        else:
+            if self.luzbuild.rootless:
+                warn(f'Custom install directory for module "{self.name}" was specified, and rootless is enabled. Prefixing path with /var/jb.')
+            self.install_dir = resolve_path(self.install_dir)
+            dirtomake = resolve_path(f'{self.dir}/stage/{self.install_dir.parent}') if not self.luzbuild.rootless else resolve_path(
+                f'{self.dir}/stage/var/jb/{self.install_dir.parent}')
+            dirtocopy = resolve_path(f'{self.dir}/stage/{self.install_dir}') if not self.luzbuild.rootless else resolve_path(
+                f'{self.dir}/stage/var/jb/{self.install_dir}')
+        # make proper dirs
+        if not dirtomake.exists():
+            makedirs(dirtomake, exist_ok=True)
+        copytree(f'{self.dir}/dylib', dirtocopy, dirs_exist_ok=True)
+        with open(f'{dirtocopy}/{self.name}.plist', 'w') as f:
+            filtermsg = 'Filter = {\n'
+            # bundle filters
+            if self.filter.get('bundles') is not None:
+                filtermsg += '    Bundles = ( '
+                for filter in self.filter.get('bundles'):
+                    filtermsg += f'"{filter}", '
+                filtermsg = filtermsg[:-2] + ' );\n'
+            # executables filters
+            if self.filter.get('executables') is not None:
+                filtermsg += '    Executables = ( '
+                for executable in self.filter.get('executables'):
+                    filtermsg += f'"{executable}", '
+                filtermsg = filtermsg[:-2] + ' );\n'
+            filtermsg += '};'
+            f.write(filtermsg)
+    
 
     def compile(self):
         """Compile."""
@@ -287,5 +270,3 @@ class Tweak(Module):
         self.__linker()
         # stage deb
         self.__stage()
-        log(
-            f'Finished compiling module "{self.name}" in {round(time() - start, 2)} seconds.')
