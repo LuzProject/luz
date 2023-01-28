@@ -6,6 +6,7 @@ from pyclang import CCompiler, SwiftCompiler
 from pydeb import Pack
 from shutil import copytree, rmtree
 from subprocess import getoutput
+from threading import Lock
 from time import time
 from yaml import safe_load
 
@@ -40,6 +41,9 @@ class LuzBuild:
             
         # pool
         self.pool = ThreadPool()
+        
+        # lock
+        self.lock = Lock()
             
         # control
         self.control_raw = ''

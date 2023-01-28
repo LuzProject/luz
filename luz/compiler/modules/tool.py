@@ -80,7 +80,7 @@ class Tool(Module):
 
     def __linker(self):
         """Use a linker on the compiled files."""
-        log(f'Linking compiled files to executable "{self.name}"...')
+        self.log(f'Linking compiled files to executable "{self.name}"...')
         # lipo
         lipod = False
         # get files by extension
@@ -120,7 +120,7 @@ class Tool(Module):
                 # compile with clang using build flags
                 self.luzbuild.ccompiler.compile(new_files, f'{self.dir}/bin/{self.name}', build_flags)
         except:
-            error(f'An error occured when attempting to link the compiled files. ({self.name})')
+            self.error(f'An error occured when attempting to link the compiled files. ({self.name})')
             exit(1)
         
         try:
@@ -129,7 +129,7 @@ class Tool(Module):
             check_output(
                 f'{self.luzbuild.install_name_tool} -add_rpath {rpath} {self.dir}/bin/{self.name}', shell=True)
         except:
-            error(f'An error occured when trying to add rpath to "{self.dir}/bin/{self.name}". ({self.name})')
+            self.error(f'An error occured when trying to add rpath to "{self.dir}/bin/{self.name}". ({self.name})')
             exit(1)
         
         try:
@@ -137,7 +137,7 @@ class Tool(Module):
             check_output(
                 f'{self.luzbuild.ldid} {self.luzbuild.entflag}{self.luzbuild.entfile} {self.dir}/bin/{self.name}', shell=True)
         except:
-            error(f'An error occured when trying codesign "{self.dir}/bin/{self.name}". ({self.name})')
+            self.error(f'An error occured when trying codesign "{self.dir}/bin/{self.name}". ({self.name})')
             exit(1)
             
 
@@ -146,7 +146,7 @@ class Tool(Module):
         
         :param str file: The file to compile.
         """
-        log(f'Compiling "{file}"...')
+        self.log(f'Compiling "{file}"...')
         # compile file
         try:
             is_swift = str(file.name).endswith('swift')
@@ -191,8 +191,6 @@ class Tool(Module):
 
     def compile(self):
         """Compile the specified self."""
-        start = time()
-        
         # compile files
         self.luzbuild.pool.map(self.__compile_tool_file, self.files)
         # link files

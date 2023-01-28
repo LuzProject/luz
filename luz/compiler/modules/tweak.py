@@ -94,7 +94,7 @@ class Tweak(Module):
         
         # handle files not needing compilation
         if len(files) == 0:
-            log(f'Nothing to compile for module "{self.name}".')
+            self.log(f'Nothing to compile for module "{self.name}".')
             return []
         
         # use logos files if necessary
@@ -107,7 +107,7 @@ class Tweak(Module):
 
     def __linker(self):
         """Use a linker on the compiled files."""
-        log(f'Linking compiled files to "{self.name}.dylib"...')
+        self.log(f'Linking compiled files to "{self.name}.dylib"...')
         # lipo
         lipod = False
         # get files by extension
@@ -148,7 +148,7 @@ class Tweak(Module):
                 # compile with clang using build flags
                 self.luzbuild.ccompiler.compile(new_files, f'{self.dir}/dylib/{self.name}.dylib', build_flags)
         except:
-            error(f'An error occured when attempting to link the compiled files. ({self.name})')
+            self.error(f'An error occured when attempting to link the compiled files. ({self.name})')
             exit(1)
         
         try:
@@ -156,14 +156,14 @@ class Tweak(Module):
             rpath = '/var/jb/Library/Frameworks/' if self.luzbuild.rootless else '/Library/Frameworks'
             check_output(f'{self.luzbuild.install_name_tool} -add_rpath {rpath} {self.dir}/dylib/{self.name}.dylib', shell=True)
         except:
-            error(f'An error occured when trying to add rpath to "{self.dir}/dylib/{self.name}.dylib". ({self.name})')
+            self.error(f'An error occured when trying to add rpath to "{self.dir}/dylib/{self.name}.dylib". ({self.name})')
             exit(1)
         
         try:
             # run ldid
             check_output(f'{self.luzbuild.ldid} {self.luzbuild.entflag}{self.luzbuild.entfile} {self.dir}/dylib/{self.name}.dylib', shell=True)
         except:
-            error(f'An error occured when trying to codesign "{self.dir}/dylib/{self.name}.dylib". ({self.name})')
+            self.error(f'An error occured when trying to codesign "{self.dir}/dylib/{self.name}.dylib". ({self.name})')
             exit(1)
         
 
@@ -191,7 +191,7 @@ class Tweak(Module):
             path_to_compile = file.get('path')
             # set original path
             orig_path = file.get('path')
-        log(f'Compiling "{orig_path}"...')
+        self.log(f'Compiling "{orig_path}"...')
         outName = f'{self.dir}/obj/{self.name}/{resolve_path(path_to_compile).name}.o'
         # compile file
         try:
@@ -261,9 +261,6 @@ class Tweak(Module):
 
     def compile(self):
         """Compile."""
-
-        start = time()
-
         # compile files
         self.luzbuild.pool.map(self.__compile_tweak_file, self.files)
         # link files

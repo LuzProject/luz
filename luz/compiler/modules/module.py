@@ -3,7 +3,7 @@ from shutil import rmtree
 
 # local imports
 from ..deps import clone_headers, clone_libraries
-from ...common.logger import error
+from ...common.logger import log, error
 from ...common.utils import get_from_cfg, get_from_default, resolve_path
 
 
@@ -140,3 +140,6 @@ class Module:
         if self.private_frameworks != '' and self.sdk.startswith('/Applications'):
             error(f'No SDK specified. Xcode will be used, and private frameworks will not be found.')
             exit(1)
+            
+    def log(self, msg): log(msg, self.luzbuild.lock)
+    def error(self, msg): error(msg, self.luzbuild.lock)
