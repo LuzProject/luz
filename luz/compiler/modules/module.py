@@ -47,21 +47,6 @@ class Module:
         # install_dir
         self.install_dir = get_safe(module, 'installDir', None)
 
-        # prefix
-        self.prefix = luzbuild.prefix
-        
-        # archs
-        self.archs = luzbuild.archs
-        
-        # sdk
-        self.sdk = luzbuild.sdk
-        
-        # platform
-        self.platform = luzbuild.platform
-        
-        # min_vers
-        self.min_vers = luzbuild.min_vers
-
         # name
         self.name = key
         
