@@ -131,6 +131,12 @@ class Tool(Module):
             return f'An error occured when trying to add rpath to "{self.dir}/bin/{self.name}" for module "{self.name}".'
         
         try:
+            check_output(
+                f'{self.luzbuild.strip} {self.dir}/bin/{self.name}', shell=True)
+        except:
+            return f'An error occured when trying to strip "{self.dir}/bin/{self.name}" for module "{self.name}".'
+        
+        try:
             # run ldid
             check_output(
                 f'{self.luzbuild.ldid} {self.luzbuild.entflag}{self.luzbuild.entfile} {self.dir}/bin/{self.name}', shell=True)

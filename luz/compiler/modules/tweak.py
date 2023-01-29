@@ -158,6 +158,11 @@ class Tweak(Module):
             return f'An error occured when trying to add rpath to "{self.dir}/dylib/{self.name}.dylib" for module "{self.name}".'
         
         try:
+            check_output(f'{self.luzbuild.strip} {self.dir}/dylib/{self.name}.dylib', shell=True)
+        except:
+            return f'An error occured when trying to strip "{self.dir}/dylib/{self.name}.dylib" for module "{self.name}".'
+        
+        try:
             # run ldid
             check_output(f'{self.luzbuild.ldid} {self.luzbuild.entflag}{self.luzbuild.entfile} {self.dir}/dylib/{self.name}.dylib', shell=True)
         except:

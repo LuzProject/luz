@@ -155,6 +155,16 @@ class LuzBuild:
             if self.ldid is None:
                 error('Could not find ldid.')
                 exit(1)
+        
+        # format ldid with prefix
+        self.strip = cmd_in_path(
+            f'{(str(self.prefix) + "/") if self.prefix is not None else ""}strip')
+        if self.strip is None:
+            # fall back to path
+            self.strip = cmd_in_path('strip')
+            if self.strip is None:
+                error('Could not find strip.')
+                exit(1)
                 
         # format lipo with prefix
         if self.compile_for_swift:
