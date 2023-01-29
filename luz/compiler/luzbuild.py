@@ -57,14 +57,14 @@ class LuzBuild:
         # cc
         self.cc = get_from_cfg(self, 'meta.cc')
         
-        # cflags
-        self.cflags = get_from_cfg(self, 'meta.cflags')
+        # c_flags
+        self.c_flags = get_from_cfg(self, 'meta.cflags')
         
         # swiftc
         self.swift = get_from_cfg(self, 'meta.swiftc')
         
-        # swiftflags
-        self.swiftflags = get_from_cfg(self, 'meta.swiftflags')
+        # swift_flags
+        self.swift_flags = get_from_cfg(self, 'meta.swiftflags')
         
         # rootless
         self.rootless = get_from_cfg(self, 'meta.rootless')
@@ -191,7 +191,7 @@ class LuzBuild:
             # dir
             self.dir = setup_luz_dir()
             # set compiler
-            self.ccompiler = CCompiler().set_compiler(self.cc)
+            self.c_compiler = CCompiler().set_compiler(self.cc)
             # get modules
             for m in self.modules:
                 # get module data
@@ -207,7 +207,7 @@ class LuzBuild:
                         if self.swift is None:
                             error('Swift compiler not found.')
                             exit(1)
-                        self.swiftcompiler = SwiftCompiler().set_compiler(self.swift)
+                        self.swift_compiler = SwiftCompiler().set_compiler(self.swift)
                 # assign module
                 self.modules[m] = assign_module(v, m, self)
         elif self.modules is None or self.modules == {}:

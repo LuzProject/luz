@@ -105,20 +105,20 @@ class Tool(Module):
                 for arch in self.luzbuild.archs.split(' -arch '):
                     if arch == '':
                         continue
-                    outName = f'{self.dir}/bin/{self.name}_{arch.replace(" ", "")}'
+                    out_name = f'{self.dir}/bin/{self.name}_{arch.replace(" ", "")}'
                     build_flags = [f'-sdk {self.luzbuild.sdk}',
-                                   '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.luzbuild.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in new_files else '', self.include, self.librarydirs, self.luzbuild.swiftflags, f'-target {arch.replace(" ", "")}-apple-{platform}{self.luzbuild.min_vers}']
+                                   '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.luzbuild.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in new_files else '', self.include, self.library_dirs, self.luzbuild.swift_flags, f'-target {arch.replace(" ", "")}-apple-{platform}{self.luzbuild.min_vers}']
                     # compile with swiftc using build flags
-                    self.luzbuild.swiftcompiler.compile(new_files, outName, build_flags)
+                    self.luzbuild.swift_compiler.compile(new_files, out_name, build_flags)
                 
                 # lipo compiled files
                 check_output(f'{self.luzbuild.lipo} -create -output {self.dir}/bin/{self.name} {self.dir}/bin/{self.name}_* && rm -rf {self.dir}/bin/{self.name}_*', shell=True)
             else:
                 # define build flags
                 build_flags = ['-fobjc-arc' if self.arc else '', f'-isysroot {self.luzbuild.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}',
-                            '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.luzbuild.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in new_files else '', self.include, self.librarydirs, self.luzbuild.archs, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', self.luzbuild.cflags]
+                            '-Xlinker', '-segalign', '-Xlinker 4000', f'-F{self.luzbuild.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in new_files else '', self.include, self.library_dirs, self.luzbuild.archs, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', self.luzbuild.c_flags]
                 # compile with clang using build flags
-                self.luzbuild.ccompiler.compile(new_files, f'{self.dir}/bin/{self.name}', build_flags)
+                self.luzbuild.c_compiler.compile(new_files, f'{self.dir}/bin/{self.name}', build_flags)
         except:
             return f'An error occured when attempting to link the compiled files for module "{self.name}".'
         
@@ -162,17 +162,17 @@ class Tool(Module):
                     # skip empty archs
                     if arch == '':
                         continue
-                    outName = f'{self.dir}/obj/{self.name}/{resolve_path(file).name}.{arch.replace(" ", "")}-{self.now}.o'
+                    out_name = f'{self.dir}/obj/{self.name}/{resolve_path(file).name}.{arch.replace(" ", "")}-{self.now}.o'
                     # define build flags
-                    build_flags = [f'-sdk {self.luzbuild.sdk}', self.include,  '-c', '-emit-object', self.luzbuild.swiftflags, f'-target {arch.replace(" ", "")}-apple-{platform}{self.luzbuild.min_vers}']
+                    build_flags = [f'-sdk {self.luzbuild.sdk}', self.include,  '-c', '-emit-object', self.luzbuild.swift_flags, f'-target {arch.replace(" ", "")}-apple-{platform}{self.luzbuild.min_vers}']
                     # compile with swiftc using build flags
-                    self.luzbuild.swiftcompiler.compile(file, outName, build_flags)
+                    self.luzbuild.swift_compiler.compile(file, out_name, build_flags)
             else:
-                outName = f'{self.dir}/obj/{self.name}/{resolve_path(file).name}.o'
+                out_name = f'{self.dir}/obj/{self.name}/{resolve_path(file).name}.o'
                 build_flags = ['-fobjc-arc' if self.arc else '',
-                               f'-isysroot {self.luzbuild.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.luzbuild.archs, self.include, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', self.luzbuild.cflags, '-c']
+                               f'-isysroot {self.luzbuild.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.luzbuild.archs, self.include, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', self.luzbuild.c_flags, '-c']
                 # compile with clang using build flags
-                self.luzbuild.ccompiler.compile(file, outName, build_flags)
+                self.luzbuild.c_compiler.compile(file, out_name, build_flags)
             
         except:
             return f'An error occured when attempting to compile file "{file}" for module "{self.name}".'

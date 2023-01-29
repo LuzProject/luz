@@ -60,7 +60,7 @@ class Module:
         self.libraries = ''
         
         # library files dir
-        self.librarydirs = f'-L{clone_libraries(luzbuild)}'
+        self.library_dirs = f'-L{clone_libraries(luzbuild)}'
         
         # include
         self.include = f'-I{clone_headers(luzbuild)}'
