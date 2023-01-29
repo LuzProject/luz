@@ -7,5 +7,5 @@ if [[ -z "$MY_PATH" ]] ; then
 fi
 
 cd $MY_PATH/..
-pip uninstall -y luz
-pip install . --no-dependencies
+pip uninstall -q -y luz
+pip install -q . --no-dependencies
