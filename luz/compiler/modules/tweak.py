@@ -158,11 +158,6 @@ class Tweak(Module):
             return f'An error occured when trying to add rpath to "{self.dir}/dylib/{self.name}.dylib" for module "{self.name}".'
         
         try:
-            check_output(f'{self.luzbuild.strip} {self.dir}/dylib/{self.name}.dylib', shell=True)
-        except:
-            return f'An error occured when trying to strip "{self.dir}/dylib/{self.name}.dylib" for module "{self.name}".'
-        
-        try:
             # run ldid
             check_output(f'{self.luzbuild.ldid} {self.luzbuild.entflag}{self.luzbuild.entfile} {self.dir}/dylib/{self.name}.dylib', shell=True)
         except:
@@ -211,15 +206,16 @@ class Tweak(Module):
                     # format arch
                     arch_formatted = f' -target {arch.replace(" ", "")}-apple-{platform}{self.min_vers}'
                     # use swiftc to compile
-                    self.luzbuild.swiftcompiler.compile(file, outName, build_flags.append(arch_formatted))
+                    self.luzbuild.swiftcompiler.compile(path_to_compile, outName, build_flags.append(arch_formatted))
             else:
                 outName = f'{self.dir}/obj/{self.name}/{resolve_path(path_to_compile).name}.o'
                 build_flags = ['-fobjc-arc' if self.arc else '',
                                f'-isysroot {self.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.archs, self.include, f'-m{self.platform}-version-min={self.min_vers}',  '-c', self.luzbuild.cflags]
                 # use clang to compile
-                self.luzbuild.cccompiler.compile(file, outName, build_flags)
+                self.luzbuild.ccompiler.compile(path_to_compile, outName, build_flags)
 
-        except:
+        except Exception as e:
+            print(e)
             return f'An error occured when attempting to compile file "{orig_path}" for module "{self.name}".'
             
             
