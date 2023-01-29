@@ -7,9 +7,9 @@ from time import time
 
 # local imports
 from ..deps import logos
-from ...common.logger import log, error, warn
+from ...common.logger import warn
 from .module import Module
-from ...common.utils import cmd_in_path, get_hash, resolve_path
+from ...common.utils import get_hash, resolve_path
 
 
 class Tweak(Module):
@@ -148,23 +148,20 @@ class Tweak(Module):
                 # compile with clang using build flags
                 self.luzbuild.ccompiler.compile(new_files, f'{self.dir}/dylib/{self.name}.dylib', build_flags)
         except:
-            self.error(f'An error occured when attempting to link the compiled files. ({self.name})')
-            exit(1)
+            return f'An error occured when attempting to link the compiled files for module "{self.name}".'
         
         try:
             # fix rpath
             rpath = '/var/jb/Library/Frameworks/' if self.luzbuild.rootless else '/Library/Frameworks'
             check_output(f'{self.luzbuild.install_name_tool} -add_rpath {rpath} {self.dir}/dylib/{self.name}.dylib', shell=True)
         except:
-            self.error(f'An error occured when trying to add rpath to "{self.dir}/dylib/{self.name}.dylib". ({self.name})')
-            exit(1)
+            return f'An error occured when trying to add rpath to "{self.dir}/dylib/{self.name}.dylib" for module "{self.name}".'
         
         try:
             # run ldid
             check_output(f'{self.luzbuild.ldid} {self.luzbuild.entflag}{self.luzbuild.entfile} {self.dir}/dylib/{self.name}.dylib', shell=True)
         except:
-            self.error(f'An error occured when trying to codesign "{self.dir}/dylib/{self.name}.dylib". ({self.name})')
-            exit(1)
+            return f'An error occured when trying to codesign "{self.dir}/dylib/{self.name}.dylib". ({self.name})'
         
 
     def __compile_tweak_file(self, file):
@@ -217,8 +214,8 @@ class Tweak(Module):
                 # use clang to compile
                 self.luzbuild.cccompiler.compile(file, outName, build_flags)
 
-        except Exception as e:
-            exit(1)
+        except:
+            return f'An error occured when attempting to compile file "{orig_path}" for module "{self.name}".'
             
             
     def __stage(self):
@@ -262,8 +259,13 @@ class Tweak(Module):
     def compile(self):
         """Compile."""
         # compile files
-        self.luzbuild.pool.map(self.__compile_tweak_file, self.files)
+        compile_results = self.luzbuild.pool.map(self.__compile_tweak_file, self.files)
+        for result in compile_results:
+            if result is not None:
+                return result
         # link files
-        self.__linker()
+        linker_results = self.__linker()
+        if linker_results is not None:
+            return linker_results
         # stage deb
         self.__stage()

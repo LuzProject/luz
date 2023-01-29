@@ -6,9 +6,9 @@ from subprocess import check_output
 from time import time
 
 # local imports
-from ...common.logger import log, error, warn
+from ...common.logger import warn
 from .module import Module
-from ...common.utils import cmd_in_path, get_hash, resolve_path
+from ...common.utils import get_hash, resolve_path
 
 
 class Tool(Module):
@@ -120,8 +120,7 @@ class Tool(Module):
                 # compile with clang using build flags
                 self.luzbuild.ccompiler.compile(new_files, f'{self.dir}/bin/{self.name}', build_flags)
         except:
-            self.error(f'An error occured when attempting to link the compiled files. ({self.name})')
-            exit(1)
+            return f'An error occured when attempting to link the compiled files for module "{self.name}".'
         
         try:
             # fix rpath
@@ -129,16 +128,14 @@ class Tool(Module):
             check_output(
                 f'{self.luzbuild.install_name_tool} -add_rpath {rpath} {self.dir}/bin/{self.name}', shell=True)
         except:
-            self.error(f'An error occured when trying to add rpath to "{self.dir}/bin/{self.name}". ({self.name})')
-            exit(1)
+            return f'An error occured when trying to add rpath to "{self.dir}/bin/{self.name}" for module "{self.name}".'
         
         try:
             # run ldid
             check_output(
                 f'{self.luzbuild.ldid} {self.luzbuild.entflag}{self.luzbuild.entfile} {self.dir}/bin/{self.name}', shell=True)
         except:
-            self.error(f'An error occured when trying codesign "{self.dir}/bin/{self.name}". ({self.name})')
-            exit(1)
+            return f'An error occured when trying codesign "{self.dir}/bin/{self.name}" for module "{self.name}".'
             
 
     def __compile_tool_file(self, file):
@@ -170,7 +167,7 @@ class Tool(Module):
                 self.luzbuild.ccompiler.compile(file, outName, build_flags)
             
         except:
-            exit(1)
+            return f'An error occured when attempting to compile file "{file}" for module "{self.name}".'
 
     def __stage(self):
         """Stage a deb to be packaged."""
@@ -192,8 +189,13 @@ class Tool(Module):
     def compile(self):
         """Compile the specified self."""
         # compile files
-        self.luzbuild.pool.map(self.__compile_tool_file, self.files)
+        compile_results = self.luzbuild.pool.map(self.__compile_tool_file, self.files)
+        for result in compile_results:
+            if result is not None:
+                return result
         # link files
-        self.__linker()
+        linker_results = self.__linker()
+        if linker_results is not None:
+            return linker_results
         # stage deb
         self.__stage()

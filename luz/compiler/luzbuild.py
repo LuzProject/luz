@@ -224,18 +224,25 @@ class LuzBuild:
                 # control assignments
                 if c in ['name', 'id', 'depends', 'architecture', 'version', 'maintainer', 'description', 'section', 'author', 'icon', 'priority', 'size', 'tags', 'replaces', 'provides', 'conflicts', 'installed-size', 'depiction', 'tag', 'package', 'sileodepiction']:
                     if type(v) is str:
+                        end = '\n'
                         # id patch
                         if c == 'id':
-                            self.control_raw += f'Package: {v}\n'
+                            self.control_raw += f'Package: {v}{end}'
+                        # maintainer
+                        elif c == 'author' and not 'maintainer' in list(self.luzbuild.get('control')):
+                            self.control_raw += f'Author: {v}{end}Maintainer: {v}{end}'
+                        # author
+                        elif c == 'maintainer' and not 'author' in list(self.luzbuild.get('control')):
+                            self.control_raw += f'Author: {v}{end}Maintainer: {v}{end}'
                         # sileodepiction patch
                         elif c == 'sileodepiction':
-                            self.control_raw += f'SileoDepiction: {v}\n'
+                            self.control_raw += f'SileoDepiction: {v}{end}'
                         # installed-size patch
                         elif c == 'installed-size':
-                            self.control_raw += f'Installed-Size: {v}\n'
+                            self.control_raw += f'Installed-Size: {v}{end}'
                         # other values
                         else:
-                            self.control_raw += f'{c.capitalize()}: {v}\n'
+                            self.control_raw += f'{c.capitalize()}: {v}{end}'
 
     
     def __get_sdk(self):
@@ -263,14 +270,16 @@ class LuzBuild:
         layout_path = resolve_path('layout')
         if layout_path.exists(): copytree(layout_path, f'{self.dir}/_', dirs_exist_ok=True)
         # pack
-        Pack(f'{self.dir}/_', algorithm=self.compression)
+        Pack(resolve_path(f'{self.dir}/_'), algorithm=self.compression)
     
     
     def build(self):
         """Build the project."""
         log(f'Compiling for target "{self.platform}:{self.min_vers}"...')
         start = time()
-        for result in self.pool.map(lambda x: x.compile(), self.modules.values()):
+        # compile results
+        compile_results = self.pool.map(lambda x: x.compile(), self.modules.values())
+        for result in compile_results:
             if result is not None:
                 error(result)
                 exit(1)
