@@ -36,18 +36,27 @@ colors = {
     'invisible': '\033[08m'
 }
 
-
-def log_stdout(tolog: str):
+def log_stdout(message, lock = None):
     colorway = colors['bold'] + colors['darkgrey'] + '[' + colors['reset'] + colors['bold'] + colors['green'] + '*' + colors['bold'] + colors['darkgrey'] + '] ' + colors['reset']
-    stdout.write(f'{colorway}{tolog}')
-    stdout.flush()
-
-
-def remove_log_stdout(toremove: str):
-    colorway = colors['bold'] + colors['darkgrey'] + '[' + colors['reset'] + colors['bold'] + colors['green'] + '*' + colors['bold'] + colors['darkgrey'] + '] ' + colors['reset']
-    for _ in range(len(f'{colorway}{toremove}')):
-        stdout.write('\033[D \033[D')
+    if lock is not None:
+        with lock:
+            stdout.write(f'{colorway}{message}')
+            stdout.flush()
+    else:
+        stdout.write(f'{colorway}{message}')
         stdout.flush()
+
+def remove_log_stdout(message, lock = None):
+    colorway = colors['bold'] + colors['darkgrey'] + '[' + colors['reset'] + colors['bold'] + colors['green'] + '*' + colors['bold'] + colors['darkgrey'] + '] ' + colors['reset']
+    if lock is not None:
+        with lock:
+            for _ in range(len(f'{colorway}{message}')):
+                stdout.write('\033[D \033[D')
+                stdout.flush()
+    else:
+        for _ in range(len(f'{colorway}{message}')):
+            stdout.write('\033[D \033[D')
+            stdout.flush()
 
 
 def log(message, lock = None):

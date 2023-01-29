@@ -3,7 +3,7 @@ from shutil import rmtree
 
 # local imports
 from ..deps import clone_headers, clone_libraries
-from ...common.logger import log, error
+from ...common.logger import log, log_stdout, error, remove_log_stdout
 from ...common.utils import get_from_cfg, get_from_default, resolve_path
 
 
@@ -143,3 +143,5 @@ class Module:
             
     def log(self, msg): log(msg, self.luzbuild.lock)
     def error(self, msg): error(msg, self.luzbuild.lock)
+    def log_stdout(self, msg): log_stdout(msg, self.luzbuild.lock)
+    def remove_log_stdout(self, msg): remove_log_stdout(msg, self.luzbuild.lock)

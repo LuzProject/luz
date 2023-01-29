@@ -107,7 +107,7 @@ class Tweak(Module):
 
     def __linker(self):
         """Use a linker on the compiled files."""
-        self.log(f'Linking compiled files to "{self.name}.dylib"...')
+        self.log_stdout(f'Linking compiled files to "{self.name}.dylib"...')
         # lipo
         lipod = False
         # get files by extension
@@ -163,6 +163,8 @@ class Tweak(Module):
         except:
             return f'An error occured when trying to codesign "{self.dir}/dylib/{self.name}.dylib". ({self.name})'
         
+        self.remove_log_stdout(f'Linking compiled files to "{self.name}.dylib"...')
+        
 
     def __compile_tweak_file(self, file):
         """Compile a tweak file.
@@ -188,7 +190,7 @@ class Tweak(Module):
             path_to_compile = file.get('path')
             # set original path
             orig_path = file.get('path')
-        self.log(f'Compiling "{orig_path}"...')
+        self.log_stdout(f'Compiling "{orig_path}"...')
         outName = f'{self.dir}/obj/{self.name}/{resolve_path(path_to_compile).name}.o'
         # compile file
         try:
@@ -214,9 +216,10 @@ class Tweak(Module):
                 # use clang to compile
                 self.luzbuild.ccompiler.compile(path_to_compile, outName, build_flags)
 
-        except Exception as e:
-            print(e)
+        except:
             return f'An error occured when attempting to compile file "{orig_path}" for module "{self.name}".'
+        
+        self.remove_log_stdout(f'Compiling "{orig_path}"...')
             
             
     def __stage(self):

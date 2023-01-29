@@ -80,7 +80,7 @@ class Tool(Module):
 
     def __linker(self):
         """Use a linker on the compiled files."""
-        self.log(f'Linking compiled files to executable "{self.name}"...')
+        self.log_stdout(f'Linking compiled files to executable "{self.name}"...')
         # lipo
         lipod = False
         # get files by extension
@@ -142,6 +142,8 @@ class Tool(Module):
                 f'{self.luzbuild.ldid} {self.luzbuild.entflag}{self.luzbuild.entfile} {self.dir}/bin/{self.name}', shell=True)
         except:
             return f'An error occured when trying codesign "{self.dir}/bin/{self.name}" for module "{self.name}".'
+        
+        self.remove_log_stdout(f'Linking compiled files to executable "{self.name}"...')
             
 
     def __compile_tool_file(self, file):
@@ -149,7 +151,7 @@ class Tool(Module):
         
         :param str file: The file to compile.
         """
-        self.log(f'Compiling "{file}"...')
+        self.log_stdout(f'Compiling "{file}"...')
         # compile file
         try:
             is_swift = str(file.name).endswith('swift')
@@ -174,6 +176,9 @@ class Tool(Module):
             
         except:
             return f'An error occured when attempting to compile file "{file}" for module "{self.name}".'
+        
+        self.remove_log_stdout(f'Compiling "{file}"...')
+
 
     def __stage(self):
         """Stage a deb to be packaged."""

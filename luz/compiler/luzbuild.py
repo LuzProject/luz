@@ -276,11 +276,13 @@ class LuzBuild:
     
     def __pack(self):
         """Pack up the .deb file."""
+        log_stdout('Packing deb file...', self.lock)
         # layout
         layout_path = resolve_path('layout')
         if layout_path.exists(): copytree(layout_path, f'{self.dir}/_', dirs_exist_ok=True)
         # pack
         Pack(resolve_path(f'{self.dir}/_'), algorithm=self.compression)
+        remove_log_stdout('Packing deb file...', self.lock)
     
     
     def build(self):
@@ -300,5 +302,4 @@ class LuzBuild:
         with open(f'{self.dir}/_/DEBIAN/control', 'w') as f:
             f.write(self.control_raw)
         self.__pack()
-        remove_log_stdout('Packing up .deb file...')
         log(f'Done in {round(time() - start, 2)} seconds.')
