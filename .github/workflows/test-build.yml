@@ -26,11 +26,9 @@ jobs:
         run: |
           sudo xcode-select --switch /Applications/Xcode_14.2.app
           
-      - name: Install Procursus
-        uses: beerpiss/procursus-action@v2
       - name: Install ldid and xz
         run: |
-          sudo apt install -y ldid xz-utils
+          brew install ldid xz
           
       - name: Set up Python
         id: setup-python
