@@ -26,9 +26,9 @@ jobs:
         run: |
           sudo xcode-select --switch /Applications/Xcode_14.2.app
           
-      - name: Install ldid and xz
+      - name: Install ldid
         run: |
-          brew install ldid xz
+          brew install ldid
           
       - name: Set up Python
         id: setup-python
@@ -37,7 +37,7 @@ jobs:
           python-version: '3.11'
       
       - name: Build and install project
-        run: pip install .
+        run: pip install . && echo $HOME
         
       - name: Get tweak zip
         run: |
