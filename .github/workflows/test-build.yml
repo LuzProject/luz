@@ -30,7 +30,7 @@ jobs:
         uses: beerpiss/procursus-action@v2
       - name: Install ldid and xz
         run: |
-          sudo apt install ldid xz-utils
+          sudo apt install -y ldid xz-utils
           
       - name: Set up Python
         id: setup-python
