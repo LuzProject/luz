@@ -18,13 +18,16 @@ from .modules.modules import assign_module
 
 
 class LuzBuild:
-    def __init__(self, clean: bool = False, path_to_file: str = 'LuzBuild'):
+    def __init__(self, clean: bool = False, path_to_file: str = 'LuzBuild', inherit: object = None):
         """Parse the luzbuild file.
         
         :param str path_to_file: The path to the luzbuild file.
         """
         # start
         self.time = time()
+
+        # to inherit
+        self.to_inherit = inherit
 
         # path
         self.path = resolve_path(str(path_to_file).split('LuzBuild')[0])
@@ -66,53 +69,54 @@ class LuzBuild:
         self.control_raw = ''
         
         # sdk
-        self.sdk = get_from_cfg(self, 'meta.sdk')
+        self.sdk = self.__get('sdk', 'meta.sdk')
         
         # prefix
-        self.prefix = get_from_cfg(self, 'meta.prefix')
+        self.prefix = self.__get('prefix', 'meta.prefix')
         
         # cc
-        self.cc = get_from_cfg(self, 'meta.cc')
+        self.cc = self.__get('cc', 'meta.cc')
         
         # c_flags
-        self.c_flags = get_from_cfg(self, 'meta.cflags')
+        self.c_flags = self.__get('c_flags', 'meta.cflags')
         
         # swiftc
-        self.swift = get_from_cfg(self, 'meta.swiftc')
+        self.swift = self.__get('swift', 'meta.swiftc')
         
         # swift_flags
-        self.swift_flags = get_from_cfg(self, 'meta.swiftflags')
+        self.swift_flags = self.__get('swift_flags', 'meta.swiftflags')
         
         # rootless
-        self.rootless = get_from_cfg(self, 'meta.rootless')
+        self.rootless = self.__get('rootless', 'meta.rootless')
         
         # optimization
-        self.optimization = get_from_cfg(self, 'meta.optimization')
+        self.optimization = self.__get('optimization', 'meta.optimization')
         
         # warnings
-        self.warnings = get_from_cfg(self, 'meta.warnings')
+        self.warnings = self.__get('warnings', 'meta.warnings')
         
         # entitlement flag
-        self.entflag = get_from_cfg(self, 'meta.entflag')
+        self.entflag = self.__get('entflag', 'meta.entflag')
         
         # entitlement file
-        self.entfile = get_from_cfg(self, 'meta.entfile')
+        self.entfile = self.__get('entfile', 'meta.entfile')
                 
         # compression
         self.compression = get_from_cfg(self, 'meta.compression')
         
         # archs
-        self.archs = get_from_cfg(self, 'meta.archs')
+        self.archs = self.__get('archs', 'meta.archs')
         
         self.archs_formatted = ''
 
-        for arch in self.archs: self.archs_formatted += f' -arch {arch}'
+        if self.archs != None:
+            for arch in self.archs: self.archs_formatted += f' -arch {arch}'
             
         # platform
-        self.platform = get_from_cfg(self, 'meta.platform')
+        self.platform = self.__get('platform', 'meta.platform')
         
         # min version
-        self.min_vers = get_from_cfg(self, 'meta.minVers')
+        self.min_vers = self.__get('min_vers', 'meta.minVers')
             
         # storage dir
         self.storage = get_luz_storage()
@@ -240,6 +244,16 @@ class LuzBuild:
             if result is not None:
                 error(result)
                 exit(1)
+
+    
+    def __get(self, obj_key, def_key):
+        """Get a key."""
+        if get_from_luzbuild(self, def_key) is not None:
+            return get_from_luzbuild(self, def_key)
+        elif self.to_inherit is not None:
+            return getattr(self.to_inherit, obj_key)
+        else:
+            return get_from_cfg(self, def_key)
         
 
     def __handle_submodule(self, submodule):
@@ -251,7 +265,7 @@ class LuzBuild:
         if not path.exists():
             return f'Submodule "{submodule}" does not exist.'
         # get luzbuild
-        luzbuild = LuzBuild(clean=False, path_to_file=path)
+        luzbuild = LuzBuild(clean=False, path_to_file=path, inherit=self)
         # add to submodules
         self.submodules.append(luzbuild)
 

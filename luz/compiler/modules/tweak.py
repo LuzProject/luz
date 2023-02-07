@@ -102,7 +102,8 @@ class Tweak(Module):
             self.log(f'Nothing to compile for module "{self.name}".')
             return []
         """
-        
+        files = files_to_compile
+
         # use logos files if necessary
         if filter(lambda x: '.x' in x, files) != []:
             files = logos(self.luzbuild, files)
