@@ -37,7 +37,7 @@ def main():
         if not resolve_path('LuzBuild').exists():
             error('Could not find LuzBuild file in current directory.')
             exit(1)
-        LuzBuild(args.clean).build()
+        LuzBuild(args.clean).build_and_pack()
     elif args.command == 'gen':
         if args.type is None:
             args.type = ask('What type of project would you like to generate? (tool/tweak) (enter for "tweak")')

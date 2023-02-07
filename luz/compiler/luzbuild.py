@@ -22,6 +22,8 @@ class LuzBuild:
         
         :param str path_to_file: The path to the luzbuild file.
         """
+        # start
+        self.time = time()
         # module path
         module_path = resolve_path(resolve_path(__file__).absolute()).parent
         # read default config values
@@ -85,12 +87,11 @@ class LuzBuild:
         self.compression = get_from_cfg(self, 'meta.compression')
         
         # archs
-        self.archs_formatted = ''
-        archs = get_from_cfg(self, 'meta.archs')
+        self.archs = get_from_cfg(self, 'meta.archs')
         
-        self.archs = archs
+        self.archs_formatted = ''
 
-        for arch in archs: self.archs_formatted += f' -arch {arch}'
+        for arch in self.archs: self.archs_formatted += f' -arch {arch}'
             
         # platform
         self.platform = get_from_cfg(self, 'meta.platform')
@@ -290,13 +291,17 @@ class LuzBuild:
     def build(self):
         """Build the project."""
         log(f'Compiling for target "{self.platform}:{self.min_vers}"...')
-        start = time()
         # compile results
         compile_results = self.pool.map(lambda x: x.compile(), self.modules.values())
         for result in compile_results:
             if result is not None:
                 error(result)
                 exit(1)
+        
+    def build_and_pack(self):
+        """Build and pack the project."""
+        # build
+        self.build()
         # make staging dirs
         if not resolve_path(f'{self.dir}/_/DEBIAN').exists():
             makedirs(f'{self.dir}/_/DEBIAN')
@@ -304,4 +309,4 @@ class LuzBuild:
         with open(f'{self.dir}/_/DEBIAN/control', 'w') as f:
             f.write(self.control_raw)
         self.__pack()
-        log(f'Done in {round(time() - start, 2)} seconds.')
+        log(f'Done in {round(time() - self.time, 2)} seconds.')
