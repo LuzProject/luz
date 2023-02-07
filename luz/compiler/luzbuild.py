@@ -327,7 +327,10 @@ class LuzBuild:
         """Build the project."""
         # compile results
         if self.modules != None:
-            log(f'Compiling for target "{self.platform}:{self.min_vers}"...')
+            if self.path != "":
+                log(f'Compiling "{self.path}" for target "{self.platform}:{self.min_vers}"...')
+            else:
+                log(f'Compiling base project for target "{self.platform}:{self.min_vers}"...')
             compile_results = self.pool.map(lambda x: x.compile(), self.modules.values())
             for result in compile_results:
                 if result is not None:

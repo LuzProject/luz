@@ -62,7 +62,8 @@ class Tweak(Module):
                     files_to_compile.append(f)
             else:
                 files_to_compile.append(file_path)
-                
+
+        """
         # changed files
         changed = []
         # old hashes
@@ -70,7 +71,10 @@ class Tweak(Module):
         # check if hashlist exists
         if self.hash_file.exists():
             with open(self.hash_file, 'r') as f:
-                old_hashlist = loads(f.read())
+                try:
+                    old_hashlist = loads(f.read())
+                except:
+                    return files_to_compile
 
         with open(self.hash_file, 'w') as f:
             # new hashes
@@ -97,6 +101,7 @@ class Tweak(Module):
         if len(files) == 0:
             self.log(f'Nothing to compile for module "{self.name}".')
             return []
+        """
         
         # use logos files if necessary
         if filter(lambda x: '.x' in x, files) != []:

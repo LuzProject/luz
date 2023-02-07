@@ -56,6 +56,7 @@ class Tool(Module):
             else:
                 files_to_compile.append(file_path)
 
+        """
         # old hashes
         old_hashlist = {}
         # check if hashlist exists
@@ -78,6 +79,7 @@ class Tool(Module):
             # write new hashes
             new_hashes.update({k: v for k, v in old_hashlist.items() if k in new_hashes})
             f.write(str(new_hashes).replace("'", '"'))
+        """
 
         # return files
         return files_to_compile
