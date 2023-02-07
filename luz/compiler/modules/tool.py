@@ -102,11 +102,9 @@ class Tool(Module):
             if lipod:
                 # define build flags
                 platform = 'ios' if self.luzbuild.platform == 'iphoneos' else self.luzbuild.platform
-                for arch in self.luzbuild.archs.split(' -arch '):
-                    if arch == '':
-                        continue
-                    out_name = f'{self.dir}/bin/{self.name}_{arch.replace(" ", "")}'
-                    build_flags = [f'-sdk {self.luzbuild.sdk}', f'-F{self.luzbuild.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in new_files else '', self.include, self.library_dirs, self.luzbuild.swift_flags, f'-target {arch.replace(" ", "")}-apple-{platform}{self.luzbuild.min_vers}']
+                for arch in self.luzbuild.archs:
+                    out_name = f'{self.dir}/bin/{self.name}_{arch}'
+                    build_flags = [f'-sdk {self.luzbuild.sdk}', f'-F{self.luzbuild.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in new_files else '', self.include, self.library_dirs, self.luzbuild.swift_flags, f'-target {arch}-apple-{platform}{self.luzbuild.min_vers}']
                     # compile with swiftc using build flags
                     self.luzbuild.swift_compiler.compile(new_files, out_name, build_flags)
                 
@@ -114,7 +112,7 @@ class Tool(Module):
                 check_output(f'{self.luzbuild.lipo} -create -output {self.dir}/bin/{self.name} {self.dir}/bin/{self.name}_* && rm -rf {self.dir}/bin/{self.name}_*', shell=True)
             else:
                 # define build flags
-                build_flags = ['-fobjc-arc' if self.arc else '', f'-isysroot {self.luzbuild.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', f'-F{self.luzbuild.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in new_files else '', self.include, self.library_dirs, self.luzbuild.archs, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', self.luzbuild.c_flags]
+                build_flags = ['-fobjc-arc' if self.arc else '', f'-isysroot {self.luzbuild.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', f'-F{self.luzbuild.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in new_files else '', self.include, self.library_dirs, self.luzbuild.archs_formatted, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', self.luzbuild.c_flags]
                 # compile with clang using build flags
                 self.luzbuild.c_compiler.compile(new_files, f'{self.dir}/bin/{self.name}', build_flags)
         except:
@@ -154,21 +152,20 @@ class Tool(Module):
         try:
             is_swift = str(file.name).endswith('swift')
             if is_swift:
+                # define build flags
+                build_flags = build_flags = [f'-sdk {self.luzbuild.sdk}', self.include,  '-c', '-emit-object', self.luzbuild.swift_flags]
                 # format platform
                 platform = 'ios' if self.luzbuild.platform == 'iphoneos' else self.luzbuild.platform
-                for arch in self.luzbuild.archs.split(' -arch '):
-                    # skip empty archs
-                    if arch == '':
-                        continue
-                    out_name = f'{self.dir}/obj/{self.name}/{resolve_path(file).name}.{arch.replace(" ", "")}-{self.now}.o'
-                    # define build flags
-                    build_flags = [f'-sdk {self.luzbuild.sdk}', self.include,  '-c', '-emit-object', self.luzbuild.swift_flags, f'-target {arch.replace(" ", "")}-apple-{platform}{self.luzbuild.min_vers}']
+                for arch in self.luzbuild.archs:
+                    out_name = f'{self.dir}/obj/{self.name}/{resolve_path(file).name}.{arch}-{self.now}.o'
+                    # arch
+                    arch_formatted = f'-target {arch}-apple-{platform}{self.luzbuild.min_vers}'
                     # compile with swiftc using build flags
-                    self.luzbuild.swift_compiler.compile(file, out_name, build_flags)
+                    self.luzbuild.swift_compiler.compile(file, out_name, build_flags + [arch_formatted])
             else:
                 out_name = f'{self.dir}/obj/{self.name}/{resolve_path(file).name}.o'
                 build_flags = ['-fobjc-arc' if self.arc else '',
-                               f'-isysroot {self.luzbuild.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.luzbuild.archs, self.include, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', self.luzbuild.c_flags, '-c']
+                               f'-isysroot {self.luzbuild.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.luzbuild.archs_formatted, self.include, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', self.luzbuild.c_flags, '-c']
                 # compile with clang using build flags
                 self.luzbuild.c_compiler.compile(file, out_name, build_flags)
             

@@ -85,10 +85,12 @@ class LuzBuild:
         self.compression = get_from_cfg(self, 'meta.compression')
         
         # archs
-        self.archs = ''
+        self.archs_formatted = ''
         archs = get_from_cfg(self, 'meta.archs')
         
-        for arch in archs: self.archs += f' -arch {arch}'
+        self.archs = archs
+
+        for arch in archs: self.archs_formatted += f' -arch {arch}'
             
         # platform
         self.platform = get_from_cfg(self, 'meta.platform')
