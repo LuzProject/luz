@@ -48,6 +48,7 @@ class Tool(Module):
         
         # file path formatting
         for file in files:
+            if not file.startswith('/'): file = f'{self.luzbuild.path}/{file}'
             file_path = resolve_path(file)
             if type(file_path) is list:
                 for f in file_path:
@@ -60,7 +61,10 @@ class Tool(Module):
         # check if hashlist exists
         if self.hash_file.exists():
             with open(self.hash_file, 'r') as f:
-                old_hashlist = loads(f.read())
+                try:
+                    old_hashlist = loads(f.read())
+                except:
+                    return files_to_compile
 
         with open(self.hash_file, 'w') as f:
             # new hashes

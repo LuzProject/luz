@@ -34,7 +34,7 @@ class Module:
         
         # hash file
         self.hash_file = resolve_path(f'{self.dir}/hashlist.json')
-        
+
         # stage dir
         self.stage_dir = resolve_path(f'{self.dir}/_')
         

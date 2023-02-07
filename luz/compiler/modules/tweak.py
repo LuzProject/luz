@@ -55,6 +55,7 @@ class Tweak(Module):
             
         # file path formatting
         for file in files:
+            if not file.startswith('/'): file = f'{self.luzbuild.path}/{file}'
             file_path = resolve_path(file)
             if type(file_path) is list:
                 for f in file_path:

@@ -1,4 +1,5 @@
 # module imports
+from atexit import register
 from multiprocessing.pool import ThreadPool
 from os import makedirs
 from pathlib import Path
@@ -24,8 +25,13 @@ class LuzBuild:
         """
         # start
         self.time = time()
+
+        # path
+        self.path = resolve_path(str(path_to_file).split('LuzBuild')[0])
+
         # module path
         module_path = resolve_path(resolve_path(__file__).absolute()).parent
+
         # read default config values
         with open(f'{module_path}/config/defaults.yaml') as f: self.defaults = safe_load(f)
         
@@ -40,9 +46,18 @@ class LuzBuild:
         # clean
         if clean:
             rmtree('.luz', ignore_errors=True)
+
+        # dir
+        self.dir = setup_luz_dir()
             
+        # submodules
+        self.submodules = []
+
         # pool
         self.pool = ThreadPool()
+
+        # register pool close
+        register(self.pool.close)
         
         # lock
         self.lock = Lock()
@@ -191,8 +206,6 @@ class LuzBuild:
                 
         # parse modules
         if self.modules is not None:
-            # dir
-            self.dir = setup_luz_dir()
             # set compiler
             self.c_compiler = CCompiler().set_compiler(self.cc)
             # get modules
@@ -214,13 +227,35 @@ class LuzBuild:
                 # assign module
                 self.modules[m] = assign_module(v, m, self)
         elif self.modules is None or self.modules == {}:
-            error('No modules found in LuzBuild file.')
-            exit(1)
+            if get_from_cfg(self, 'submodules') == []:
+                error('No modules found in LuzBuild file.')
+                exit(1)
 
         # parse luzbuild file
         self.pool.map(lambda x: self.__handle_key(x), self.luzbuild)
+
+        # get submodules
+        subproj_results = self.pool.map(lambda x: self.__handle_submodule(x), get_from_cfg(self, 'submodules'))
+        for result in subproj_results:
+            if result is not None:
+                error(result)
+                exit(1)
         
+
+    def __handle_submodule(self, submodule):
+        """Handle a submodule dir.
         
+        :param str submodule: Directory of submodule.
+        """
+        path = resolve_path(submodule + '/LuzBuild')
+        if not path.exists():
+            return f'Submodule "{submodule}" does not exist.'
+        # get luzbuild
+        luzbuild = LuzBuild(clean=False, path_to_file=path)
+        # add to submodules
+        self.submodules.append(luzbuild)
+
+
     def __handle_key(self, key):
         """Handle a key in the LuzBuild file.
         
@@ -290,13 +325,22 @@ class LuzBuild:
     
     def build(self):
         """Build the project."""
-        log(f'Compiling for target "{self.platform}:{self.min_vers}"...')
         # compile results
-        compile_results = self.pool.map(lambda x: x.compile(), self.modules.values())
-        for result in compile_results:
-            if result is not None:
-                error(result)
-                exit(1)
+        if self.modules != None:
+            log(f'Compiling for target "{self.platform}:{self.min_vers}"...')
+            compile_results = self.pool.map(lambda x: x.compile(), self.modules.values())
+            for result in compile_results:
+                if result is not None:
+                    error(result)
+                    exit(1)
+        
+        # compile submodules
+        if self.submodules != []:
+            compile_results = self.pool.map(lambda x: x.build(), self.submodules)
+            for result in compile_results:
+                if result is not None:
+                    error(result)
+                    exit(1)
         
     def build_and_pack(self):
         """Build and pack the project."""
