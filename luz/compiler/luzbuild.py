@@ -32,11 +32,12 @@ class LuzBuild:
         # path
         self.path = resolve_path(str(path_to_file).split('LuzBuild')[0])
 
-        # module path
-        module_path = resolve_path(resolve_path(__file__).absolute()).parent
+        if inherit is None:
+            # module path
+            module_path = resolve_path(resolve_path(__file__).absolute()).parent
 
-        # read default config values
-        with open(f'{module_path}/config/defaults.yaml') as f: self.defaults = safe_load(f)
+            # read default config values
+            with open(f'{module_path}/config/defaults.yaml') as f: self.defaults = safe_load(f)
         
         # open and parse luzbuild file
         with open(path_to_file) as f: self.luzbuild = safe_load(f)
@@ -52,9 +53,6 @@ class LuzBuild:
 
         # dir
         self.dir = setup_luz_dir()
-            
-        # submodules
-        self.submodules = []
 
         # pool
         self.pool = ThreadPool()
@@ -126,6 +124,9 @@ class LuzBuild:
         
         # swift
         self.compile_for_swift = '.swift' in str(self.modules)
+
+        # submodules
+        self.submodules = []
         
         # ensure prefix exists
         if self.prefix is not '':
@@ -247,7 +248,7 @@ class LuzBuild:
 
     
     def __get(self, obj_key, def_key):
-        """Get a key."""
+        """Get a key from either the LuzBuild, inherited object, or default config."""
         if get_from_luzbuild(self, def_key) is not None:
             return get_from_luzbuild(self, def_key)
         elif self.to_inherit is not None:
