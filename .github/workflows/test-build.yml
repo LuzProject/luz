@@ -19,20 +19,20 @@ jobs:
     runs-on: macos-12
 
     steps:
-      - name: Checkout
+      - name: Checkout Project
         uses: actions/checkout@v3
       
       - name: Checkout Logos
         uses: actions/checkout@v3
         with:
-          repository: https://github.com/LuzProject/logos
+          repository: LuzProject/logos
           path: /Users/runner/.luz/logos
           submodules: 'recursive'
       
       - name: Checkout Libraries
         uses: actions/checkout@v3
         with:
-          repository: https://github.com/elihwyma/lib
+          repository: elihwyma/lib
           path: /Users/runner/.luz/lib
           ref: rootless
           submodules: 'recursive'
@@ -40,7 +40,7 @@ jobs:
       - name: Checkout Headers
         uses: actions/checkout@v3
         with:
-          repository: https://github.com/theos/headers
+          repository: theos/headers
           path: /Users/runner/.luz/include
           submodules: 'recursive'
         
