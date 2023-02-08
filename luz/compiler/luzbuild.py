@@ -379,6 +379,7 @@ class LuzBuild:
                 if result is not None:
                     error(result)
                     exit(1)
+                    
         
     def build_and_pack(self):
         """Build and pack the project."""
