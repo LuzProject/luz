@@ -3,7 +3,7 @@ name = "luz"
 version = "0.0.1"
 description = "A build system for iOS tweaks."
 authors = ["ja1dan <ajaidan0@gmail.com>"]
-readme = "README.md"
+readme = "README.rst"
 packages = [{include = "luz"}]
 
 [tool.poetry.dependencies]
