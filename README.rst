@@ -1,17 +1,16 @@
 Luz
 ---------------------
+Luz is a next-generation build system for Apple Darwin-based systems.
 
-Luz is a revolutionary build system for Apple Darwin-based systems.
+Installing
+*********************
 
-In order to make a new Luz tweak, you can run::
+Installing is incredibly simple::
+
+    pip3 install 'git+https://github.com/LuzProject/luz'
+
+Generation
+*********************
+Luz comes with a built-in generator that can be used to generate a new project::
+
     luz gen
-
-This will take you through a wizard to create a new tweak. You can also manually create a LuzBuild file.
-
-Currently, Luz supports two types of 'modules'::
-#. Tweaks
-#. Tools
-
-Support for Preference Bundles, Applications and XPC is planned.
-
-Luz is still in its early stages, so please report any bugs you find.
