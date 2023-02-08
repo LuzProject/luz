@@ -55,34 +55,39 @@ class Tool(Module):
                     files_to_compile.append(f)
             else:
                 files_to_compile.append(file_path)
+            
+        # changed
+        changed = []
+        # get hashes
+        new_hashes = {}
+        for file in files_to_compile:
+            # get hashes
+            fhash = self.luzbuild.hashlist.get(str(file))
+            new_hash = get_hash(file)
+            # variables
+            objcpp_path = resolve_path(f'{self.dir}/obj/{self.name}/{file.name}.mm.o')
+            objc_path = resolve_path(f'{self.dir}/obj/{self.name}/{file.name}.m.o')
+            c_path = resolve_path(f'{self.dir}/obj/{self.name}/{file.name}.c.o')
+            other_path = resolve_path(f'{self.dir}/obj/{self.name}/{file.name}.o')
+            lipod_path = resolve_path(f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo')
+            # check if file needs to be compiled
+            if (fhash is not None and fhash != new_hash) or (not objcpp_path.exists() and not objc_path.exists() and not c_path.exists() and not other_path.exists() and not lipod_path.exists()):
+                changed.append(file)
+            new_hashes[str(file)] = new_hash
 
-        """
-        # old hashes
-        old_hashlist = {}
-        # check if hashlist exists
-        if self.hash_file.exists():
-            with open(self.hash_file, 'r') as f:
-                try:
-                    old_hashlist = loads(f.read())
-                except:
-                    return files_to_compile
+        # write new hashes
+        self.luzbuild.update_hashlist(new_hashes)
 
-        with open(self.hash_file, 'w') as f:
-            # new hashes
-            new_hashes = {}
-            # loop files
-            for file in files_to_compile:
-                # get file hash
-                new_hash = get_hash(file)
-                # add to new hashes
-                new_hashes[str(file)] = new_hash
-            # write new hashes
-            new_hashes.update({k: v for k, v in old_hashlist.items() if k in new_hashes})
-            f.write(str(new_hashes).replace("'", '"'))
-        """
+        # files list
+        files = changed if self.only_compile_changed else files_to_compile
+
+        # handle files not needing compilation
+        if len(files) == 0:
+            self.log(f'Nothing to compile for module "{self.name}".')
+            return []
 
         # return files
-        return files_to_compile
+        return files
 
     def __linker(self):
         """Use a linker on the compiled files."""
@@ -91,6 +96,10 @@ class Tool(Module):
         lipod = False
         # get files by extension
         new_files = []
+        # handle pre-lipod files
+        if resolve_path(f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo').exists():
+            new_files.append(resolve_path(f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo'))
+            lipod = True
         # loop through files that were compiled
         for file in resolve_path(f'{self.dir}/obj/{self.name}/*.o'):
             # handle swift files

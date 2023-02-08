@@ -1,6 +1,3 @@
-# module imports
-from shutil import rmtree
-
 # local imports
 from ..deps import clone_headers, clone_libraries
 from ...common.logger import log, log_stdout, error, remove_log_stdout
@@ -31,9 +28,6 @@ class Module:
         
         # dir
         self.dir = luzbuild.dir
-        
-        # hash file
-        self.hash_file = resolve_path(f'{self.dir}/hashlist.json')
 
         # stage dir
         self.stage_dir = resolve_path(f'{self.dir}/_')
@@ -75,10 +69,6 @@ class Module:
         if module.get('files') is None or module.get('files') is [] or module.get('files') is '':
             error(f'No files specified for module "{self.name}".')
             exit(1)
-
-        # remove staging
-        if self.stage_dir.exists():
-            rmtree(self.stage_dir)
 
         # define default values
         frameworksD = list(get_from_default(luzbuild, f'modules.types.{self.type}.frameworks'))

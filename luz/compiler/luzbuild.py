@@ -1,5 +1,6 @@
 # module imports
 from atexit import register
+from json import loads
 from multiprocessing.pool import ThreadPool
 from os import makedirs
 from pathlib import Path
@@ -38,6 +39,8 @@ class LuzBuild:
 
             # read default config values
             with open(f'{module_path}/config/defaults.yaml') as f: self.defaults = safe_load(f)
+        else:
+            self.defaults = getattr(self.to_inherit, 'defaults')
         
         # open and parse luzbuild file
         with open(path_to_file) as f: self.luzbuild = safe_load(f)
@@ -53,6 +56,22 @@ class LuzBuild:
 
         # dir
         self.dir = setup_luz_dir()
+
+        # remove staging
+        if resolve_path(f'{self.dir}/_').exists():
+            rmtree(resolve_path(f'{self.dir}/_'))
+
+        # hashlist
+        if self.to_inherit is not None:
+            self.hashlist = getattr(self.to_inherit, 'hashlist')
+        else:
+            hash_file = resolve_path(f'{self.dir}/hashlist.json')
+            # check if hashlist exists
+            if hash_file.exists():
+                with open(hash_file, 'r') as f:
+                    self.hashlist = loads(f.read())
+            else:
+                self.hashlist = {}
 
         # pool
         self.pool = ThreadPool()
@@ -247,6 +266,11 @@ class LuzBuild:
                 exit(1)
 
     
+    def update_hashlist(self, keys):
+        """Update the hashlist with a list of keys."""
+        self.hashlist.update(keys)
+
+    
     def __get(self, obj_key, def_key):
         """Get a key from either the LuzBuild, inherited object, or default config."""
         if get_from_luzbuild(self, def_key) is not None:
@@ -342,10 +366,6 @@ class LuzBuild:
         """Build the project."""
         # compile results
         if self.modules != None:
-            if self.path != "":
-                log(f'Compiling "{self.path}" for target "{self.platform}:{self.min_vers}"...')
-            else:
-                log(f'Compiling base project for target "{self.platform}:{self.min_vers}"...')
             compile_results = self.pool.map(lambda x: x.compile(), self.modules.values())
             for result in compile_results:
                 if result is not None:
@@ -371,4 +391,7 @@ class LuzBuild:
         with open(f'{self.dir}/_/DEBIAN/control', 'w') as f:
             f.write(self.control_raw)
         self.__pack()
+        with open(resolve_path(f'{self.dir}/hashlist.json'), 'w') as f:
+            f.write(str(self.hashlist).replace("'", '"'))
+
         log(f'Done in {round(time() - self.time, 2)} seconds.')

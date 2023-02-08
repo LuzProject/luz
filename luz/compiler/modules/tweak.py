@@ -1,5 +1,4 @@
 # module imports
-from json import loads
 from os import makedirs
 from shutil import copytree
 from subprocess import check_output
@@ -63,36 +62,29 @@ class Tweak(Module):
             else:
                 files_to_compile.append(file_path)
 
-        """
         # changed files
         changed = []
-        # old hashes
-        old_hashlist = {}
-        # check if hashlist exists
-        if self.hash_file.exists():
-            with open(self.hash_file, 'r') as f:
-                try:
-                    old_hashlist = loads(f.read())
-                except:
-                    return files_to_compile
+        # new hashes
+        new_hashes = {}
+        # loop files
+        for file in files_to_compile:
+            # get file hash
+            fhash = self.luzbuild.hashlist.get(str(file))
+            new_hash = get_hash(file)
+            # variables
+            objcpp_path = resolve_path(f'{self.dir}/obj/{self.name}/{file.name}.mm.o')
+            objc_path = resolve_path(f'{self.dir}/obj/{self.name}/{file.name}.m.o')
+            c_path = resolve_path(f'{self.dir}/obj/{self.name}/{file.name}.c.o')
+            other_path = resolve_path(f'{self.dir}/obj/{self.name}/{file.name}.o')
+            lipod_path = resolve_path(f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo')
+            # check if file needs to be compiled
+            if (fhash is not None and fhash != new_hash) or (not objcpp_path.exists() and not objc_path.exists() and not c_path.exists() and not other_path.exists() and not lipod_path.exists()):
+                changed.append(file)
+            # add to new hashes
+            new_hashes[str(file)] = new_hash
 
-        with open(self.hash_file, 'w') as f:
-            # new hashes
-            new_hashes = {}
-            # loop files
-            for file in files_to_compile:
-                # get file hash
-                fhash = old_hashlist.get(file)
-                new_hash = get_hash(file)
-                # check if the file has changes
-                file_path = resolve_path(file)
-                if (fhash is not None and fhash != new_hash) or (not resolve_path(f'{self.dir}/obj/{self.name}/{file_path.name}.mm.o').exists() and not resolve_path(f'{self.dir}/obj/{self.name}/{file_path.name}.m.o').exists() and not resolve_path(f'{self.dir}/obj/{self.name}/{file_path.name}.o').exists()):
-                    changed.append(file)
-                # add to new hashes
-                new_hashes[str(file)] = new_hash
-            # write new hashes
-            new_hashes.update({k: v for k, v in old_hashlist.items() if k in new_hashes})
-            f.write(str(new_hashes).replace("'", '"'))
+        # hashes
+        self.luzbuild.update_hashlist(new_hashes)
 
         # files list
         files = changed if self.only_compile_changed else files_to_compile
@@ -101,7 +93,7 @@ class Tweak(Module):
         if len(files) == 0:
             self.log(f'Nothing to compile for module "{self.name}".')
             return []
-        """
+    
         files = files_to_compile
 
         # use logos files if necessary
@@ -119,6 +111,10 @@ class Tweak(Module):
         lipod = False
         # get files by extension
         new_files = []
+        # handle pre-lipod files
+        if resolve_path(f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo').exists():
+            new_files.append(resolve_path(f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo'))
+            lipod = True
         # loop through files that were compiled
         for file in resolve_path(f'{self.dir}/obj/{self.name}/*.o'):
             # handle swift files
