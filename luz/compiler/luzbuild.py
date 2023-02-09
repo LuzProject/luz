@@ -198,6 +198,16 @@ class LuzBuild:
                 error('Could not find ldid.')
                 exit(1)
         
+        # format ld with prefix
+        self.ld = cmd_in_path(
+            f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ld')
+        if self.ld is None:
+            # fall back to path
+            self.ld = cmd_in_path('ld')
+            if self.ld is None:
+                error('Could not find ld.')
+                exit(1)
+        
         # format ldid with prefix
         self.strip = cmd_in_path(
             f'{(str(self.prefix) + "/") if self.prefix is not None else ""}strip')
@@ -209,15 +219,14 @@ class LuzBuild:
                 exit(1)
                 
         # format lipo with prefix
-        if self.compile_for_swift:
-            self.lipo = cmd_in_path(
-                f'{(str(self.prefix) + "/") if self.prefix is not None else ""}lipo')
+        self.lipo = cmd_in_path(
+            f'{(str(self.prefix) + "/") if self.prefix is not None else ""}lipo')
+        if self.lipo is None:
+            # fall back to path
+            self.lipo = cmd_in_path('lipo')
             if self.lipo is None:
-                # fall back to path
-                self.lipo = cmd_in_path('lipo')
-                if self.lipo is None:
-                    error('Could not find lipo.')
-                    exit(1)
+                error('Could not find lipo.')
+                exit(1)
             
         # attempt to manually find an sdk
         if self.sdk == '': self.sdk = self.__get_sdk()

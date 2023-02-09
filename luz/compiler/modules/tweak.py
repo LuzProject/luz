@@ -10,6 +10,8 @@ from ...common.logger import warn
 from .module import Module
 from ...common.utils import get_hash, resolve_path
 
+import sys, os
+
 
 class Tweak(Module):
     def __init__(self, **kwargs):
@@ -42,13 +44,13 @@ class Tweak(Module):
         """
         # make dirs
         if not self.obj_dir.exists():
-            makedirs(self.obj_dir)
+            makedirs(self.obj_dir, exist_ok=True)
         
         if not self.logos_dir.exists():
-            makedirs(self.logos_dir)
+            makedirs(self.logos_dir, exist_ok=True)
         
         if not self.dylib_dir.exists():
-            makedirs(self.dylib_dir)
+            makedirs(self.dylib_dir, exist_ok=True)
             
         files_to_compile = []
             
@@ -72,13 +74,9 @@ class Tweak(Module):
             fhash = self.luzbuild.hashlist.get(str(file))
             new_hash = get_hash(file)
             # variables
-            objcpp_path = resolve_path(f'{self.dir}/obj/{self.name}/{file.name}.mm.o')
-            objc_path = resolve_path(f'{self.dir}/obj/{self.name}/{file.name}.m.o')
-            c_path = resolve_path(f'{self.dir}/obj/{self.name}/{file.name}.c.o')
-            other_path = resolve_path(f'{self.dir}/obj/{self.name}/{file.name}.o')
-            lipod_path = resolve_path(f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo')
+            lipod_path = resolve_path(f'{self.dir}/obj/{self.name}/*{file.name}.dylib')
             # check if file needs to be compiled
-            if (fhash is not None and fhash != new_hash) or (not objcpp_path.exists() and not objc_path.exists() and not c_path.exists() and not other_path.exists() and not lipod_path.exists()):
+            if (fhash is not None and fhash != new_hash) or (len(lipod_path) == 0):
                 changed.append(file)
             # add to new hashes
             new_hashes[str(file)] = new_hash
@@ -107,47 +105,8 @@ class Tweak(Module):
     def __linker(self):
         """Use a linker on the compiled files."""
         self.log_stdout(f'Linking compiled files to "{self.name}.dylib"...')
-        # lipo
-        lipod = False
-        # get files by extension
-        new_files = []
-        # handle pre-lipod files
-        if resolve_path(f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo').exists():
-            new_files.append(resolve_path(f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo'))
-            lipod = True
-        # loop through files that were compiled
-        for file in resolve_path(f'{self.dir}/obj/{self.name}/*.o'):
-            # handle swift files
-            if '.swift.' in str(file) and not lipod:
-                # combine swift files into one file for specific arch
-                check_output(f'{self.luzbuild.lipo} -create -output {self.dir}/obj/{self.name}/{self.name}-swift-lipo {self.dir}/obj/{self.name}/*.swift.*-{self.now}.o && rm -rf {self.dir}/obj/{self.name}/*.swift.*-{self.now}.o', shell=True)
-                # add lipo file to files list
-                new_files.append(resolve_path(f'{self.dir}/obj/{self.name}/{self.name}-swift-lipo'))
-                # let the compiler know that we lipod
-                lipod = True
-            elif not '.swift.' in str(file):
-                new_files.append(resolve_path(file))
-        
-        try:
-            if lipod:
-                # define build flags
-                platform = 'ios' if self.luzbuild.platform == 'iphoneos' else self.luzbuild.platform
-                for arch in self.luzbuild.archs:
-                    out_name = f'{self.dir}/dylib/{self.name}_{arch}.dylib'
-                    # define build flags
-                    build_flags = [f'-sdk {self.luzbuild.sdk}', '-emit-library', f'-F{self.luzbuild.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in new_files else '', self.include, self.library_dirs, self.luzbuild.swift_flags, f'-target {arch}-apple-{platform}{self.luzbuild.min_vers}']
-                    # compile with swiftc using build flags
-                    self.luzbuild.swift_compiler.compile(new_files, out_name, build_flags)
-                
-                # lipo the dylibs
-                check_output(f'{self.luzbuild.lipo} -create -output {self.dir}/dylib/{self.name}.dylib {self.dir}/dylib/{self.name}_*.dylib && rm -rf {self.dir}/dylib/{self.name}_*.dylib', shell=True)
-            else:
-                # define build flags
-                build_flags = ['-fobjc-arc' if self.arc else '', f'-isysroot {self.luzbuild.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', '-dynamiclib', f'-F{self.luzbuild.sdk}/System/Library/PrivateFrameworks' if self.private_frameworks != '' else '', self.private_frameworks, self.frameworks, self.libraries, '-lc++' if ".mm" in new_files else '', self.include, self.library_dirs, self.luzbuild.archs_formatted, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', self.luzbuild.c_flags]
-                # compile with clang using build flags
-                self.luzbuild.c_compiler.compile(new_files, f'{self.dir}/dylib/{self.name}.dylib', build_flags)
-        except:
-            return f'An error occured when attempting to link the compiled files for module "{self.name}".'
+
+        check_output(f'{self.luzbuild.lipo} -create -output {self.dir}/dylib/{self.name}.dylib {self.dir}/obj/{self.name}/*', shell=True)
         
         try:
             # fix rpath
@@ -165,57 +124,71 @@ class Tweak(Module):
         self.remove_log_stdout(f'Linking compiled files to "{self.name}.dylib"...')
         
 
-    def __compile_tweak_file(self, file):
-        """Compile a tweak file.
+    def __compile_tweak_files(self, files):
+        """Compile a tweak files.
         
-        :param str file: The file to compile.
+        :param str files: The files to compile.
         """
-        path_to_compile = ''
-        orig_path = ''
-        # handle logos files
-        if file.get('logos') == True:
-            # set compile path
-            path_to_compile = file.get('new_path')
-            # set original path
-            orig_path = file.get('old_path')
-            # include path
-            include_path = '/'.join(str(orig_path).split('/')[:-1])
-            # add it to include if it's not already there
-            if include_path not in self.include:
-                self.include += ' -I' + include_path
-        # handle normal files
-        else:
-            # set compile path
-            path_to_compile = file.get('path')
-            # set original path
-            orig_path = file.get('path')
-        self.log_stdout(f'Compiling "{orig_path}"...')
-        out_name = f'{self.dir}/obj/{self.name}/{resolve_path(path_to_compile).name}.o'
+        c = []
+        swift = []
+        for file in files:
+            new_path = ''
+            # handle logos files
+            if file.get('logos') == True:
+                # new path
+                new_path = file.get('new_path')
+                # set original path
+                orig_path = file.get('old_path')
+                # include path
+                include_path = '/'.join(str(orig_path).split('/')[:-1])
+                # add it to include if it's not already there
+                if include_path not in self.include:
+                    self.include += ' -I' + include_path
+            else:
+                new_path = file.get('path')
+            # handle normal files
+            if str(new_path).endswith('.swift'):
+                swift.append(new_path)
+            else:
+                c.append(new_path)
+
         # compile file
         try:
-            is_swift = str(orig_path.name).endswith('swift')
-            if is_swift:
+            if len(swift) != 0:
+                # convert paths to strings
+                swift_strings = []
+                for file in swift:
+                    swift_strings.append(str(file))
+
+                # define build flags
+                build_flags = [f'-sdk {self.luzbuild.sdk}',
+                               self.include, self.luzbuild.swift_flags, '-emit-library', f'-module-name {self.name}']
+                out_name = f'{self.dir}/obj/{self.name}/{resolve_path("".join(swift_strings)).name}'
                 # format platform
                 platform = 'ios' if self.luzbuild.platform == 'iphoneos' else self.luzbuild.platform
-                # define build args
-                build_flags = [f'-sdk {self.luzbuild.sdk}', self.include, '-c', '-emit-object', self.luzbuild.swift_flags]
                 for arch in self.luzbuild.archs:
-                    out_name = f'{self.dir}/obj/{self.name}/{resolve_path(path_to_compile).name}.{arch}-{self.now}.o'
-                    # format arch
-                    arch_formatted = f' -target {arch}-apple-{platform}{self.luzbuild.min_vers}'
-                    # use swiftc to compile
-                    self.luzbuild.swift_compiler.compile(path_to_compile, out_name, build_flags + [arch_formatted])
-            else:
-                out_name = f'{self.dir}/obj/{self.name}/{resolve_path(path_to_compile).name}.o'
+                    # arch
+                    arch_formatted = f'-target {arch}-apple-{platform}{self.luzbuild.min_vers}'
+                    # compile with swiftc using build flags
+                    self.luzbuild.swift_compiler.compile(
+                        swift, outfile=out_name+f'{arch}-{self.now}.dylib', args=build_flags+[arch_formatted])
+            if len(c) != 0:
+                # convert paths to strings
+                c_strings = []
+                for file in c:
+                    c_strings.append(str(file))
+                out_name = f'{self.dir}/obj/{self.name}/{resolve_path("".join(c_strings)).name}.dylib'
                 build_flags = ['-fobjc-arc' if self.arc else '',
-                               f'-isysroot {self.luzbuild.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.luzbuild.archs_formatted, self.include, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}',  '-c', self.luzbuild.c_flags]
-                # use clang to compile
-                self.luzbuild.c_compiler.compile(path_to_compile, out_name, build_flags)
+                               f'-isysroot {self.luzbuild.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.luzbuild.archs_formatted, self.include, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', '-dynamiclib', self.luzbuild.c_flags]
+                # compile with clang using build flags
+                self.luzbuild.c_compiler.compile(c, out_name, build_flags)
 
-        except:
-            return f'An error occured when attempting to compile file "{orig_path}" for module "{self.name}".'
-        
-        self.remove_log_stdout(f'Compiling "{orig_path}"...')
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print(exc_type, fname, exc_tb.tb_lineno)
+            print(e)
+            return f'An error occured when attempting to compile for module "{self.name}".'
             
             
     def __stage(self):
@@ -259,10 +232,9 @@ class Tweak(Module):
     def compile(self):
         """Compile."""
         # compile files
-        compile_results = self.luzbuild.pool.map(self.__compile_tweak_file, self.files)
-        for result in compile_results:
-            if result is not None:
-                return result
+        compile_results = self.__compile_tweak_files(self.files)
+        if compile_results is not None:
+            return compile_results
         # link files
         linker_results = self.__linker()
         if linker_results is not None:
