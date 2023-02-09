@@ -5,22 +5,10 @@ meta:
   prefix: ''
   # default cc
   cc: clang
-  # cflags
-  cflags: ''
   # swift
   swiftc: swiftc
-  # swiftflags
-  swiftflags: ''
   # rootless
   rootless: True
-  # optimization
-  optimization: 0
-  # warnings
-  warnings: -Wall
-  # entflag
-  entflag: -S
-  # entfile
-  entfile: ''
   # deb compression (gzip, xz, bzip)
   compression: xz
   # architectures
@@ -39,6 +27,18 @@ modules:
   types:
     # tweak
     tweak:
+      # cflags
+      cflags: ''
+      # swiftflags
+      swiftflags: ''
+      # optimization
+      optimization: 0
+      # warnings
+      warnings: -Wall
+      # entflag
+      entflag: -S
+      # entfile
+      entfile: ''
       # filter
       filter:
         bundles:
@@ -47,6 +47,8 @@ modules:
       useArc: True
       # only compile changed by default
       onlyCompileChanged: True
+      # bridging headers
+      bridgingHeaders: []
       # frameworks
       frameworks:
         - CoreFoundation
@@ -59,10 +61,24 @@ modules:
         - objc
     # tool
     tool:
+      # cflags
+      cflags: ''
+      # swiftflags
+      swiftflags: ''
+      # optimization
+      optimization: 0
+      # warnings
+      warnings: -Wall
+      # entflag
+      entflag: -S
+      # entfile
+      entfile: ''
       # use arc by default
       useArc: True
       # only compile changed by default
       onlyCompileChanged: False
+      # bridging headers
+      bridgingHeaders: []
       # frameworks
       frameworks:
         - CoreFoundation

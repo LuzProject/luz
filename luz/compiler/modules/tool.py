@@ -112,7 +112,7 @@ class Tool(Module):
         try:
             # run ldid
             check_output(
-                f'{self.luzbuild.ldid} {self.luzbuild.entflag}{self.luzbuild.entfile} {self.dir}/bin/{self.name}', shell=True)
+                f'{self.luzbuild.ldid} {self.entflag}{self.entfile} {self.dir}/bin/{self.name}', shell=True)
         except:
             return f'An error occured when trying codesign "{self.dir}/bin/{self.name}" for module "{self.name}".'
         
@@ -136,7 +136,7 @@ class Tool(Module):
                     swift_strings.append(str(file))
                 
                 # define build flags
-                build_flags = [f'-sdk {self.luzbuild.sdk}', self.include, self.luzbuild.swift_flags]
+                build_flags = [f'-sdk {self.luzbuild.sdk}', self.include, self.library_dirs, self.libraries, self.frameworks, self.private_frameworks, self.swift_flags, self.bridging_headers]
                 out_name = f'{self.dir}/obj/{self.name}/{resolve_path("".join(swift_strings)).name}'
                 # format platform
                 platform = 'ios' if self.luzbuild.platform == 'iphoneos' else self.luzbuild.platform
@@ -152,7 +152,7 @@ class Tool(Module):
                     c_strings.append(str(file))
                 out_name = f'{self.dir}/obj/{self.name}/{resolve_path("".join(c_strings)).name}'
                 build_flags = ['-fobjc-arc' if self.arc else '',
-                               f'-isysroot {self.luzbuild.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.luzbuild.archs_formatted, self.include, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', self.luzbuild.c_flags]
+                               f'-isysroot {self.luzbuild.sdk}', self.warnings, f'-O{self.optimization}', self.luzbuild.archs_formatted, self.include, self.library_dirs, self.libraries, self.frameworks, self.private_frameworks, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', self.c_flags]
                 # compile with clang using build flags
                 self.luzbuild.c_compiler.compile(c, out_name, build_flags)
             

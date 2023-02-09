@@ -35,6 +35,24 @@ class Module:
         # type
         self.type = get_from_cfg(luzbuild, f'modules.{key}.type', 'modules.defaultType')
 
+        # c_flags
+        self.c_flags = get_from_cfg(luzbuild, f'modules.{key}.cflags', f'modules.types.{self.type}.cflags')
+
+        # swift_flags
+        self.swift_flags = get_from_cfg(luzbuild, f'modules.{key}.swiftflags', f'modules.types.{self.type}.swiftflags')
+
+        # optimization
+        self.optimization = get_from_cfg(luzbuild, f'modules.{key}.optimization', f'modules.types.{self.type}.optimization')
+
+        # warnings
+        self.warnings = get_from_cfg(luzbuild, f'modules.{key}.warnings', f'modules.types.{self.type}.warnings')
+
+        # entitlement flag
+        self.entflag = get_from_cfg(luzbuild, f'modules.{key}.entflag', f'modules.types.{self.type}.entflag')
+
+        # entitlement file
+        self.entfile = get_from_cfg(luzbuild, f'modules.{key}.entfile', f'modules.types.{self.type}.entfile')
+
         # process
         self.filter = get_from_cfg(luzbuild, f'modules.{key}.filter', f'modules.types.{self.type}.filter')
         
@@ -43,6 +61,9 @@ class Module:
 
         # name
         self.name = key
+
+        # bridging headers
+        self.bridging_headers = ''
         
         # frameworks
         self.frameworks = ''
@@ -71,9 +92,20 @@ class Module:
             exit(1)
 
         # define default values
+        bridging_headersD = list(get_from_cfg(luzbuild, f'modules.{key}.bridgingHeaders', f'modules.types.{self.type}.bridgingHeaders'))
         frameworksD = list(get_from_default(luzbuild, f'modules.types.{self.type}.frameworks'))
         private_frameworksD = list(get_from_default(luzbuild, f'modules.types.{self.type}.private_frameworks'))
         librariesD = list(get_from_default(luzbuild, f'modules.types.{self.type}.libraries'))
+
+        # add bridging headers
+        bridging_headers = get_safe(module, 'bridging_headers', [])
+        # default frameworks first
+        if bridging_headersD != []:
+            for bridging_header in bridging_headers:
+                self.bridging_headers += f' -import-objc-header {bridging_header}'
+        if bridging_headers != []:
+            for bridging_header in bridging_headers:
+                self.bridging_headers += f' -import-objc-header {bridging_header}'
 
         # add module frameworks
         frameworks = get_safe(module, 'frameworks', [])

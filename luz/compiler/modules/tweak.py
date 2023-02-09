@@ -117,7 +117,7 @@ class Tweak(Module):
         
         try:
             # run ldid
-            check_output(f'{self.luzbuild.ldid} {self.luzbuild.entflag}{self.luzbuild.entfile} {self.dir}/dylib/{self.name}.dylib', shell=True)
+            check_output(f'{self.luzbuild.ldid} {self.entflag}{self.entfile} {self.dir}/dylib/{self.name}.dylib', shell=True)
         except:
             return f'An error occured when trying to codesign "{self.dir}/dylib/{self.name}.dylib". ({self.name})'
         
@@ -161,8 +161,7 @@ class Tweak(Module):
                     swift_strings.append(str(file))
 
                 # define build flags
-                build_flags = [f'-sdk {self.luzbuild.sdk}',
-                               self.include, self.luzbuild.swift_flags, '-emit-library', f'-module-name {self.name}']
+                build_flags = [f'-sdk {self.luzbuild.sdk}', self.include, self.library_dirs, self.libraries, self.frameworks, self.private_frameworks,  self.swift_flags, '-emit-library', f'-module-name {self.name}', self.bridging_headers]
                 out_name = f'{self.dir}/obj/{self.name}/{resolve_path("".join(swift_strings)).name}'
                 # format platform
                 platform = 'ios' if self.luzbuild.platform == 'iphoneos' else self.luzbuild.platform
@@ -179,15 +178,11 @@ class Tweak(Module):
                     c_strings.append(str(file))
                 out_name = f'{self.dir}/obj/{self.name}/{resolve_path("".join(c_strings)).name}.dylib'
                 build_flags = ['-fobjc-arc' if self.arc else '',
-                               f'-isysroot {self.luzbuild.sdk}', self.luzbuild.warnings, f'-O{self.luzbuild.optimization}', self.luzbuild.archs_formatted, self.include, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', '-dynamiclib', self.luzbuild.c_flags]
+                               f'-isysroot {self.luzbuild.sdk}', self.warnings, f'-O{self.optimization}', self.luzbuild.archs_formatted, self.include, self.library_dirs, self.libraries, self.frameworks, self.private_frameworks, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', '-dynamiclib', self.c_flags]
                 # compile with clang using build flags
                 self.luzbuild.c_compiler.compile(c, out_name, build_flags)
 
-        except Exception as e:
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            print(exc_type, fname, exc_tb.tb_lineno)
-            print(e)
+        except:
             return f'An error occured when attempting to compile for module "{self.name}".'
             
             

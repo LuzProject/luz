@@ -94,29 +94,11 @@ class LuzBuild:
         # cc
         self.cc = self.__get('cc', 'meta.cc')
         
-        # c_flags
-        self.c_flags = self.__get('c_flags', 'meta.cflags')
-        
         # swiftc
         self.swift = self.__get('swift', 'meta.swiftc')
         
-        # swift_flags
-        self.swift_flags = self.__get('swift_flags', 'meta.swiftflags')
-        
         # rootless
         self.rootless = self.__get('rootless', 'meta.rootless')
-        
-        # optimization
-        self.optimization = self.__get('optimization', 'meta.optimization')
-        
-        # warnings
-        self.warnings = self.__get('warnings', 'meta.warnings')
-        
-        # entitlement flag
-        self.entflag = self.__get('entflag', 'meta.entflag')
-        
-        # entitlement file
-        self.entfile = self.__get('entfile', 'meta.entfile')
                 
         # compression
         self.compression = get_from_cfg(self, 'meta.compression')
