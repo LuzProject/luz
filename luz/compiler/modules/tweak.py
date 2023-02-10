@@ -160,7 +160,7 @@ class Tweak(Module):
                     out_name = f'{self.dir}/obj/{self.name}/{arch}/{file.name}-{self.now}'
                     # arch
                     arch_formatted = f'-target {arch}-apple-{platform}{self.luzbuild.min_vers}'
-                    # compile with swiftc using build flags
+                    # compile with swift using build flags
                     self.luzbuild.swift_compiler.compile([file] + files_minus_to_compile, outfile=out_name+'.o', args=build_flags+[arch_formatted, f'-emit-module-path {out_name}.swiftmodule', '-primary-file'])
             else:
                 for arch in self.luzbuild.archs:

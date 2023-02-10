@@ -4,7 +4,7 @@ from json import loads
 from multiprocessing.pool import ThreadPool
 from os import makedirs
 from pathlib import Path
-from pyclang import CCompiler, SwiftCompiler
+from pyclang import CCompiler, swiftompiler
 from pydeb import Pack
 from shutil import copytree, rmtree
 from subprocess import getoutput
@@ -94,8 +94,8 @@ class LuzBuild:
         # cc
         self.cc = self.__get('cc', 'meta.cc')
         
-        # swiftc
-        self.swift = self.__get('swift', 'meta.swiftc')
+        # swift
+        self.swift = self.__get('swift', 'meta.swift')
         
         # rootless
         self.rootless = self.__get('rootless', 'meta.rootless')
@@ -233,7 +233,7 @@ class LuzBuild:
                         if self.swift is None:
                             error('Swift compiler not found.')
                             exit(1)
-                        self.swift_compiler = SwiftCompiler().set_compiler(self.swift)
+                        self.swift_compiler = swiftompiler().set_compiler(self.swift)
                 # assign module
                 self.modules[m] = assign_module(v, m, self)
         elif self.modules is None or self.modules == {}:
