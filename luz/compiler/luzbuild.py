@@ -105,11 +105,6 @@ class LuzBuild:
         
         # archs
         self.archs = self.__get('archs', 'meta.archs')
-        
-        self.archs_formatted = ''
-
-        if self.archs != None:
-            for arch in self.archs: self.archs_formatted += f' -arch {arch}'
             
         # platform
         self.platform = self.__get('platform', 'meta.platform')

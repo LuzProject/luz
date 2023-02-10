@@ -6,7 +6,7 @@ meta:
   # default cc
   cc: clang
   # swift
-  swiftc: swiftc
+  swiftc: swift
   # rootless
   rootless: True
   # deb compression (gzip, xz, bzip)

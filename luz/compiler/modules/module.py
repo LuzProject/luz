@@ -76,6 +76,13 @@ class Module:
         
         # library files dir
         self.library_dirs = f'-L{clone_libraries(luzbuild)}'
+
+        files = module.get('files') if type(module.get(
+            'files')) is list else [module.get('files')]
+        
+        # add swift libs
+        if '.swift' in ' '.join(files):
+            self.library_dirs += ' -L/usr/lib/swift'
         
         # include
         self.include = f'-I{clone_headers(luzbuild)}'
