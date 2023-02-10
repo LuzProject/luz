@@ -136,7 +136,7 @@ class Tool(Module):
         
         :param str file: The file to compile.
         """
-        files_minus_to_compile = list(filter(lambda x: x != file, self.files))
+        files_minus_to_compile = list(filter(lambda x: x != file and str(x).endswith('.swift'), self.files))
         # compile file
         try:
             if str(file).endswith('.swift'):

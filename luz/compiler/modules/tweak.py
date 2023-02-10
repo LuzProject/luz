@@ -147,7 +147,7 @@ class Tweak(Module):
         :param str file: The file to compile.
         """
         file = list(filter(lambda x: x == file.get('new_path') or x == file.get('path'), self.files_paths))[0]
-        files_minus_to_compile = list(filter(lambda x: x != file, self.files_paths))
+        files_minus_to_compile = list(filter(lambda x: x != file and str(x).endswith('.swift'), self.files_paths))
         # compile file
         try:
             if str(file).endswith('.swift'):
