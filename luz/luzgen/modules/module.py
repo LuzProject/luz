@@ -1,5 +1,6 @@
 # module imports
-from os import makedirs
+from os import makedirs, getuid
+from pwd import getpwuid
 from pathlib import Path
 from yaml import dump, safe_load
 
@@ -20,7 +21,7 @@ class Module:
         self.control['id'] = self.ask_for('id')
         self.control['name'] = self.ask_for('name', self.control['id'])
         self.control['version'] = self.ask_for('version', '1.0.0')
-        self.control['maintainer'] = self.ask_for('maintainer', dsc='Who')
+        self.control['maintainer'] = self.ask_for('maintainer', getpwuid(getuid())[0], dsc='Who')
         self.control['author'] = self.ask_for('author', self.control['maintainer'], dsc='Who')
         self.control['depends'] = self.ask_for('dependencies', 'mobilesubstrate', dsc1='are')
         self.control['architecture'] = self.ask_for('architecture', 'iphoneos-arm64')

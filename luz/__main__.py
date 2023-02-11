@@ -32,20 +32,22 @@ def main():
     if args.command is None:
         error('Please specify an operation.')
         exit(1)
-
-    if args.command == 'build':
-        if not resolve_path('LuzBuild').exists():
-            error('Could not find LuzBuild file in current directory.')
+    try:
+        if args.command == 'build':
+            if not resolve_path('LuzBuild').exists():
+                error('Could not find LuzBuild file in current directory.')
+                exit(1)
+            LuzBuild(args.clean).build_and_pack()
+        elif args.command == 'gen':
+            if args.type is None:
+                args.type = ask('What type of project would you like to generate? (tool/tweak) (enter for "tweak")')
+                if args.type == '':
+                    args.type = 'tweak'
+            assign_module(args.type)
+        else:
+            error(f'Unknown command "{args.command}".')
             exit(1)
-        LuzBuild(args.clean).build_and_pack()
-    elif args.command == 'gen':
-        if args.type is None:
-            args.type = ask('What type of project would you like to generate? (tool/tweak) (enter for "tweak")')
-            if args.type == '':
-                args.type = 'tweak'
-        assign_module(args.type)
-    else:
-        error(f'Unknown command "{args.command}".')
+    except:
         exit(1)
 
     
