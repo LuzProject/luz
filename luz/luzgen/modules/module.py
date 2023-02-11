@@ -1,7 +1,7 @@
 # module imports
 from os import makedirs
 from pathlib import Path
-from yaml import dump
+from yaml import dump, safe_load
 
 # local imports
 from ...common.logger import ask, error
@@ -34,6 +34,21 @@ class Module:
         
         :param Path path: The path to write to.
         """
+        # check if luzbuild currently exists
+        if resolve_path('LuzBuild').exists():
+            val = ask(f'A LuzBuild was found in the current working directory. Would you like to add this module as a submodule? (y/n)')
+            if val.startswith('y'):
+                # add subproject
+                luzbuild = None
+                # read and add subproject
+                with open('LuzBuild', 'r') as f:
+                    luzbuild = safe_load(f)
+                    if luzbuild['submodules'] is None: luzbuild['submodules'] = []
+                    luzbuild['submodules'].append(str(path))
+                # dump yaml
+                with open('LuzBuild', 'w') as f:
+                    dump(luzbuild, f)
+        # resolve path
         path = resolve_path(f'{path}/LuzBuild')
         # make directory
         makedirs(path.parent, exist_ok=True)
