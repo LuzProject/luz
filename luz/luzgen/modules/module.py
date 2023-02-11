@@ -6,11 +6,22 @@ from yaml import dump, safe_load
 
 # local imports
 from ...common.logger import ask, error
+from ...common.tar import TAR
 from ...common.utils import resolve_path
 
 
 class Module:
-    def __init__(self):
+    def __init__(self, module_type: str, src: str):
+        # type
+        self.type = module_type
+        self.src = src
+
+        # tar
+        self.tar = TAR(algorithm='gzip')
+
+        # templates_dir
+        self.template_path = str(resolve_path(resolve_path(__file__).absolute()).parent.parent) + f'/templates/{self.type}s/{self.src}.tar.gz'
+
         # dict to make YAML
         self.dict = {}
         
@@ -51,8 +62,8 @@ class Module:
                     dump(luzbuild, f)
         # resolve path
         path = resolve_path(f'{path}/LuzBuild')
-        # make directory
-        makedirs(path.parent, exist_ok=True)
+        # extract archive to directory
+        self.tar.decompress_archive(self.template_path, path.parent)
         # dump yaml
         with open(path, 'w') as f:
             dump(self.dict, f)

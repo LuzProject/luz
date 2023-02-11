@@ -6,10 +6,26 @@ from .module import Module
 
 class Tool(Module):
     def __init__(self):
-        # init super class
-        super().__init__()
         # type
         self.type = 'tool'
+        # valid source types
+        self.VALID = ['objc', 'c', 'asm', 'objcpp', 'swift']
+        # srctype
+        self.srctype = self.__ask_for('source type', 'objc').lower()
+        if self.srctype not in self.VALID:
+            error(f'Invalid source type: {self.srctype}. Valid types: {", ".join(self.VALID)}')
+            exit(1)
+
+        # init super class
+        super().__init__(self.type, self.srctype)
+
+        # calculate ending
+        if self.srctype == 'objc': self.ending = '.m'
+        elif self.srctype == 'c': self.ending = '.c'
+        elif self.srctype == 'asm': self.ending = '.s'
+        elif self.srctype == 'objcpp': self.ending = '.mm'
+        elif self.srctype == 'swift': self.ending = '.swift'
+
         # get keys
         self.name = self.__ask_for('name')
         # add values to dict
