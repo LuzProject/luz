@@ -4,7 +4,7 @@ from json import loads
 from multiprocessing.pool import ThreadPool
 from os import makedirs
 from pathlib import Path
-from pyclang import CCompiler, swiftompiler
+from pyclang import CCompiler, SwiftCompiler
 from pydeb import Pack
 from shutil import copytree, rmtree
 from subprocess import getoutput
@@ -233,7 +233,7 @@ class LuzBuild:
                         if self.swift is None:
                             error('Swift compiler not found.')
                             exit(1)
-                        self.swift_compiler = swiftompiler().set_compiler(self.swift)
+                        self.swift_compiler = SwiftCompiler().set_compiler(self.swift)
                 # assign module
                 self.modules[m] = assign_module(v, m, self)
         elif self.modules is None or self.modules == {}:
@@ -355,22 +355,23 @@ class LuzBuild:
             compile_results = self.pool.map(lambda x: x.compile(), self.modules.values())
             for result in compile_results:
                 if result is not None:
-                    error(result)
-                    exit(1)
+                    return result
         
         # compile submodules
         if self.submodules != []:
             compile_results = self.pool.map(lambda x: x.build(), self.submodules)
             for result in compile_results:
                 if result is not None:
-                    error(result)
-                    exit(1)
+                    return result
                     
         
     def build_and_pack(self):
         """Build and pack the project."""
         # build
-        self.build()
+        build_results = self.build()
+        if build_results is not None:
+            error(build_results)
+            exit(1)
         # make staging dirs
         if not resolve_path(f'{self.dir}/_/DEBIAN').exists():
             makedirs(f'{self.dir}/_/DEBIAN')

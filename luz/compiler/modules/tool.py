@@ -160,8 +160,7 @@ class Tool(Module):
                     # compile with clang using build flags
                     self.luzbuild.c_compiler.compile(file, out_name, build_flags)
             
-        except Exception as e:
-            print(e)
+        except:
             return f'An error occured when attempting to compile for module "{self.name}".'
 
 
