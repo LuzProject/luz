@@ -32,6 +32,7 @@ def main():
     if args.command is None:
         error('Please specify an operation.')
         exit(1)
+
     try:
         if args.command == 'build':
             if not resolve_path('LuzBuild').exists():

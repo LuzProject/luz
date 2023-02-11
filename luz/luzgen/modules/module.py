@@ -24,21 +24,34 @@ class Module:
 
         # dict to make YAML
         self.dict = {}
+
+        # submodule
+        self.submodule = False
+
+        # check if luzbuild currently exists
+        if resolve_path('LuzBuild').exists():
+            val = ask(f'A LuzBuild was found in the current working directory. Would you like to add this module as a submodule? (y/n)')
+            if val == '': val = 'n'
+            if val.startswith('y'):
+                self.submodule = True
         
-        # init control
-        self.control = {}
+        self.control = None
         
-        # ask for control values
-        self.control['id'] = self.ask_for('id')
-        self.control['name'] = self.ask_for('name', self.control['id'])
-        self.control['version'] = self.ask_for('version', '1.0.0')
-        self.control['maintainer'] = self.ask_for('maintainer', getpwuid(getuid())[0], dsc='Who')
-        self.control['author'] = self.ask_for('author', self.control['maintainer'], dsc='Who')
-        self.control['depends'] = self.ask_for('dependencies', 'mobilesubstrate', dsc1='are')
-        self.control['architecture'] = self.ask_for('architecture', 'iphoneos-arm64')
-        
-        # add control to dict
-        self.dict['control'] = self.control
+        if not self.submodule:
+            # init control
+            self.control = {}
+            
+            # ask for control values
+            self.control['id'] = self.ask_for('id')
+            self.control['name'] = self.ask_for('name', self.control['id'])
+            self.control['version'] = self.ask_for('version', '1.0.0')
+            self.control['author'] = self.ask_for('author', getpwuid(getuid())[0], dsc='Who')
+            self.control['maintainer'] = self.control['author']
+            self.control['depends'] = self.ask_for('dependencies', 'mobilesubstrate', dsc1='are')
+            self.control['architecture'] = self.ask_for('architecture', 'iphoneos-arm64')
+            
+            # add control to dict
+            self.dict['control'] = self.control
         
     
     def write_to_file(self, path: Path = None) -> None:
@@ -46,20 +59,17 @@ class Module:
         
         :param Path path: The path to write to.
         """
-        # check if luzbuild currently exists
-        if resolve_path('LuzBuild').exists():
-            val = ask(f'A LuzBuild was found in the current working directory. Would you like to add this module as a submodule? (y/n)')
-            if val.startswith('y'):
-                # add subproject
-                luzbuild = None
-                # read and add subproject
-                with open('LuzBuild', 'r') as f:
-                    luzbuild = safe_load(f)
-                    if luzbuild['submodules'] is None: luzbuild['submodules'] = []
-                    luzbuild['submodules'].append(str(path))
-                # dump yaml
-                with open('LuzBuild', 'w') as f:
-                    dump(luzbuild, f)
+        if self.submodule:
+            # add subproject
+            luzbuild = None
+            # read and add subproject
+            with open('LuzBuild', 'r') as f:
+                luzbuild = safe_load(f)
+                if 'submodules' not in luzbuild.keys(): luzbuild['submodules'] = []
+                luzbuild['submodules'].append(str(path))
+            # dump yaml
+            with open('LuzBuild', 'w') as f:
+                dump(luzbuild, f)
         # resolve path
         path = resolve_path(f'{path}/LuzBuild')
         # extract archive to directory

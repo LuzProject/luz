@@ -27,9 +27,6 @@ class Tweak(Module):
         elif self.srctype == 'objcpp': self.ending = '.mm'
         elif self.srctype == 'swift': self.ending = '.swift'
 
-        # archive
-        self.archive = self.templates_dir + 'tweaks/' + self.srctype + '.tar.gz'
-
         # get keys
         self.name = self.__ask_for('name')
 
@@ -37,10 +34,10 @@ class Tweak(Module):
         self.filter = self.__ask_for('executable filter', 'com.apple.SpringBoard')
 
         # add values to dict
-        self.dict.update({'modules': {self.name: {'files': [f'Sources/Tweak{self.ending}'], 'filter': {'bundles': [self.filter]}}}})
+        self.dict.update({'modules': {self.name: {'type': 'tweak', 'files': [f'Sources/Tweak{self.ending}'], 'filter': {'bundles': [self.filter]}}}})
 
         # folder
-        folder = resolve_path(self.__ask_for('folder for project', self.control['name']))
+        folder = resolve_path(self.__ask_for('project folder', self.control['name'] if self.control is not None else self.name))
 
         # write to yaml
         self.write_to_file(folder)
