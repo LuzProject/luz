@@ -115,15 +115,21 @@ class Tweak(Module):
         self.log_stdout(f'Linking compiled files to "{self.name}.dylib"...')
 
         for arch in self.luzbuild.archs:
-            # define compiler flags
-            build_flags = ['-fobjc-arc' if self.arc else '',
-                           f'-isysroot {self.luzbuild.sdk}', self.warnings, f'-O{self.optimization}', f'-arch {arch}', self.include, self.library_dirs, self.libraries, self.frameworks, self.private_frameworks, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', '-dynamiclib', self.c_flags]
-            self.luzbuild.c_compiler.compile(resolve_path(
-                f'{self.dir}/obj/{self.name}/{arch}/*.o'), outfile=f'{self.dir}/obj/{self.name}/{arch}/{self.name}.dylib', args=build_flags)
+            try:
+                # define compiler flags
+                build_flags = ['-fobjc-arc' if self.arc else '',
+                            f'-isysroot {self.luzbuild.sdk}', self.warnings, f'-O{self.optimization}', f'-arch {arch}', self.include, self.library_dirs, self.libraries, self.frameworks, self.private_frameworks, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', '-dynamiclib', self.c_flags]
+                self.luzbuild.c_compiler.compile(resolve_path(
+                    f'{self.dir}/obj/{self.name}/{arch}/*.o'), outfile=f'{self.dir}/obj/{self.name}/{arch}/{self.name}.dylib', args=build_flags)
+            except:
+                return f'An error occured when trying to link files for module "{self.name}" for architecture "{arch}".'
 
         # link
-        check_output(
-            f'{self.luzbuild.lipo} -create -output {self.dir}/dylib/{self.name}.dylib {self.dir}/obj/{self.name}/*/{self.name}.dylib', shell=True)
+        try:
+            check_output(
+                f'{self.luzbuild.lipo} -create -output {self.dir}/dylib/{self.name}.dylib {self.dir}/obj/{self.name}/*/{self.name}.dylib', shell=True)
+        except:
+            return f'An error occured when trying to lipo files for module "{self.name}".'
         
         try:
             # fix rpath
