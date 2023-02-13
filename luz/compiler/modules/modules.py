@@ -2,6 +2,7 @@
 from ...common.logger import error
 from .tool import Tool
 from .tweak import Tweak
+from .prefs import Preferences
 
 
 def assign_module(module: dict, key: str, luzbuild):
@@ -18,6 +19,8 @@ def assign_module(module: dict, key: str, luzbuild):
         return Tool(**args)
     elif module.get('type') == 'tweak':
         return Tweak(**args)
+    elif module.get('type') == 'preferences':
+        return Preferences(**args)
     else:
         error(f'Unknown module type: {module.get("type")}')
         exit(1)

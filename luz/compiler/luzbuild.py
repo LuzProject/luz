@@ -343,6 +343,10 @@ class LuzBuild:
         # layout
         layout_path = resolve_path('layout')
         if layout_path.exists(): copytree(layout_path, f'{self.dir}/_', dirs_exist_ok=True)
+        # submodule layout paths
+        for submodule in self.submodules:
+            layout_path = resolve_path(f'{submodule.path}/layout')
+            if layout_path.exists(): copytree(layout_path, f'{self.dir}/_', dirs_exist_ok=True)
         # pack
         Pack(resolve_path(f'{self.dir}/_'), algorithm=self.compression, outdir='packages/')
         remove_log_stdout('Packing deb file...', self.lock)

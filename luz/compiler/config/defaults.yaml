@@ -87,5 +87,36 @@ modules:
       private_frameworks: []
       # libraries
       libraries: []
+    # preferences
+    preferences:
+      # cflags
+      cflags: ''
+      # swiftflags
+      swiftflags: ''
+      # optimization
+      optimization: 0
+      # warnings
+      warnings: -Wall
+      # entflag
+      entflag: -S
+      # entfile
+      entfile: ''
+      # use arc by default
+      useArc: True
+      # only compile changed by default
+      onlyCompileChanged: False
+      # bridging headers
+      bridgingHeaders: []
+      # frameworks
+      frameworks:
+        - CoreFoundation
+        - Foundation
+      # private frameworks
+      private_frameworks:
+        - Preferences
+      # libraries
+      libraries:
+        - prefs
+        - objc
 
 submodules: []

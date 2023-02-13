@@ -30,7 +30,7 @@ class Tweak(Module):
         # directories
         self.obj_dir = resolve_path(f'{self.dir}/obj/{self.name}')
         self.logos_dir = resolve_path(f'{self.dir}/logos-processed')
-        self.dylib_dir = resolve_path(f'{self.dir}/dylib')
+        self.dylib_dir = resolve_path(f'{self.dir}/dylib/{self.name}')
         self.files = self.__hash_files(files)
     
 
@@ -109,7 +109,7 @@ class Tweak(Module):
     def __linker(self):
         """Use a linker on the compiled files."""
 
-        if len(self.files) == 0 and resolve_path(f'{self.dir}/dylib/{self.name}.dylib').exists():
+        if len(self.files) == 0 and resolve_path(f'{self.dir}/dylib/{self.name}/{self.name}.dylib').exists():
             return
 
         self.log_stdout(f'Linking compiled files to "{self.name}.dylib"...')
@@ -118,7 +118,7 @@ class Tweak(Module):
             try:
                 # define compiler flags
                 build_flags = ['-fobjc-arc' if self.arc else '',
-                            f'-isysroot {self.luzbuild.sdk}', self.warnings, f'-O{self.optimization}', f'-arch {arch}', self.include, self.library_dirs, self.libraries, self.frameworks, self.private_frameworks, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', '-dynamiclib', self.c_flags]
+                            f'-isysroot {self.luzbuild.sdk}', self.warnings, f'-O{self.optimization}', f'-arch {arch}', self.include, self.library_dirs, self.framework_dirs,self.libraries, self.frameworks, self.private_frameworks, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', '-dynamiclib', self.c_flags]
                 self.luzbuild.c_compiler.compile(resolve_path(
                     f'{self.dir}/obj/{self.name}/{arch}/*.o'), outfile=f'{self.dir}/obj/{self.name}/{arch}/{self.name}.dylib', args=build_flags)
             except:
@@ -127,22 +127,22 @@ class Tweak(Module):
         # link
         try:
             check_output(
-                f'{self.luzbuild.lipo} -create -output {self.dir}/dylib/{self.name}.dylib {self.dir}/obj/{self.name}/*/{self.name}.dylib', shell=True)
+                f'{self.luzbuild.lipo} -create -output {self.dir}/dylib/{self.name}/{self.name}.dylib {self.dir}/obj/{self.name}/*/{self.name}.dylib', shell=True)
         except:
             return f'An error occured when trying to lipo files for module "{self.name}".'
         
         try:
             # fix rpath
             rpath = '/var/jb/Library/Frameworks/' if self.luzbuild.rootless else '/Library/Frameworks'
-            check_output(f'{self.luzbuild.install_name_tool} -add_rpath {rpath} {self.dir}/dylib/{self.name}.dylib', shell=True)
+            check_output(f'{self.luzbuild.install_name_tool} -add_rpath {rpath} {self.dir}/dylib/{self.name}/{self.name}.dylib', shell=True)
         except:
-            return f'An error occured when trying to add rpath to "{self.dir}/dylib/{self.name}.dylib" for module "{self.name}".'
+            return f'An error occured when trying to add rpath to "{self.dir}/dylib/{self.name}/{self.name}.dylib" for module "{self.name}".'
         
         try:
             # run ldid
-            check_output(f'{self.luzbuild.ldid} {self.entflag}{self.entfile} {self.dir}/dylib/{self.name}.dylib', shell=True)
+            check_output(f'{self.luzbuild.ldid} {self.entflag}{self.entfile} {self.dir}/dylib/{self.name}/{self.name}.dylib', shell=True)
         except:
-            return f'An error occured when trying to codesign "{self.dir}/dylib/{self.name}.dylib". ({self.name})'
+            return f'An error occured when trying to codesign "{self.dir}/dylib/{self.name}/{self.name}.dylib". ({self.name})'
         
         self.remove_log_stdout(f'Linking compiled files to "{self.name}.dylib"...')
         
@@ -158,7 +158,7 @@ class Tweak(Module):
         try:
             if str(file).endswith('.swift'):
                 # define build flags
-                build_flags = ['-frontend', '-c', f'-module-name {self.name}', f'-sdk "{self.luzbuild.sdk}"', self.include, self.library_dirs, self.libraries, self.frameworks, self.private_frameworks, self.swift_flags, self.bridging_headers]
+                build_flags = ['-frontend', '-c', f'-module-name {self.name}', f'-sdk "{self.luzbuild.sdk}"', self.include, self.library_dirs, self.framework_dirs,self.libraries, self.frameworks, self.private_frameworks, self.swift_flags, self.bridging_headers]
                 # format platform
                 platform = 'ios' if self.luzbuild.platform == 'iphoneos' else self.luzbuild.platform
                 for arch in self.luzbuild.archs:
@@ -201,7 +201,7 @@ class Tweak(Module):
         # make proper dirs
         if not dirtomake.exists():
             makedirs(dirtomake, exist_ok=True)
-        copytree(f'{self.dir}/dylib', dirtocopy, dirs_exist_ok=True)
+        copytree(f'{self.dir}/dylib/{self.name}', dirtocopy, dirs_exist_ok=True)
         with open(f'{dirtocopy}/{self.name}.plist', 'w') as f:
             filtermsg = 'Filter = {\n'
             # bundle filters

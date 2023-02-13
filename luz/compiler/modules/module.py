@@ -77,6 +77,9 @@ class Module:
         # library files dir
         self.library_dirs = f'-L{clone_libraries(luzbuild)}'
 
+        # framework files dir
+        self.framework_dirs = f''
+
         files = module.get('files') if type(module.get(
             'files')) is list else [module.get('files')]
         
@@ -149,11 +152,14 @@ class Module:
         if include != []:
             for include in include:
                 self.include += f' -I{include}'
-
+        
         # xcode sdks dont include private frameworks
-        if self.private_frameworks != '' and self.sdk.startswith('/Applications'):
+        if self.private_frameworks != '' and str(self.luzbuild.sdk).startswith('/Applications'):
             error(f'No SDK specified. Xcode will be used, and private frameworks will not be found.')
             exit(1)
+        else:
+            self.framework_dirs = f'-F{self.luzbuild.sdk}/System/Library/PrivateFrameworks'
+
             
     def log(self, msg): log(msg, self.luzbuild.lock)
     def error(self, msg): error(msg, self.luzbuild.lock)
