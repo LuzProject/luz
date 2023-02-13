@@ -1,7 +1,11 @@
+# module imports
+from os import makedirs
+from subprocess import check_output
+
 # local imports
-from ..deps import clone_headers, clone_libraries
+from ..deps import clone_headers, clone_libraries, logos
 from ...common.logger import log, log_stdout, error, remove_log_stdout
-from ...common.utils import get_from_cfg, get_from_default, resolve_path
+from ...common.utils import get_from_cfg, get_from_default, get_hash, resolve_path
 
 
 def get_safe(module: dict, key: str, default: str = None) -> str:
@@ -34,6 +38,9 @@ class Module:
         
         # type
         self.type = get_from_cfg(luzbuild, f'modules.{key}.type', 'modules.defaultType')
+
+        # allow for 'prefs' module type
+        if self.type == 'prefs': self.type == 'preferences'
 
         # c_flags
         self.c_flags = get_from_cfg(luzbuild, f'modules.{key}.cflags', f'modules.types.{self.type}.cflags')
@@ -159,6 +166,159 @@ class Module:
             exit(1)
         else:
             self.framework_dirs = f'-F{self.luzbuild.sdk}/System/Library/PrivateFrameworks'
+    
+        # dirs
+        self.obj_dir = resolve_path(f'{self.dir}/obj/{self.name}')
+        self.dylib_dir = resolve_path(f'{self.dir}/dylib/{self.name}')
+        self.logos_dir = resolve_path(f'{self.dir}/logos-processed')
+        self.bin_dir = resolve_path(f'{self.dir}/bin/{self.name}')
+
+        # hash files
+        files = module.get('files') if type(module.get(
+            'files')) is list else [module.get('files')]
+        self.files = self.hash_files(files, 'executable' if self.type == 'tool' else 'dylib', True if self.type == 'tweak' else False)
+
+
+    def hash_files(self, files, compile_type: str = 'dylib', run_logos: bool = False):
+        """Hash source files, and check if their objects exist.
+        
+        :param list files: The list of files to hash.
+        :param str type: The type of files to hash.
+        """
+        # make dirs
+        if not self.obj_dir.exists():
+            makedirs(self.obj_dir, exist_ok=True)
+
+        files_to_compile = []
+
+        # changed files
+        changed = []
+        # new hashes
+        new_hashes = {}
+        # arch count
+        arch_count = len(self.luzbuild.archs)
+        # file path formatting
+        for file in files:
+            if not file.startswith('/'):
+                file = f'{self.luzbuild.path}/{file}'
+            file_path = resolve_path(file)
+            if type(file_path) is list:
+                for f in file_path:
+                    files_to_compile.append(f)
+            else:
+                files_to_compile.append(file_path)
+
+        # dylib
+        if compile_type == 'dylib':
+            if not self.dylib_dir.exists():
+                makedirs(self.dylib_dir, exist_ok=True)
+        # executable
+        elif compile_type == 'executable':
+            if not self.bin_dir.exists():
+                makedirs(self.bin_dir, exist_ok=True)
+        
+        # loop files
+        for file in files_to_compile:
+            # get file hash
+            fhash = self.luzbuild.hashlist.get(str(file))
+            new_hash = get_hash(file)
+            if fhash is None:
+                changed.append(file)
+            elif fhash == new_hash:
+                # variables
+                object_paths = resolve_path(
+                    f'{self.dir}/obj/{self.name}/*/{file.name}*-*.o')
+                if compile_type == 'dylib':
+                    dylib_paths = resolve_path(
+                        f'{self.dir}/obj/{self.name}/*/{self.name}.dylib')
+                elif compile_type == 'executable':
+                    dylib_paths = resolve_path(
+                        f'{self.dir}/obj/{self.name}/*/{self.name}')
+                if len(object_paths) < arch_count or len(dylib_paths) < arch_count:
+                    changed.append(file)
+            elif fhash != new_hash:
+                changed.append(file)
+            # add to new hashes
+            new_hashes[str(file)] = new_hash
+
+        # hashes
+        self.luzbuild.update_hashlist(new_hashes)
+
+        # files list
+        files = changed if self.only_compile_changed else files_to_compile
+
+        # handle files not needing compilation
+        if len(files) == 0:
+            self.log(f'Nothing to compile for module "{self.name}".')
+            return []
+
+        files = files_to_compile
+
+        # use logos files if necessary
+        if run_logos and filter(lambda x: '.x' in x, files) != []:
+            if not self.logos_dir.exists():
+                makedirs(self.logos_dir, exist_ok=True)
+            files = logos(self.luzbuild, files)
+
+        # return files
+        return files
+
+
+    def linker(self, compile_type: str = 'dylib'):
+        """Use a linker on the compiled files.
+        
+        :param str type: The type of files to link.
+        """
+        if compile_type == 'dylib':
+            out_name = resolve_path(f'{self.dir}/dylib/{self.name}/{self.name}.dylib')
+        else:
+            out_name = resolve_path(f'{self.dir}/bin/{self.name}/{self.name}')
+        
+        # check if linked files exist
+        if len(self.files) == 0 and out_name.exists():
+            return
+
+        # build args
+        build_flags = ['-fobjc-arc' if self.arc else '',
+                        f'-isysroot {self.luzbuild.sdk}', self.warnings, f'-O{self.optimization}', self.include, self.library_dirs, self.framework_dirs, self.libraries, self.frameworks, self.private_frameworks, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', self.c_flags]
+        # add dynamic lib to args
+        if compile_type == 'dylib': build_flags.append('-dynamiclib')
+        # compile for each arch
+        for arch in self.luzbuild.archs:
+            try:
+                self.luzbuild.c_compiler.compile(resolve_path(f'{self.dir}/obj/{self.name}/{arch}/*.o'), outfile=f'{self.dir}/obj/{self.name}/{arch}/{self.name}', args=build_flags + [f'-arch {arch}'])
+            except:
+                return f'An error occured when trying to link files for module "{self.name}" for architecture "{arch}".'
+
+        # link
+        try:
+            check_output(f'{self.luzbuild.lipo} -create -output {out_name} {self.dir}/obj/{self.name}/*/{self.name}', shell=True)
+        except:
+            return f'An error occured when trying to lipo files for module "{self.name}".'
+        
+        try:
+            # fix rpath
+            rpath = '/var/jb/Library/Frameworks/' if self.luzbuild.rootless else '/Library/Frameworks'
+            check_output(
+                f'{self.luzbuild.install_name_tool} -add_rpath {rpath} {out_name}', shell=True)
+        except:
+            return f'An error occured when trying to add rpath to "{out_name}" for module "{self.name}".'
+        
+        if compile_type == 'executable':
+            try:
+                check_output(
+                    f'{self.luzbuild.strip} {out_name}', shell=True)
+            except:
+                return f'An error occured when trying to strip "{out_name}" for module "{self.name}".'
+        
+        try:
+            # run ldid
+            check_output(
+                f'{self.luzbuild.ldid} {self.entflag}{self.entfile} {out_name}', shell=True)
+        except:
+            return f'An error occured when trying codesign "{out_name}" for module "{self.name}".'
+        
+        self.remove_log_stdout(f'Linking compiled files to {compile_type} "{out_name.name}"...')
 
             
     def log(self, msg): log(msg, self.luzbuild.lock)

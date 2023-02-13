@@ -1,5 +1,5 @@
 # module imports
-from os import makedirs, getuid
+from os import getuid
 from pwd import getpwuid
 from pathlib import Path
 from yaml import dump, safe_load
@@ -52,7 +52,7 @@ class Module:
             
             # add control to dict
             self.dict['control'] = self.control
-        
+
     
     def write_to_file(self, path: Path = None) -> None:
         """Write the dict to a file.

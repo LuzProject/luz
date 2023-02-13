@@ -1,13 +1,12 @@
 # module imports
 from os import makedirs
 from shutil import copytree, rmtree
-from subprocess import check_output
 from time import time
 
 # local imports
 from ...common.logger import warn
 from .module import Module
-from ...common.utils import get_hash, resolve_path
+from ...common.utils import resolve_path
 
 
 class Tool(Module):
@@ -22,119 +21,7 @@ class Tool(Module):
         self.now = time()
         # kwargs parsing
         module = kwargs.get('module')
-        # files
-        files = module.get('files') if type(module.get(
-            'files')) is list else [module.get('files')]
         super().__init__(module, kwargs.get('key'), kwargs.get('luzbuild'))
-        # bin directory
-        self.obj_dir = resolve_path(f'{self.dir}/obj/{self.name}')
-        self.bin_dir = resolve_path(f'{self.dir}/bin/{self.name}')
-        self.files = self.__hash_files(files)
-
-    def __hash_files(self, files: list) -> list:
-        """Hash the files of the module, and compare them to their old hashes.
-
-        :return: The list of changed files.
-        """
-        # make dirs
-        if not self.obj_dir.exists():
-            makedirs(self.obj_dir, exist_ok=True)
-        
-        if not self.bin_dir.exists():
-            makedirs(self.bin_dir, exist_ok=True)
-            
-        files_to_compile = []
-        
-        # file path formatting
-        for file in files:
-            if not file.startswith('/'): file = f'{self.luzbuild.path}/{file}'
-            file_path = resolve_path(file)
-            if type(file_path) is list:
-                for f in file_path:
-                    files_to_compile.append(f)
-            else:
-                files_to_compile.append(file_path)
-            
-        # changed
-        changed = []
-        # get hashes
-        new_hashes = {}
-        # arch count
-        arch_count = len(self.luzbuild.archs)
-        # loop files
-        for file in files_to_compile:
-            # get file hash
-            fhash = self.luzbuild.hashlist.get(str(file))
-            new_hash = get_hash(file)
-            if fhash is None: changed.append(file)
-            elif fhash == new_hash:
-                # variables
-                object_paths = resolve_path(f'{self.dir}/obj/{self.name}/*/{file.name}*-*.o')
-                dylib_paths = resolve_path(f'{self.dir}/obj/{self.name}/*/{self.name}')
-                if len(object_paths) < arch_count or len(dylib_paths) < arch_count:
-                    changed.append(file)
-            elif fhash != new_hash: changed.append(file)
-            # add to new hashes
-            new_hashes[str(file)] = new_hash
-
-        # write new hashes
-        self.luzbuild.update_hashlist(new_hashes)
-
-        # files list
-        files = changed if self.only_compile_changed else files_to_compile
-
-        # handle files not needing compilation
-        if len(files) == 0:
-            self.log(f'Nothing to compile for module "{self.name}".')
-            return []
-
-        # return files
-        return files
-
-    def __linker(self):
-        """Use a linker on the compiled files."""
-        if len(self.files) == 0 and resolve_path(f'{self.dir}/bin/{self.name}/{self.name}').exists():
-            return
-        
-        self.log_stdout(f'Linking compiled files to executable "{self.name}"...')
-        
-        for arch in self.luzbuild.archs:
-            try:
-                # define compiler flags
-                build_flags = ['-fobjc-arc' if self.arc else '',
-                            f'-isysroot {self.luzbuild.sdk}', self.warnings, f'-O{self.optimization}', f'-arch {arch}', self.include, self.library_dirs, self.framework_dirs,self.libraries, self.frameworks, self.private_frameworks, f'-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}', self.c_flags]
-                self.luzbuild.c_compiler.compile(resolve_path(f'{self.dir}/obj/{self.name}/{arch}/*.o'), outfile=f'{self.dir}/obj/{self.name}/{arch}/{self.name}', args=build_flags)
-            except:
-                return f'An error occured when trying to link files for module "{self.name}" for architecture "{arch}".'
-
-        # link
-        try:
-            check_output(f'{self.luzbuild.lipo} -create -output {self.dir}/bin/{self.name}/{self.name} {self.dir}/obj/{self.name}/*/{self.name}', shell=True)
-        except:
-            return f'An error occured when trying to lipo files for module "{self.name}".'
-        
-        try:
-            # fix rpath
-            rpath = '/var/jb/Library/Frameworks/' if self.luzbuild.rootless else '/Library/Frameworks'
-            check_output(
-                f'{self.luzbuild.install_name_tool} -add_rpath {rpath} {self.dir}/bin/{self.name}/{self.name}', shell=True)
-        except:
-            return f'An error occured when trying to add rpath to "{self.dir}/bin/{self.name}/{self.name}" for module "{self.name}".'
-        
-        try:
-            check_output(
-                f'{self.luzbuild.strip} {self.dir}/bin/{self.name}/{self.name}', shell=True)
-        except:
-            return f'An error occured when trying to strip "{self.dir}/bin/{self.name}/{self.name}" for module "{self.name}".'
-        
-        try:
-            # run ldid
-            check_output(
-                f'{self.luzbuild.ldid} {self.entflag}{self.entfile} {self.dir}/bin/{self.name}/{self.name}', shell=True)
-        except:
-            return f'An error occured when trying codesign "{self.dir}/bin/{self.name}/{self.name}" for module "{self.name}".'
-        
-        self.remove_log_stdout(f'Linking compiled files to executable "{self.name}"...')
             
 
     def __compile_tool_file(self, file) -> bool:
@@ -198,7 +85,7 @@ class Tool(Module):
             if result is not None:
                 return result
         # link files
-        linker_results = self.__linker()
+        linker_results = self.linker('executable')
         if linker_results is not None:
             return linker_results
         # stage deb
