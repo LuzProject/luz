@@ -29,7 +29,7 @@ class Tool(Module):
         # get keys
         self.name = self.__ask_for('name')
         # add values to dict
-        self.dict.update({'modules': {self.name: {'type': 'tool', 'files': [f'Sources/Tool{self.ending}']}}})
+        self.dict.update({'modules': {self.name: {'type': 'tool', 'files': [f'Sources/Tool{self.ending}' if self.srctype != 'swift' else f'Sources/main.swift']}}})
         # folder
         folder = resolve_path(self.__ask_for('folder for project', self.control['name'] if self.control is not None else self.name))
         # write to yaml

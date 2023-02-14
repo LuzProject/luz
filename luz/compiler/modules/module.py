@@ -92,7 +92,7 @@ class Module:
         
         # add swift libs
         if '.swift' in ' '.join(files):
-            self.library_dirs += ' -L/usr/lib/swift'
+            self.library_dirs += f' -L/usr/lib/swift -L{self.luzbuild.sdk}/usr/lib/swift'
         
         # include
         self.include = f'-I{clone_headers(luzbuild)}'
@@ -111,17 +111,19 @@ class Module:
         # define default values
         bridging_headersD = list(get_from_cfg(luzbuild, f'modules.{key}.bridgingHeaders', f'modules.types.{self.type}.bridgingHeaders'))
         frameworksD = list(get_from_default(luzbuild, f'modules.types.{self.type}.frameworks'))
-        private_frameworksD = list(get_from_default(luzbuild, f'modules.types.{self.type}.private_frameworks'))
+        private_frameworksD = list(get_from_default(luzbuild, f'modules.types.{self.type}.privateFrameworks'))
         librariesD = list(get_from_default(luzbuild, f'modules.types.{self.type}.libraries'))
 
         # add bridging headers
-        bridging_headers = get_safe(module, 'bridging_headers', [])
+        bridging_headers = get_safe(module, 'bridgingHeaders', [])
         # default frameworks first
         if bridging_headersD != []:
             for bridging_header in bridging_headers:
                 self.bridging_headers += f' -import-objc-header {bridging_header}'
         if bridging_headers != []:
             for bridging_header in bridging_headers:
+                if not bridging_header.startswith('/'):
+                    bridging_header = f'{self.luzbuild.path}/{bridging_header}'
                 self.bridging_headers += f' -import-objc-header {bridging_header}'
 
         # add module frameworks
@@ -135,7 +137,7 @@ class Module:
                 self.frameworks += f' -framework {framework}'
         
         # add module private frameworks
-        private_frameworks = get_safe(module, 'private_frameworks', [])
+        private_frameworks = get_safe(module, 'privateFrameworks', [])
         # default frameworks first
         if private_frameworksD != []:
             for framework in private_frameworksD:

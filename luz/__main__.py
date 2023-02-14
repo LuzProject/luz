@@ -41,15 +41,14 @@ def main():
             LuzBuild(args.clean).build_and_pack()
         elif args.command == 'gen':
             if args.type is None:
-                args.type = ask('What type of project would you like to generate? (tool/tweak) (enter for "tweak")')
+                args.type = ask('What type of project would you like to generate? (tool/tweak/preferences) (enter for "tweak")')
                 if args.type == '':
                     args.type = 'tweak'
             assign_module(args.type)
         else:
             error(f'Unknown command "{args.command}".')
             exit(1)
-    except Exception as e:
-        print(e)
+    except:
         exit(1)
 
     

@@ -34,7 +34,7 @@ class Preferences(Module):
             if str(file).endswith('.swift'):
                 # define build flags
                 build_flags = ['-frontend', '-c', f'-module-name {self.name}', f'-sdk "{self.luzbuild.sdk}"', self.include,
-                               self.library_dirs, self.framework_dirs,self.libraries, self.frameworks, self.private_frameworks, self.swift_flags, self.bridging_headers]
+                               self.library_dirs, self.framework_dirs, self.libraries, self.frameworks, self.private_frameworks, self.swift_flags, self.bridging_headers]
                 # format platform
                 platform = 'ios' if self.luzbuild.platform == 'iphoneos' else self.luzbuild.platform
                 for arch in self.luzbuild.archs:

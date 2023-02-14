@@ -54,7 +54,7 @@ modules:
         - CoreFoundation
         - Foundation
       # private frameworks
-      private_frameworks: []
+      privateFrameworks: []
       # libraries
       libraries:
         - substrate
@@ -84,7 +84,7 @@ modules:
         - CoreFoundation
         - Foundation
       # private frameworks
-      private_frameworks: []
+      privateFrameworks: []
       # libraries
       libraries: []
     # preferences
@@ -109,10 +109,11 @@ modules:
       bridgingHeaders: []
       # frameworks
       frameworks:
+        - UIKit
         - CoreFoundation
         - Foundation
       # private frameworks
-      private_frameworks:
+      privateFrameworks:
         - Preferences
       # libraries
       libraries:

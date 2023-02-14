@@ -20,7 +20,7 @@ class Module:
         self.tar = TAR(algorithm='gzip')
 
         # templates_dir
-        self.template_path = str(resolve_path(resolve_path(__file__).absolute()).parent.parent) + f'/templates/{self.type}s/{self.src}.tar.gz'
+        self.template_path = str(resolve_path(resolve_path(__file__).absolute()).parent.parent) + f'/templates/{self.type}/{self.src}.tar.gz'
 
         # dict to make YAML
         self.dict = {}
@@ -42,8 +42,8 @@ class Module:
             self.control = {}
             
             # ask for control values
-            self.control['id'] = self.ask_for('id')
-            self.control['name'] = self.ask_for('name', self.control['id'])
+            self.control['name'] = self.ask_for('name')
+            self.control['id'] = self.ask_for('bundle ID', f'com.yourcompany.{self.control["name"]}')
             self.control['version'] = self.ask_for('version', '1.0.0')
             self.control['author'] = self.ask_for('author', getpwuid(getuid())[0], dsc='Who')
             self.control['maintainer'] = self.control['author']
@@ -74,6 +74,8 @@ class Module:
         path = resolve_path(f'{path}/LuzBuild')
         # extract archive to directory
         self.tar.decompress_archive(self.template_path, path.parent)
+        # check for after_untar
+        if hasattr(self, 'after_untar'): self.after_untar()
         # dump yaml
         with open(path, 'w') as f:
             dump(self.dict, f)
