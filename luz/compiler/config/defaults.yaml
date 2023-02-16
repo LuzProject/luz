@@ -11,6 +11,8 @@ meta:
   rootless: True
   # deb compression (gzip, xz, bzip)
   compression: xz
+  # should pack
+  pack: True
   # architectures
   archs:
     - arm64

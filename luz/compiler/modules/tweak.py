@@ -131,4 +131,4 @@ class Tweak(Module):
         if linker_results is not None:
             return linker_results
         # stage deb
-        self.__stage()
+        if self.luzbuild.should_pack: self.__stage()

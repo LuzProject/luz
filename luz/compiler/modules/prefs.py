@@ -96,6 +96,7 @@ class Preferences(Module):
         if linker_results is not None:
             return linker_results
         # stage deb
-        stage_results = self.__stage()
-        if stage_results is not None:
-            return stage_results
+        if self.luzbuild.should_pack:
+            stage_results = self.__stage()
+            if stage_results is not None:
+                return stage_results

@@ -111,6 +111,9 @@ class LuzBuild:
         
         # min version
         self.min_vers = self.__get('min_vers', 'meta.minVers')
+
+        # should pack
+        self.should_pack = bool(self.__get('pack', 'meta.pack'))
             
         # storage dir
         self.storage = get_luz_storage()
@@ -290,7 +293,7 @@ class LuzBuild:
         value = self.luzbuild.get(key)
 
         # control assignments
-        if key == 'control':
+        if key == 'control' and self.should_pack:
             for c in value:
                 v = value.get(c)
                 c = str(c).lower()
@@ -376,13 +379,14 @@ class LuzBuild:
         if build_results is not None:
             error(build_results)
             exit(1)
-        # make staging dirs
-        if not resolve_path(f'{self.dir}/_/DEBIAN').exists():
-            makedirs(f'{self.dir}/_/DEBIAN')
-        # write control
-        with open(f'{self.dir}/_/DEBIAN/control', 'w') as f:
-            f.write(self.control_raw)
-        self.__pack()
+        if self.should_pack:
+            # make staging dirs
+            if not resolve_path(f'{self.dir}/_/DEBIAN').exists():
+                makedirs(f'{self.dir}/_/DEBIAN')
+            # write control
+            with open(f'{self.dir}/_/DEBIAN/control', 'w') as f:
+                f.write(self.control_raw)
+            self.__pack()
         with open(resolve_path(f'{self.dir}/hashlist.json'), 'w') as f:
             f.write(str(self.hashlist).replace("'", '"'))
 
