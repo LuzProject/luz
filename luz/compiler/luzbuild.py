@@ -47,8 +47,7 @@ class LuzBuild:
         
         # exit if failed
         if self.luzbuild is None or self.luzbuild == {}:
-            error('Failed to parse LuzBuild file.')
-            exit(1)
+            return self.__error_and_exit('Failed to parse luzbuild file.')
         
         # clean
         if clean:
@@ -113,7 +112,7 @@ class LuzBuild:
         self.min_vers = self.__get('min_vers', 'meta.minVers')
 
         # should pack
-        self.should_pack = bool(self.__get('pack', 'meta.pack'))
+        self.should_pack = bool(self.__get('should_pack', 'meta.pack'))
             
         # storage dir
         self.storage = get_luz_storage()
@@ -131,31 +130,27 @@ class LuzBuild:
         if self.prefix is not '':
             self.prefix = resolve_path(self.prefix)
             if not self.prefix.exists():
-                error('Specified prefix does not exist.')
-                exit(1)
+                return self.__error_and_exit('Specified prefix does not exist.')
         
         # get git
         self.git = cmd_in_path('git')
         if self.git is None:
-            error('Git is needed in order to use Luz.')
-            exit(1)
+            return self.__error_and_exit('Git is needed in order to use Luz.')
         
         # format cc with prefix
         if self.prefix is not '' and not resolve_path(self.cc).is_relative_to('/'):
             prefix_path = cmd_in_path(f'{self.prefix}/{self.cc}')
             if not prefix_path:
-                error(
+                return self.__error_and_exit(
                     f'C compiler "{self.cc}" not in prefix path.')
-                exit(1)
             self.cc = prefix_path
         
         # format swift with prefix
         if self.prefix is not '' and not resolve_path(self.swift).is_relative_to('/'):
             prefix_path = cmd_in_path(f'{self.prefix}/{self.swift}')
             if not prefix_path:
-                error(
+                return self.__error_and_exit(
                     f'Swift compiler "{self.swift}" not in prefix path.')
-                exit(1)
             self.swift = prefix_path
         
         # format install_name_tool with prefix
@@ -165,8 +160,7 @@ class LuzBuild:
             # fall back to path
             self.install_name_tool = cmd_in_path('install_name_tool')
             if self.install_name_tool is None:
-                error('Could not find install_name_tool.')
-                exit(1)
+                return self.__error_and_exit('Could not find install_name_tool.')
         
         # format ldid with prefix
         self.ldid = cmd_in_path(
@@ -175,8 +169,7 @@ class LuzBuild:
             # fall back to path
             self.ldid = cmd_in_path('ldid')
             if self.ldid is None:
-                error('Could not find ldid.')
-                exit(1)
+                return self.__error_and_exit('Could not find ldid.')
         
         # format ld with prefix
         self.ld = cmd_in_path(
@@ -185,8 +178,7 @@ class LuzBuild:
             # fall back to path
             self.ld = cmd_in_path('ld')
             if self.ld is None:
-                error('Could not find ld.')
-                exit(1)
+                return self.__error_and_exit('Could not find ld.')
         
         # format ldid with prefix
         self.strip = cmd_in_path(
@@ -195,8 +187,7 @@ class LuzBuild:
             # fall back to path
             self.strip = cmd_in_path('strip')
             if self.strip is None:
-                error('Could not find strip.')
-                exit(1)
+                return self.__error_and_exit('Could not find strip.')
                 
         # format lipo with prefix
         self.lipo = cmd_in_path(
@@ -205,8 +196,7 @@ class LuzBuild:
             # fall back to path
             self.lipo = cmd_in_path('lipo')
             if self.lipo is None:
-                error('Could not find lipo.')
-                exit(1)
+                return self.__error_and_exit('Could not find lipo.')
             
         # attempt to manually find an sdk
         if self.sdk == '': self.sdk = self.__get_sdk()
@@ -214,8 +204,7 @@ class LuzBuild:
             # ensure sdk exists
             self.sdk = resolve_path(self.sdk)
             if not self.sdk.exists():
-                error(f'Specified SDK path "{self.sdk}" does not exist.')
-                exit(1)
+                return self.__error_and_exit(f'Specified SDK path "{self.sdk}" does not exist.')
                 
         # parse modules
         if self.modules is not None:
@@ -234,15 +223,13 @@ class LuzBuild:
                     if type(self.swift) is not Path:
                         self.swift = cmd_in_path(self.swift)
                         if self.swift is None:
-                            error('Swift compiler not found.')
-                            exit(1)
+                            return self.__error_and_exit('Swift compiler not found.')
                         self.swift_compiler = SwiftCompiler().set_compiler(self.swift)
                 # assign module
                 self.modules[m] = assign_module(v, m, self)
         elif self.modules is None or self.modules == {}:
             if get_from_cfg(self, 'submodules') == []:
-                error('No modules found in LuzBuild file.')
-                exit(1)
+                return self.__error_and_exit('No modules found in LuzBuild file.')
 
         # parse luzbuild file
         self.pool.map(lambda x: self.__handle_key(x), self.luzbuild)
@@ -251,8 +238,7 @@ class LuzBuild:
         subproj_results = self.pool.map(lambda x: self.__handle_submodule(x), get_from_cfg(self, 'submodules'))
         for result in subproj_results:
             if result is not None:
-                error(result)
-                exit(1)
+                self.__error_and_exit(result)
 
     
     def update_hashlist(self, keys):
@@ -319,22 +305,31 @@ class LuzBuild:
                         # other values
                         else:
                             self.control_raw += f'{c.capitalize()}: {v}{end}'
+    
+
+    def __error_and_exit(self, error):
+        """Print an error and exit.
+        
+        :param str error: The error to print.
+        """
+        if self.to_inherit is not None:
+            error(error)
+            exit(1)
+        else:
+            return error
 
     
     def __get_sdk(self):
         """Get an SDK from Xcode using xcrun."""
         xcrun = cmd_in_path('xcrun')
         if xcrun is None:
-            error(
-                'Xcode does not appear to be installed. Please specify an SDK manually.')
-            exit(1)
+            return self.__error_and_exit('xcrun not found.')
         else:
             log_stdout('Finding an SDK...')
             sdkA = getoutput(
                 f'{xcrun} --show-sdk-path --sdk {self.platform}').split('\n')[-1]
             if sdkA == '' or not sdkA.startswith('/'):
-                error('Could not find an SDK. Please specify one manually.')
-                exit(1)
+                return self.__error_and_exit('Could not find an SDK. Please specify one manually.')
             remove_log_stdout('Finding an SDK...')
             self.sdk = sdkA
         return resolve_path(self.sdk)
@@ -370,15 +365,14 @@ class LuzBuild:
             for result in compile_results:
                 if result is not None:
                     return result
-                    
+
         
     def build_and_pack(self):
         """Build and pack the project."""
         # build
         build_results = self.build()
         if build_results is not None:
-            error(build_results)
-            exit(1)
+            self.__error_and_exit(build_results)
         if self.should_pack:
             # make staging dirs
             if not resolve_path(f'{self.dir}/_/DEBIAN').exists():

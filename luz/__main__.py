@@ -48,7 +48,8 @@ def main():
         else:
             error(f'Unknown command "{args.command}".')
             exit(1)
-    except:
+    except Exception as e:
+        error(f'An error occured: {e}')
         exit(1)
 
     
