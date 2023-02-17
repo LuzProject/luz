@@ -100,7 +100,7 @@ class LuzBuild:
         self.rootless = self.__get('rootless', 'meta.rootless')
                 
         # compression
-        self.compression = get_from_cfg(self, 'meta.compression')
+        self.compression = self.__get('compression', 'meta.compression')
         
         # archs
         self.archs = self.__get('archs', 'meta.archs')
@@ -313,10 +313,10 @@ class LuzBuild:
         :param str error: The error to print.
         """
         if self.to_inherit is not None:
+            return error
+        else:
             error(error)
             exit(1)
-        else:
-            return error
 
     
     def __get_sdk(self):

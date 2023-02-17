@@ -7,7 +7,9 @@ Installing
 
 Installing is incredibly simple::
 
-    pip3 install 'git+https://github.com/LuzProject/luz'
+    sudo python -c "$(curl -fsSL https://raw.githubusercontent.com/LuzProject/luz/main/install.py)"
+
+This will install the latest version of Luz to your system.
 
 Generation
 *********************
