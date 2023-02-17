@@ -14,12 +14,12 @@ def assign_module(module: dict, key: str, luzbuild):
     :return: The module object.
     """
     # args
-    args = {'module': module, 'key': key, 'luzbuild': luzbuild}
-    if module.get('type') == 'tool':
+    args = {"module": module, "key": key, "luzbuild": luzbuild}
+    if module.get("type") == "tool":
         return Tool(**args)
-    elif module.get('type') == 'tweak':
+    elif module.get("type") == "tweak":
         return Tweak(**args)
-    elif module.get('type') == 'preferences':
+    elif module.get("type") == "preferences":
         return Preferences(**args)
     else:
         error(f'Unknown module type: {module.get("type")}')

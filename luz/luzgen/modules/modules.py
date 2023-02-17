@@ -11,14 +11,14 @@ def assign_module(type: str):
     :param str type: The type of module.
     """
     # args
-    if type == 'tool':
+    if type == "tool":
         return Tool()
-    elif type == 'tweak':
+    elif type == "tweak":
         return Tweak()
-    elif type == 'prefs':
+    elif type == "prefs":
         return Preferences()
-    elif type == 'preferences':
+    elif type == "preferences":
         return Preferences()
     else:
-        error(f'Unknown module type: {type}')
+        error(f"Unknown module type: {type}")
         exit(1)
