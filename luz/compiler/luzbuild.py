@@ -307,15 +307,15 @@ class LuzBuild:
                             self.control_raw += f'{c.capitalize()}: {v}{end}'
     
 
-    def __error_and_exit(self, error):
+    def __error_and_exit(self, msg):
         """Print an error and exit.
         
-        :param str error: The error to print.
+        :param str msg: The error to print.
         """
         if self.to_inherit is not None:
-            return error
+            return msg
         else:
-            error(error)
+            error(msg)
             exit(1)
 
     
