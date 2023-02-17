@@ -287,6 +287,7 @@ class Module:
             self.frameworks,
             self.private_frameworks,
             f"-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}",
+            f'-DLUZ_PACKAGE_VERSION="{self.luzbuild.version}"',
             self.c_flags,
         ]
         # add dynamic lib to args
