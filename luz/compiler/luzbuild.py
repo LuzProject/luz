@@ -5,7 +5,7 @@ from multiprocessing.pool import ThreadPool
 from os import makedirs
 from pathlib import Path
 from pyclang import CCompiler, SwiftCompiler
-from pydeb import Pack
+from pydeb import Control, Pack
 from shutil import copytree, rmtree
 from subprocess import getoutput
 from threading import Lock
@@ -84,7 +84,12 @@ class LuzBuild:
         self.lock = Lock()
 
         # control
-        self.control_raw = ""
+        if self.to_inherit is not None:
+            self.control = getattr(self.to_inherit, "control")
+            self.control_raw = getattr(self.to_inherit, "control_raw")
+        else:
+            self.control = None
+            self.control_raw = ""
 
         # sdk
         self.sdk = self.__get("sdk", "meta.sdk")
@@ -235,6 +240,22 @@ class LuzBuild:
         for result in subproj_results:
             if result is not None:
                 self.__error_and_exit(result)
+
+        # read control if it doesn't exist
+        if self.control_raw == "":
+            control_path = resolve_path(f"{self.path}/control")
+            layout_control_path = resolve_path(f"{self.path}/layout/DEBIAN/control")
+            if control_path.exists():
+                with open(control_path, "r") as f:
+                    self.control_raw = f.read()
+            elif layout_control_path.exists():
+                with open(layout_control_path, "r") as f:
+                    self.control_raw = f.read()
+            else:
+                return self.__error_and_exit("No control file found, and package metadata was not declared in LuzBuild.")
+        # parse control
+        if self.control is None:
+            self.control = Control(self.control_raw)
 
     def update_hashlist(self, keys):
         """Update the hashlist with a list of keys."""
