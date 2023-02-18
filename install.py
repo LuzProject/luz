@@ -1,7 +1,6 @@
 # module imports
 from argparse import ArgumentParser
-from curses import wrapper
-from os import environ, getuid
+from os import environ, getuid, makedirs
 from pathlib import Path
 from platform import platform
 from pkg_resources import working_set
@@ -10,8 +9,11 @@ from subprocess import getoutput
 from typing import Union
 
 
-if getuid() != 0:
-    print("[INSTALLER] Please run this script as root.")
+platform_str = platform()
+
+
+if getuid() == 0:
+    print("[INSTALLER] Please don't run this script as root.")
     exit(1)
 
 
@@ -27,7 +29,11 @@ if not missing:
 
 def should_install_deps(win, nti):
     win.nodelay(True)
-    win.addstr('[INSTALLER] The following dependencies are missing: {}\n[INSTALLER] Press "y" to install them now.'.format(", ".join(nti)))
+    win.addstr(
+        '[INSTALLER] The following dependencies are missing: {}\n[INSTALLER] Press "y" to install them now.'.format(
+            ", ".join(nti)
+        )
+    )
     key = ""
     while 1:
         try:
@@ -88,37 +94,38 @@ def cmd_in_path(cmd: str) -> Union[None, Path]:
 PATH = resolve_path(f'{environ.get("HOME")}/.luz')
 
 
-# installer
-def check_for_deps() -> list:
-    DEPLIST = ["git", "ldid", "xz"]
-    need_to_install = []
-    for dep in DEPLIST:
-        if cmd_in_path(dep) is None:
-            need_to_install.append(dep)
-    return need_to_install
-
-
 def get_manager() -> str:
     if cmd_in_path("apt") is not None:
         return "apt"
-    elif cmd_in_path("brew") is not None:
-        return "brew"
     elif cmd_in_path("pacman") is not None:
         return "pacman"
     elif cmd_in_path("dnf") is not None:
         return "dnf"
-    elif cmd_in_path("yum") is not None:
-        return "yum"
+    elif cmd_in_path("zypper") is not None:
+        return "zypper"
+    elif cmd_in_path("port") is not None:
+        return "port"
+    elif cmd_in_path("brew") is not None:
+        return "brew"
     else:
         return ""
 
 
 def get_sdks():
     sdk_path = f"{PATH}/sdks"
-    print("[INSTALLER] Downloading iOS SDKs... (this may take a while)")
-    res = getoutput(
-        f'sudo --user "{environ.get("SUDO_USER")}" mkdir -p {sdk_path} && sudo --user "{environ.get("SUDO_USER")}" {cmd_in_path("git")} clone https://github.com/xybp888/iOS-SDKs.git {sdk_path}'
-    )
+    if (
+        not resolve_path(sdk_path).exists()
+        or len(resolve_path(f"{sdk_path}/*.sdk")) == 0
+    ):
+        print("[INSTALLER] iOS SDKs not found. Downloading...")
+        try:
+            makedirs(sdk_path, exist_ok=True)
+            res = getoutput(
+                f"curl -L https://api.github.com/repos/theos/sdks/tarball -o sdks.tar.gz && TMP=$(mktemp -d) && tar -xvf sdks.tar.gz --strip=1 -C $TMP && mv $TMP/*.sdk {sdk_path} && rm -r sdks.tar.gz $TMP"
+            )
+        except Exception as e:
+            print(f"[INSTALLER] Failed to download iOS SDKs: {e}")
+            exit(1)
 
 
 def darwin_install():
@@ -126,52 +133,125 @@ def darwin_install():
     if not xcpath.endswith(".app/Contents/Developer"):
         print("[INSTALLER] Luz depends on both Xcode and the Xcode Command Line Tools.")
         exit(1)
+    manager = get_manager()
+    print(
+        "[INSTALLER] Installing dependencies. Please enter your password if prompted."
+    )
+    try:
+        if manager == "apt":
+            res = getoutput(
+                f"sudo {manager} update && sudo {manager} install -y ldid xz-utils"
+            )
+        elif manager == "port":
+            res = getoutput(
+                f"sudo {manager} selfupdate && sudo {manager} install -y ldid xz"
+            )
+        elif manager == "brew":
+            res = getoutput(f"{manager} update && {manager} install -y ldid xz")
+        else:
+            print("[INSTALLER] Could not find a package manager.")
+            print(
+                "[INSTALLER] Please install the missing dependencies before continuing."
+            )
+            exit(1)
+    except Exception as e:
+        print(f"[INSTALLER] Failed to install dependencies: {e}")
+        exit(1)
+
+
+def linux_install():
+    manager = get_manager()
+    print(
+        "[INSTALLER] Installing dependencies. Please enter your password if prompted."
+    )
+    try:
+        if manager == "apt":
+            res = getoutput(
+                f"sudo {manager} update && sudo {manager} install -y build-essential curl perl git"
+            )
+        elif manager == "pacman":
+            res = getoutput(
+                f"sudo {manager} -Syy && sudo {manager} -S --needed --noconfirm base-devel curl perl git"
+            )
+        elif manager == "dnf":
+            res = getoutput(
+                f'sudo {manager} check-update && sudo {manager} group install -y "C Development Tools and Libraries" && sudo {manager} install -y lzma libbsd curl perl git'
+            )
+        elif manager == "zypper":
+            res = getoutput(
+                f"sudo {manager} refresh && sudo {manager} install -y -t pattern devel_basis && sudo {manager} install -y libbsd0 curl perl git"
+            )
+        else:
+            print("[INSTALLER] Could not find a package manager.")
+            print(
+                "[INSTALLER] Please install the missing dependencies before continuing."
+            )
+            exit(1)
+    except Exception as e:
+        print(f"[INSTALLER] Failed to install dependencies: {e}")
+        exit(1)
+
+    toolchain_path = f"{PATH}/toolchain"
+    if (
+        not resolve_path(toolchain_path).exists()
+        or len(resolve_path(f"{toolchain_path}/*.toolchain")) == 0
+    ):
+        print("[INSTALLER] iOS toolchain not found. Downloading...")
+        try:
+            if manager == "apt":
+                res = getoutput(f"sudo {manager} install -y libz3-dev zstd")
+            elif manager == "pacman":
+                res = getoutput(
+                    f'sudo {manager} -S --needed --noconfirm libedit z3 zstd && LATEST_LIBZ3="$(ls -v /usr/lib/ | grep libz3 | tail -n 1)" && sudo ln -sf /usr/lib/$LATEST_LIBZ3 /usr/lib/libz3.so.4 && LATEST_LIBEDIT="$(ls -v /usr/lib/ | grep libedit | tail -n 1)" && sudo ln -sf /usr/lib/$LATEST_LIBEDIT /usr/lib/libedit.so.2'
+                )
+            elif manager == "dnf":
+                res = getoutput(
+                    f'sudo {manager} install -y z3-libs zstd && LATEST_LIBZ3="$(ls -v /usr/lib64/ | grep libz3 | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBZ3 /usr/lib64/libz3.so.4 && LATEST_LIBEDIT="$(ls -v /usr/lib64/ | grep libedit | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBEDIT /usr/lib64/libedit.so.2'
+                )
+            elif manager == "zypper":
+                res = getoutput(
+                    f'sudo {manager} install -y -y $(zypper search libz3 | tail -n 1 | cut -d "|" -f2) zstd && LATEST_LIBZ3="$(ls -v /usr/lib64/ | grep libz3 | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBZ3 /usr/lib64/libz3.so.4 && LATEST_LIBEDIT="$(ls -v /usr/lib64/ | grep libedit | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBEDIT /usr/lib64/libedit.so.2'
+                )
+        except Exception as e:
+            print(f"[INSTALLER] Failed to install toolchain dependencies: {e}")
+            exit(1)
+
+        try:
+            res = getoutput(
+                f"curl -LO https://github.com/CRKatri/llvm-project/releases/download/swift-5.3.2-RELEASE/swift-5.3.2-RELEASE-ubuntu20.04.tar.zst && TMP=$(mktemp -d) && tar -xvf swift-5.3.2-RELEASE-ubuntu20.04.tar.zst -C $TMP && mkdir -p {toolchain_path}/linux/iphone {toolchain_path}/swift && mv $TMP/swift-5.3.2-RELEASE-ubuntu20.04/* {toolchain_path}/linux/iphone/ && ln -s {toolchain_path}/linux/iphone {toolchain_path}/swift && rm -r swift-5.3.2-RELEASE-ubuntu20.04.tar.zst $TMP"
+            )
+        except Exception as e:
+            print(f"[INSTALLER] Failed to download toolchain: {e}")
+            exit(1)
 
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument("-nd", "--no-deps", action="store_true", help="Do not install dependencies.")
-    parser.add_argument("-r", "--ref", type=str, default="main", help="Reference tag of Luz to install.")
+    parser.add_argument(
+        "-ns", "--no-sdks", action="store_true", help="Do not install SDKs."
+    )
+    parser.add_argument(
+        "-r", "--ref", type=str, default="main", help="Reference tag of Luz to install."
+    )
 
     args = parser.parse_args()
 
-    platform_str = platform()
     if platform_str.startswith("Darwin") or platform_str.startswith("macOS"):
         darwin_install()
     elif platform_str.startswith("Linux"):
-        pass
+        linux_install()
     else:
         print(f"[INSTALLER] Luz is not supported on this platform. ({platform_str})")
         exit(1)
 
-    if not args.no_deps:
-        need_to_install = check_for_deps()
-        if need_to_install:
-            should_install = wrapper(should_install_deps, need_to_install)
-            if not should_install:
-                print(f'[INSTALLER] Missing dependencies: {" ".join(need_to_install)}')
-                print("[INSTALLER] Please install the missing dependencies before continuing.")
-                exit(1)
-            else:
-                print("[INSTALLER] Installing dependencies...")
-                manager = get_manager()
-                if manager == "":
-                    print("[INSTALLER] Could not find a package manager.")
-                    print("[INSTALLER] Please install the missing dependencies before continuing.")
-                    exit(1)
-                else:
-                    try:
-                        res = getoutput(f'sudo {manager} install -y {" ".join(need_to_install)}')
-                    except Exception as e:
-                        print(f"[INSTALLER] Failed to install dependencies: {e}")
-                        exit(1)
-                print("[INSTALLER] Dependencies installed.")
-
-    get_sdks()
+    if not args.no_sdks:
+        get_sdks()
 
     print("[INSTALLER] Installing luz...")
     try:
-        res = getoutput(f'sudo --user "{environ.get("SUDO_USER")}" {cmd_in_path("pip")} install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip')
+        res = getoutput(
+            f'{cmd_in_path("pip")} install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip'
+        )
     except Exception as e:
         print(f"[INSTALLER] Failed to install luz: {e}")
         exit(1)
