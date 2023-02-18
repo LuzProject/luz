@@ -33,4 +33,4 @@ You can call the install script with the following options:
 Notes
 *********************
  * If you are on Windows, you will need to install the Windows Subsystem for Linux (WSL). You can find instructions on how to do this `here <https://learn.microsoft.com/en-us/windows/wsl/install>`_.
- * If you are on macOS, you will need to install XCode and the XCode command line tools.
+ * If you are on macOS, you will need to install Xcode and the Xcode Command Line Tools.
