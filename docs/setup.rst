@@ -14,6 +14,5 @@ This will install Luz and all of its dependencies.
 
 Notes
 *********************
- * If you are on Windows, you will need to install the Windows Subsystem for Linux (WSL).
- * If you are using WSL or Linux, you will need to find a toolchain.
+ * If you are on Windows, you will need to install the Windows Subsystem for Linux (WSL). You can find instructions on how to do this `here <https://learn.microsoft.com/en-us/windows/wsl/install>`_.
  * If you are on macOS, you will need to install XCode and the XCode command line tools.
