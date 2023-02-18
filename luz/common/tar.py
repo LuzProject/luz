@@ -34,19 +34,25 @@ class TAR:
         # valid algos
         self.valid = ["xz", "gzip", "bzip2", "zstd", "lzma", "lz4"]
         if self.algorithm not in self.valid:
-            raise Exception(f'Invalid algorithm type {self.algorithm}. Valid types are: {", ".join(self.valid)}. Default is xz.')
+            raise Exception(
+                f'Invalid algorithm type {self.algorithm}. Valid types are: {", ".join(self.valid)}. Default is xz.'
+            )
 
         # get tar command
         self.tar = cmd_in_path("tar")
         # ensure file exists
         if self.tar == None:
-            raise Exception('Command "tar" could not be found. Please install it in order to use this library.')
+            raise Exception(
+                'Command "tar" could not be found. Please install it in order to use this library.'
+            )
 
         # get compress command
         self.compress_command = cmd_in_path(self.algorithm)
         # ensure file exists
         if self.compress_command == None:
-            raise Exception(f'Command "{self.algorithm}" could not be found. Please install it in order to use this library.')
+            raise Exception(
+                f'Command "{self.algorithm}" could not be found. Please install it in order to use this library.'
+            )
 
         # compression level
         self.level = compress_level
@@ -61,7 +67,9 @@ class TAR:
         if not resolve_path(dir_name).exists():
             raise Exception(f"Path {dir_name} does not exist.")
         # compress
-        getoutput(f"cd {dir_name} && {self.tar} -cf - . | {self.compress_command} -{self.level} -c > ../{archive_name}.{self.ending}")
+        getoutput(
+            f"cd {dir_name} && {self.tar} -cf - . | {self.compress_command} -{self.level} -c > ../{archive_name}.{self.ending}"
+        )
 
     def decompress_archive(self, archive_name: str, out_dir: str = "."):
         """Compresses a directory using the specified algorithm.

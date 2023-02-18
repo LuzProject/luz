@@ -28,7 +28,9 @@ class Tool(Module):
 
         :param str file: The file to compile.
         """
-        files_minus_to_compile = list(filter(lambda x: x != file and str(x).endswith(".swift"), self.files))
+        files_minus_to_compile = list(
+            filter(lambda x: x != file and str(x).endswith(".swift"), self.files)
+        )
         # compile file
         try:
             if str(file).endswith(".swift"):
@@ -48,20 +50,43 @@ class Tool(Module):
                     self.bridging_headers,
                 ]
                 # format platform
-                platform = "ios" if self.luzbuild.platform == "iphoneos" else self.luzbuild.platform
+                platform = (
+                    "ios"
+                    if self.luzbuild.platform == "iphoneos"
+                    else self.luzbuild.platform
+                )
                 for arch in self.luzbuild.archs:
-                    rmtree(f"{self.dir}/obj/{self.name}/{arch}/{file.name}-*", ignore_errors=True)
-                    out_name = f"{self.dir}/obj/{self.name}/{arch}/{file.name}-{self.now}"
+                    rmtree(
+                        f"{self.dir}/obj/{self.name}/{arch}/{file.name}-*",
+                        ignore_errors=True,
+                    )
+                    out_name = (
+                        f"{self.dir}/obj/{self.name}/{arch}/{file.name}-{self.now}"
+                    )
                     # arch
-                    arch_formatted = f"-target {arch}-apple-{platform}{self.luzbuild.min_vers}"
+                    arch_formatted = (
+                        f"-target {arch}-apple-{platform}{self.luzbuild.min_vers}"
+                    )
                     # compile with swift using build flags
                     self.luzbuild.swift_compiler.compile(
-                        [file] + files_minus_to_compile, outfile=out_name + ".o", args=build_flags + [arch_formatted, f"-emit-module-path {out_name}.swiftmodule", "-primary-file"]
+                        [file] + files_minus_to_compile,
+                        outfile=out_name + ".o",
+                        args=build_flags
+                        + [
+                            arch_formatted,
+                            f"-emit-module-path {out_name}.swiftmodule",
+                            "-primary-file",
+                        ],
                     )
             else:
                 for arch in self.luzbuild.archs:
-                    rmtree(f"{self.dir}/obj/{self.name}/{arch}/{file.name}-*", ignore_errors=True)
-                    out_name = f"{self.dir}/obj/{self.name}/{arch}/{file.name}-{self.now}.o"
+                    rmtree(
+                        f"{self.dir}/obj/{self.name}/{arch}/{file.name}-*",
+                        ignore_errors=True,
+                    )
+                    out_name = (
+                        f"{self.dir}/obj/{self.name}/{arch}/{file.name}-{self.now}.o"
+                    )
                     build_flags = [
                         "-fobjc-arc" if self.arc else "",
                         f"-isysroot {self.luzbuild.sdk}",
@@ -77,20 +102,40 @@ class Tool(Module):
                     self.luzbuild.c_compiler.compile(file, out_name, build_flags)
 
         except:
-            return f'An error occured when attempting to compile for module "{self.name}".'
+            return (
+                f'An error occured when attempting to compile for module "{self.name}".'
+            )
 
     def __stage(self):
         """Stage a deb to be packaged."""
         # dirs to make
         if self.install_dir is None:
-            dirtomake = resolve_path(f"{self.dir}/_/usr") if not self.luzbuild.rootless else resolve_path(f"{self.dir}/_/var/jb/usr")
-            dirtocopy = resolve_path(f"{self.dir}/_/usr/bin") if not self.luzbuild.rootless else resolve_path(f"{self.dir}/_/var/jb/usr/bin")
+            dirtomake = (
+                resolve_path(f"{self.dir}/_/usr")
+                if not self.luzbuild.rootless
+                else resolve_path(f"{self.dir}/_/var/jb/usr")
+            )
+            dirtocopy = (
+                resolve_path(f"{self.dir}/_/usr/bin")
+                if not self.luzbuild.rootless
+                else resolve_path(f"{self.dir}/_/var/jb/usr/bin")
+            )
         else:
             if self.luzbuild.rootless:
-                warn(f'Custom install directory for module "{self.name}" was specified, and rootless is enabled. Prefixing path with /var/jb.')
+                warn(
+                    f'Custom install directory for module "{self.name}" was specified, and rootless is enabled. Prefixing path with /var/jb.'
+                )
             self.install_dir = resolve_path(self.install_dir)
-            dirtomake = resolve_path(f"{self.dir}/_/{self.install_dir.parent}") if not self.luzbuild.rootless else resolve_path(f"{self.dir}/_/var/jb/{self.install_dir.parent}")
-            dirtocopy = resolve_path(f"{self.dir}/_/{self.install_dir}") if not self.luzbuild.rootless else resolve_path(f"{self.dir}/_/var/jb/{self.install_dir}")
+            dirtomake = (
+                resolve_path(f"{self.dir}/_/{self.install_dir.parent}")
+                if not self.luzbuild.rootless
+                else resolve_path(f"{self.dir}/_/var/jb/{self.install_dir.parent}")
+            )
+            dirtocopy = (
+                resolve_path(f"{self.dir}/_/{self.install_dir}")
+                if not self.luzbuild.rootless
+                else resolve_path(f"{self.dir}/_/var/jb/{self.install_dir}")
+            )
         # make proper dirs
         if not dirtomake.exists():
             makedirs(dirtomake, exist_ok=True)

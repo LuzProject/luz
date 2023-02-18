@@ -256,6 +256,8 @@ def main():
         print(f"[INSTALLER] Failed to install luz: {e}")
         exit(1)
 
+    getoutput("mkdir -p ~/.luz/lib ~/.luz/headers")
+
     print("[INSTALLER] luz has been installed.")
 
 

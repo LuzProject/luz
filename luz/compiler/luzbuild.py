@@ -14,12 +14,24 @@ from yaml import safe_load
 
 # local imports
 from ..common.logger import error, log, log_stdout, remove_log_stdout
-from ..common.utils import cmd_in_path, get_from_cfg, get_from_luzbuild, get_luz_storage, resolve_path, setup_luz_dir
+from ..common.utils import (
+    cmd_in_path,
+    get_from_cfg,
+    get_from_luzbuild,
+    get_luz_storage,
+    resolve_path,
+    setup_luz_dir,
+)
 from .modules.modules import assign_module
 
 
 class LuzBuild:
-    def __init__(self, clean: bool = False, path_to_file: str = "LuzBuild", inherit: object = None):
+    def __init__(
+        self,
+        clean: bool = False,
+        path_to_file: str = "LuzBuild",
+        inherit: object = None,
+    ):
         """Parse the luzbuild file.
 
         :param str path_to_file: The path to the luzbuild file.
@@ -148,18 +160,24 @@ class LuzBuild:
         if self.prefix is not "" and not resolve_path(self.cc).is_relative_to("/"):
             prefix_path = cmd_in_path(f"{self.prefix}/{self.cc}")
             if not prefix_path:
-                return self.__error_and_exit(f'C compiler "{self.cc}" not in prefix path.')
+                return self.__error_and_exit(
+                    f'C compiler "{self.cc}" not in prefix path.'
+                )
             self.cc = prefix_path
 
         # format swift with prefix
         if self.prefix is not "" and not resolve_path(self.swift).is_relative_to("/"):
             prefix_path = cmd_in_path(f"{self.prefix}/{self.swift}")
             if not prefix_path:
-                return self.__error_and_exit(f'Swift compiler "{self.swift}" not in prefix path.')
+                return self.__error_and_exit(
+                    f'Swift compiler "{self.swift}" not in prefix path.'
+                )
             self.swift = prefix_path
 
         # format install_name_tool with prefix
-        self.install_name_tool = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}install_name_tool')
+        self.install_name_tool = cmd_in_path(
+            f'{(str(self.prefix) + "/") if self.prefix is not None else ""}install_name_tool'
+        )
         if self.install_name_tool is None:
             # fall back to path
             self.install_name_tool = cmd_in_path("install_name_tool")
@@ -167,7 +185,9 @@ class LuzBuild:
                 return self.__error_and_exit("Could not find install_name_tool.")
 
         # format ldid with prefix
-        self.ldid = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ldid')
+        self.ldid = cmd_in_path(
+            f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ldid'
+        )
         if self.ldid is None:
             # fall back to path
             self.ldid = cmd_in_path("ldid")
@@ -175,7 +195,9 @@ class LuzBuild:
                 return self.__error_and_exit("Could not find ldid.")
 
         # format ld with prefix
-        self.ld = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ld')
+        self.ld = cmd_in_path(
+            f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ld'
+        )
         if self.ld is None:
             # fall back to path
             self.ld = cmd_in_path("ld")
@@ -183,7 +205,9 @@ class LuzBuild:
                 return self.__error_and_exit("Could not find ld.")
 
         # format ldid with prefix
-        self.strip = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}strip')
+        self.strip = cmd_in_path(
+            f'{(str(self.prefix) + "/") if self.prefix is not None else ""}strip'
+        )
         if self.strip is None:
             # fall back to path
             self.strip = cmd_in_path("strip")
@@ -191,7 +215,9 @@ class LuzBuild:
                 return self.__error_and_exit("Could not find strip.")
 
         # format lipo with prefix
-        self.lipo = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}lipo')
+        self.lipo = cmd_in_path(
+            f'{(str(self.prefix) + "/") if self.prefix is not None else ""}lipo'
+        )
         if self.lipo is None:
             # fall back to path
             self.lipo = cmd_in_path("lipo")
@@ -205,7 +231,9 @@ class LuzBuild:
             # ensure sdk exists
             self.sdk = resolve_path(self.sdk)
             if not self.sdk.exists():
-                return self.__error_and_exit(f'Specified SDK path "{self.sdk}" does not exist.')
+                return self.__error_and_exit(
+                    f'Specified SDK path "{self.sdk}" does not exist.'
+                )
 
         # parse modules
         if self.modules is not None:
@@ -236,7 +264,9 @@ class LuzBuild:
         self.pool.map(lambda x: self.__handle_key(x), self.luzbuild)
 
         # get submodules
-        subproj_results = self.pool.map(lambda x: self.__handle_submodule(x), get_from_cfg(self, "submodules"))
+        subproj_results = self.pool.map(
+            lambda x: self.__handle_submodule(x), get_from_cfg(self, "submodules")
+        )
         for result in subproj_results:
             if result is not None:
                 self.__error_and_exit(result)
@@ -252,7 +282,9 @@ class LuzBuild:
                 with open(layout_control_path, "r") as f:
                     self.control_raw = f.read()
             else:
-                return self.__error_and_exit("No control file found, and package metadata was not declared in LuzBuild.")
+                return self.__error_and_exit(
+                    "No control file found, and package metadata was not declared in LuzBuild."
+                )
         # parse control
         if self.control is None:
             self.control = Control(self.control_raw)
@@ -326,10 +358,14 @@ class LuzBuild:
                         if c == "id":
                             self.control_raw += f"Package: {v}{end}"
                         # maintainer
-                        elif c == "author" and not "maintainer" in list(self.luzbuild.get("control")):
+                        elif c == "author" and not "maintainer" in list(
+                            self.luzbuild.get("control")
+                        ):
                             self.control_raw += f"Author: {v}{end}Maintainer: {v}{end}"
                         # author
-                        elif c == "maintainer" and not "author" in list(self.luzbuild.get("control")):
+                        elif c == "maintainer" and not "author" in list(
+                            self.luzbuild.get("control")
+                        ):
                             self.control_raw += f"Author: {v}{end}Maintainer: {v}{end}"
                         # sileodepiction patch
                         elif c == "sileodepiction":
@@ -359,9 +395,13 @@ class LuzBuild:
             return self.__error_and_exit("xcrun not found.")
         else:
             log_stdout("Finding an SDK...")
-            sdkA = getoutput(f"{xcrun} --show-sdk-path --sdk {self.platform}").split("\n")[-1]
+            sdkA = getoutput(f"{xcrun} --show-sdk-path --sdk {self.platform}").split(
+                "\n"
+            )[-1]
             if sdkA == "" or not sdkA.startswith("/"):
-                return self.__error_and_exit("Could not find an SDK. Please specify one manually.")
+                return self.__error_and_exit(
+                    "Could not find an SDK. Please specify one manually."
+                )
             remove_log_stdout("Finding an SDK...")
             self.sdk = sdkA
         return resolve_path(self.sdk)
@@ -379,14 +419,20 @@ class LuzBuild:
             if layout_path.exists():
                 copytree(layout_path, f"{self.dir}/_", dirs_exist_ok=True)
         # pack
-        Pack(resolve_path(f"{self.dir}/_"), algorithm=self.compression, outdir="packages/")
+        Pack(
+            resolve_path(f"{self.dir}/_"),
+            algorithm=self.compression,
+            outdir="packages/",
+        )
         remove_log_stdout("Packing deb file...", self.lock)
 
     def build(self):
         """Build the project."""
         # compile results
         if self.modules != None:
-            compile_results = self.pool.map(lambda x: x.compile(), self.modules.values())
+            compile_results = self.pool.map(
+                lambda x: x.compile(), self.modules.values()
+            )
             for result in compile_results:
                 if result is not None:
                     return result

@@ -20,7 +20,10 @@ class Module:
         self.tar = TAR(algorithm="gzip")
 
         # templates_dir
-        self.template_path = str(resolve_path(resolve_path(__file__).absolute()).parent.parent) + f"/templates/{self.type}/{self.src}.tar.gz"
+        self.template_path = (
+            str(resolve_path(resolve_path(__file__).absolute()).parent.parent)
+            + f"/templates/{self.type}/{self.src}.tar.gz"
+        )
 
         # dict to make YAML
         self.dict = {}
@@ -30,7 +33,9 @@ class Module:
 
         # check if luzbuild currently exists
         if resolve_path("LuzBuild").exists():
-            val = ask(f"A LuzBuild was found in the current working directory. Would you like to add this module as a submodule? (y/n)")
+            val = ask(
+                f"A LuzBuild was found in the current working directory. Would you like to add this module as a submodule? (y/n)"
+            )
             if val == "":
                 val = "n"
             if val.startswith("y"):
@@ -44,12 +49,20 @@ class Module:
 
             # ask for control values
             self.control["name"] = self.ask_for("name")
-            self.control["id"] = self.ask_for("bundle ID", f'com.yourcompany.{self.control["name"]}')
+            self.control["id"] = self.ask_for(
+                "bundle ID", f'com.yourcompany.{self.control["name"]}'
+            )
             self.control["version"] = self.ask_for("version", "1.0.0")
-            self.control["author"] = self.ask_for("author", getpwuid(getuid())[0], dsc="Who")
+            self.control["author"] = self.ask_for(
+                "author", getpwuid(getuid())[0], dsc="Who"
+            )
             self.control["maintainer"] = self.control["author"]
-            self.control["depends"] = self.ask_for("dependencies", "mobilesubstrate", dsc1="are")
-            self.control["architecture"] = self.ask_for("architecture", "iphoneos-arm64")
+            self.control["depends"] = self.ask_for(
+                "dependencies", "mobilesubstrate", dsc1="are"
+            )
+            self.control["architecture"] = self.ask_for(
+                "architecture", "iphoneos-arm64"
+            )
 
             # add control to dict
             self.dict["control"] = self.control
@@ -82,7 +95,9 @@ class Module:
         with open(path, "w") as f:
             dump(self.dict, f)
 
-    def ask_for(self, key: str, default: str = None, dsc: str = "What", dsc1: str = "is") -> str:
+    def ask_for(
+        self, key: str, default: str = None, dsc: str = "What", dsc1: str = "is"
+    ) -> str:
         """Ask for a value.
 
         :param str key: The key to ask for.

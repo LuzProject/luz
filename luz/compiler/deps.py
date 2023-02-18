@@ -1,4 +1,5 @@
 # module imports
+from os import makedirs
 from pathlib import Path
 from subprocess import getoutput
 
@@ -17,10 +18,11 @@ def clone_logos(module, update: bool = False) -> Path:
     logos_url = "https://github.com/LuzProject/logos"
     storage = module.storage
     # logos path
-    logos_path = resolve_path(f"{storage}/logos")
+    logos_path = resolve_path(f"{storage}/vendor/logos")
     # if it doesn't exist, clone logos
     if not logos_path.exists():
         log_stdout("Cloning logos...")
+        makedirs(logos_path.parent, exist_ok=True)
         getoutput(f"{module.git} clone {logos_url} {logos_path} --recursive")
         remove_log_stdout("Cloning logos...")
     # update
@@ -42,10 +44,11 @@ def clone_libraries(module, update: bool = False) -> Path:
     libraries_url = "--branch rootless https://github.com/elihwyma/lib"
     storage = module.storage
     # libraries path
-    libraries_path = resolve_path(f"{storage}/lib")
+    libraries_path = resolve_path(f"{storage}/vendor/lib")
     # if it doesn't exist, clone logos
     if not libraries_path.exists():
         log_stdout("Cloning libraries...")
+        makedirs(libraries_path.parent, exist_ok=True)
         getoutput(f"{module.git} clone {libraries_url} {libraries_path} --recursive")
         remove_log_stdout("Cloning libraries...")
     # update
@@ -67,10 +70,11 @@ def clone_headers(module, update: bool = False) -> Path:
     headers_url = "https://github.com/theos/headers"
     storage = module.storage
     # headers path
-    headers_path = resolve_path(f"{storage}/headers")
+    headers_path = resolve_path(f"{storage}/vendor/headers")
     # if it doesn't exist, clone logos
     if not headers_path.exists():
         log_stdout("Cloning headers...")
+        makedirs(headers_path.parent, exist_ok=True)
         getoutput(f"{module.git} clone {headers_url} {headers_path} --recursive")
         remove_log_stdout("Cloning headers...")
     # update
@@ -105,12 +109,24 @@ def logos(module, files: list) -> list:
         if file_formatted == "x":
             log_stdout(f"Processing {file} with Logos...")
             getoutput(f"{logos_exec} {file} > {output}.m")
-            new_files.append({"logos": True, "new_path": resolve_path(f"{output}.m"), "old_path": resolve_path(file)})
+            new_files.append(
+                {
+                    "logos": True,
+                    "new_path": resolve_path(f"{output}.m"),
+                    "old_path": resolve_path(file),
+                }
+            )
             remove_log_stdout(f"Processing {file} with Logos...")
         elif file_formatted == "xm":
             log_stdout(f"Processing {file} with Logos...")
             getoutput(f"{logos_exec} {file} > {output}.mm")
-            new_files.append({"logos": True, "new_path": resolve_path(f"{output}.mm"), "old_path": resolve_path(file)})
+            new_files.append(
+                {
+                    "logos": True,
+                    "new_path": resolve_path(f"{output}.mm"),
+                    "old_path": resolve_path(file),
+                }
+            )
             remove_log_stdout(f"Processing {file} with Logos...")
         else:
             new_files.append({"logos": False, "path": resolve_path(file)})

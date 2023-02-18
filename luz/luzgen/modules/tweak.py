@@ -13,7 +13,9 @@ class Tweak(Module):
         # srctype
         self.srctype = self.__ask_for("source type", "logos").lower()
         if self.srctype not in self.VALID:
-            error(f'Invalid source type: {self.srctype}. Valid types: {", ".join(self.VALID)}')
+            error(
+                f'Invalid source type: {self.srctype}. Valid types: {", ".join(self.VALID)}'
+            )
             exit(1)
 
         # init super class
@@ -40,15 +42,32 @@ class Tweak(Module):
         self.filter = self.__ask_for("executable filter", "com.apple.SpringBoard")
 
         # add values to dict
-        self.dict.update({"modules": {self.name: {"type": "tweak", "files": [f"Sources/Tweak{self.ending}"], "filter": {"bundles": [self.filter]}}}})
+        self.dict.update(
+            {
+                "modules": {
+                    self.name: {
+                        "type": "tweak",
+                        "files": [f"Sources/Tweak{self.ending}"],
+                        "filter": {"bundles": [self.filter]},
+                    }
+                }
+            }
+        )
 
         # folder
-        folder = resolve_path(self.__ask_for("project folder", self.control["name"] if self.control is not None else self.name))
+        folder = resolve_path(
+            self.__ask_for(
+                "project folder",
+                self.control["name"] if self.control is not None else self.name,
+            )
+        )
 
         # write to yaml
         self.write_to_file(folder)
 
-    def __ask_for(self, key: str, default: str = None, dsc: str = "What", dsc1: str = "is") -> str:
+    def __ask_for(
+        self, key: str, default: str = None, dsc: str = "What", dsc1: str = "is"
+    ) -> str:
         """Ask for a value.
 
         :param str key: The key to ask for.
@@ -58,7 +77,9 @@ class Tweak(Module):
         :return: The value.
         """
         if default is not None:
-            val = ask(f'{dsc} {dsc1} this {self.type}\'s {key}? (enter for "{default}")')
+            val = ask(
+                f'{dsc} {dsc1} this {self.type}\'s {key}? (enter for "{default}")'
+            )
             if val == "":
                 return default
         else:
