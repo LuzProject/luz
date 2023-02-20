@@ -369,7 +369,6 @@ class LuzBuild:
                             self.control_raw += f"Author: {v}{end}Maintainer: {v}{end}"
                         # debug version patch
                         elif c == "version" and self.debug:
-                            print(f"Version: {v}-{self.build_number}+debug{end}")
                             self.control_raw += f"Version: {v}-{self.build_number}+debug{end}"
                         # author
                         elif c == "maintainer" and not "author" in list(self.luzbuild.get("control")):
