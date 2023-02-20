@@ -16,9 +16,7 @@ class Preferences(Module):
         # srctype
         self.srctype = self.__ask_for("source type", "objc").lower()
         if self.srctype not in self.VALID:
-            error(
-                f'Invalid source type: {self.srctype}. Valid types: {", ".join(self.VALID)}'
-            )
+            error(f'Invalid source type: {self.srctype}. Valid types: {", ".join(self.VALID)}')
             exit(1)
 
         # init super class
@@ -28,31 +26,21 @@ class Preferences(Module):
         self.name = self.__ask_for("name")
         self.id = self.__ask_for("bundle ID", f"com.yourcompany.{self.name}")
         # prefix
-        self.prefix = (
-            self.__ask_for("unique bundle prefix", "XX")
-            if self.srctype == "objc"
-            else ""
-        )
+        self.prefix = self.__ask_for("unique bundle prefix", "XX") if self.srctype == "objc" else ""
         # add values to dict
         self.dict.update(
             {
                 "modules": {
                     self.name: {
                         "type": "preferences",
-                        "files": [
-                            f"Sources/{self.prefix}RootListController.m"
-                            if self.srctype != "swift"
-                            else f"Sources/RootListController.swift"
-                        ],
+                        "files": [f"Sources/{self.prefix}RootListController.m" if self.srctype != "swift" else f"Sources/RootListController.swift"],
                     }
                 }
             }
         )
         # add swift bridging header
         if self.srctype == "swift":
-            self.dict["modules"][self.name]["bridgingHeaders"] = [
-                f"Sources/{self.name}-Bridging-Header.h"
-            ]
+            self.dict["modules"][self.name]["bridgingHeaders"] = [f"Sources/{self.name}-Bridging-Header.h"]
         # folder
         self.folder = resolve_path(
             self.__ask_for(
@@ -63,9 +51,7 @@ class Preferences(Module):
         # write to yaml
         self.write_to_file(self.folder)
 
-    def __ask_for(
-        self, key: str, default: str = None, dsc: str = "What", dsc1: str = "is"
-    ) -> str:
+    def __ask_for(self, key: str, default: str = None, dsc: str = "What", dsc1: str = "is") -> str:
         """Ask for a value.
 
         :param str key: The key to ask for.
@@ -75,9 +61,7 @@ class Preferences(Module):
         :return: The value.
         """
         if default is not None:
-            val = ask(
-                f'{dsc} {dsc1} these {self.type}\'s {key}? (enter for "{default}")'
-            )
+            val = ask(f'{dsc} {dsc1} these {self.type}\'s {key}? (enter for "{default}")')
             if val == "":
                 return default
         else:
@@ -100,20 +84,12 @@ class Preferences(Module):
                 f"{self.folder}/Sources/{self.prefix}RootListController.h",
             )
             # fix files
-            content = open(
-                f"{self.folder}/Sources/{self.prefix}RootListController.m", "r"
-            ).read()
-            with open(
-                f"{self.folder}/Sources/{self.prefix}RootListController.m", "w"
-            ) as f:
+            content = open(f"{self.folder}/Sources/{self.prefix}RootListController.m", "r").read()
+            with open(f"{self.folder}/Sources/{self.prefix}RootListController.m", "w") as f:
                 content = content.replace("REPLACEWITHPREFIX", self.prefix)
                 f.write(content)
-            content = open(
-                f"{self.folder}/Sources/{self.prefix}RootListController.h", "r"
-            ).read()
-            with open(
-                f"{self.folder}/Sources/{self.prefix}RootListController.h", "w"
-            ) as f:
+            content = open(f"{self.folder}/Sources/{self.prefix}RootListController.h", "r").read()
+            with open(f"{self.folder}/Sources/{self.prefix}RootListController.h", "w") as f:
                 content = content.replace("REPLACEWITHPREFIX", self.prefix)
                 f.write(content)
         else:
@@ -139,9 +115,7 @@ class Preferences(Module):
             content = content.replace("REPLACEWITHNAME", self.name)
             content = content.replace("REPLACEWITHPREFIX", self.prefix)
             content = content.replace("REPLACEWITHID", self.id)
-            content = content.replace(
-                "REPLACEWITHCLASS", f"{self.name}.RootListController"
-            )
+            content = content.replace("REPLACEWITHCLASS", f"{self.name}.RootListController")
             f.write(content)
         # info.plist
         content = open(f"{self.folder}/Resources/Info.plist", "r").read()
@@ -149,9 +123,7 @@ class Preferences(Module):
             content = content.replace("REPLACEWITHNAME", self.name)
             content = content.replace("REPLACEWITHPREFIX", self.prefix)
             content = content.replace("REPLACEWITHID", self.id)
-            content = content.replace(
-                "REPLACEWITHCLASS", f"{self.name}.RootListController"
-            )
+            content = content.replace("REPLACEWITHCLASS", f"{self.name}.RootListController")
             f.write(content)
         # root.plist
         content = open(f"{self.folder}/Resources/Root.plist", "r").read()
@@ -159,7 +131,5 @@ class Preferences(Module):
             content = content.replace("REPLACEWITHNAME", self.name)
             content = content.replace("REPLACEWITHPREFIX", self.prefix)
             content = content.replace("REPLACEWITHID", self.id)
-            content = content.replace(
-                "REPLACEWITHCLASS", f"{self.name}.RootListController"
-            )
+            content = content.replace("REPLACEWITHCLASS", f"{self.name}.RootListController")
             f.write(content)

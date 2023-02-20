@@ -27,9 +27,7 @@ class Preferences(Module):
 
         :param str file: The file to compile.
         """
-        files_minus_to_compile = list(
-            filter(lambda x: x != file and str(x).endswith(".swift"), self.files)
-        )
+        files_minus_to_compile = list(filter(lambda x: x != file and str(x).endswith(".swift"), self.files))
         # compile file
         try:
             if str(file).endswith(".swift"):
@@ -46,27 +44,19 @@ class Preferences(Module):
                     self.frameworks,
                     self.private_frameworks,
                     self.swift_flags,
-                    '-g' if self.luzbuild.debug else '',
+                    "-g" if self.luzbuild.debug else "",
                     self.bridging_headers,
                 ]
                 # format platform
-                platform = (
-                    "ios"
-                    if self.luzbuild.platform == "iphoneos"
-                    else self.luzbuild.platform
-                )
+                platform = "ios" if self.luzbuild.platform == "iphoneos" else self.luzbuild.platform
                 for arch in self.luzbuild.archs:
                     rmtree(
                         f"{self.dir}/obj/{self.name}/{arch}/{file.name}-*",
                         ignore_errors=True,
                     )
-                    out_name = (
-                        f"{self.dir}/obj/{self.name}/{arch}/{file.name}-{self.now}"
-                    )
+                    out_name = f"{self.dir}/obj/{self.name}/{arch}/{file.name}-{self.now}"
                     # arch
-                    arch_formatted = (
-                        f"-target {arch}-apple-{platform}{self.luzbuild.min_vers}"
-                    )
+                    arch_formatted = f"-target {arch}-apple-{platform}{self.luzbuild.min_vers}"
                     # compile with swift using build flags
                     self.luzbuild.swift_compiler.compile(
                         [file] + files_minus_to_compile,
@@ -84,9 +74,7 @@ class Preferences(Module):
                         f"{self.dir}/obj/{self.name}/{arch}/{file.name}-*",
                         ignore_errors=True,
                     )
-                    out_name = (
-                        f"{self.dir}/obj/{self.name}/{arch}/{file.name}-{self.now}.o"
-                    )
+                    out_name = f"{self.dir}/obj/{self.name}/{arch}/{file.name}-{self.now}.o"
                     build_flags = [
                         "-fobjc-arc" if self.arc else "",
                         f"-isysroot {self.luzbuild.sdk}",
@@ -95,7 +83,7 @@ class Preferences(Module):
                         f"-arch {arch}",
                         self.include,
                         f"-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}",
-                        '-g' if self.luzbuild.debug else '',
+                        "-g" if self.luzbuild.debug else "",
                         self.c_flags,
                         "-c",
                     ]
@@ -103,24 +91,16 @@ class Preferences(Module):
                     self.luzbuild.c_compiler.compile(file, out_name, build_flags)
         except Exception as e:
             print(e)
-            return (
-                f'An error occured when attempting to compile for module "{self.name}".'
-            )
+            return f'An error occured when attempting to compile for module "{self.name}".'
 
     def __stage(self):
         """Stage a deb to be packaged."""
         # dirs to make
-        dirtomake = (
-            resolve_path(f"{self.dir}/_/Library/PreferenceBundles/")
-            if not self.luzbuild.rootless
-            else resolve_path(f"{self.dir}/_/var/jb/Library/PreferenceBundles/")
-        )
+        dirtomake = resolve_path(f"{self.dir}/_/Library/PreferenceBundles/") if not self.luzbuild.rootless else resolve_path(f"{self.dir}/_/var/jb/Library/PreferenceBundles/")
         dirtocopy = (
             resolve_path(f"{self.dir}/_/Library/PreferenceBundles/{self.name}.bundle")
             if not self.luzbuild.rootless
-            else resolve_path(
-                f"{self.dir}/_/var/jb/Library/PreferenceBundles/{self.name}.bundle"
-            )
+            else resolve_path(f"{self.dir}/_/var/jb/Library/PreferenceBundles/{self.name}.bundle")
         )
         # make proper dirs
         if not dirtomake.exists():

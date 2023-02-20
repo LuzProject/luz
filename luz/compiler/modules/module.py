@@ -44,9 +44,7 @@ class Module:
             self.type == "preferences"
 
         # c_flags
-        self.c_flags = get_from_cfg(
-            luzbuild, f"modules.{key}.cflags", f"modules.types.{self.type}.cflags"
-        )
+        self.c_flags = get_from_cfg(luzbuild, f"modules.{key}.cflags", f"modules.types.{self.type}.cflags")
 
         # swift_flags
         self.swift_flags = get_from_cfg(
@@ -63,24 +61,16 @@ class Module:
         )
 
         # warnings
-        self.warnings = get_from_cfg(
-            luzbuild, f"modules.{key}.warnings", f"modules.types.{self.type}.warnings"
-        )
+        self.warnings = get_from_cfg(luzbuild, f"modules.{key}.warnings", f"modules.types.{self.type}.warnings")
 
         # entitlement flag
-        self.entflag = get_from_cfg(
-            luzbuild, f"modules.{key}.entflag", f"modules.types.{self.type}.entflag"
-        )
+        self.entflag = get_from_cfg(luzbuild, f"modules.{key}.entflag", f"modules.types.{self.type}.entflag")
 
         # entitlement file
-        self.entfile = get_from_cfg(
-            luzbuild, f"modules.{key}.entfile", f"modules.types.{self.type}.entfile"
-        )
+        self.entfile = get_from_cfg(luzbuild, f"modules.{key}.entfile", f"modules.types.{self.type}.entfile")
 
         # process
-        self.filter = get_from_cfg(
-            luzbuild, f"modules.{key}.filter", f"modules.types.{self.type}.filter"
-        )
+        self.filter = get_from_cfg(luzbuild, f"modules.{key}.filter", f"modules.types.{self.type}.filter")
 
         # install_dir
         self.install_dir = get_safe(module, "installDir", None)
@@ -101,34 +91,22 @@ class Module:
         self.libraries = ""
 
         # library files dir
-        self.library_dirs = (
-            f"-L{clone_libraries(luzbuild)} -L{self.luzbuild.storage}/lib"
-        )
+        self.library_dirs = f"-L{clone_libraries(luzbuild)} -L{self.luzbuild.storage}/lib"
 
         # framework files dir
         self.framework_dirs = f""
 
-        files = (
-            module.get("files")
-            if type(module.get("files")) is list
-            else [module.get("files")]
-        )
+        files = module.get("files") if type(module.get("files")) is list else [module.get("files")]
 
         # add swift libs
         if ".swift" in " ".join(files):
-            self.library_dirs += (
-                f" -L/usr/lib/swift -L{self.luzbuild.sdk}/usr/lib/swift"
-            )
+            self.library_dirs += f" -L/usr/lib/swift -L{self.luzbuild.sdk}/usr/lib/swift"
 
         # include
         self.include = f"-I{clone_headers(luzbuild)} -I{self.luzbuild.storage}/headers"
 
         # use arc
-        self.arc = bool(
-            get_from_cfg(
-                luzbuild, f"modules.{key}.useArc", f"modules.types.{self.type}.useArc"
-            )
-        )
+        self.arc = bool(get_from_cfg(luzbuild, f"modules.{key}.useArc", f"modules.types.{self.type}.useArc"))
 
         # only compile changes
         self.only_compile_changed = bool(
@@ -140,11 +118,7 @@ class Module:
         )
 
         # ensure files are defined
-        if (
-            module.get("files") is None
-            or module.get("files") is []
-            or module.get("files") is ""
-        ):
+        if module.get("files") is None or module.get("files") is [] or module.get("files") is "":
             error(f'No files specified for module "{self.name}".')
             exit(1)
 
@@ -156,15 +130,9 @@ class Module:
                 f"modules.types.{self.type}.bridgingHeaders",
             )
         )
-        frameworksD = list(
-            get_from_default(luzbuild, f"modules.types.{self.type}.frameworks")
-        )
-        private_frameworksD = list(
-            get_from_default(luzbuild, f"modules.types.{self.type}.privateFrameworks")
-        )
-        librariesD = list(
-            get_from_default(luzbuild, f"modules.types.{self.type}.libraries")
-        )
+        frameworksD = list(get_from_default(luzbuild, f"modules.types.{self.type}.frameworks"))
+        private_frameworksD = list(get_from_default(luzbuild, f"modules.types.{self.type}.privateFrameworks"))
+        librariesD = list(get_from_default(luzbuild, f"modules.types.{self.type}.libraries"))
 
         # add bridging headers
         bridging_headers = get_safe(module, "bridgingHeaders", [])
@@ -215,17 +183,11 @@ class Module:
                 self.include += f" -I{include}"
 
         # xcode sdks dont include private frameworks
-        if self.private_frameworks != "" and str(self.luzbuild.sdk).startswith(
-            "/Applications"
-        ):
-            error(
-                f"No SDK specified. Xcode will be used, and private frameworks will not be found."
-            )
+        if self.private_frameworks != "" and str(self.luzbuild.sdk).startswith("/Applications"):
+            error(f"No SDK specified. Xcode will be used, and private frameworks will not be found.")
             exit(1)
         else:
-            self.framework_dirs = (
-                f"-F{self.luzbuild.sdk}/System/Library/PrivateFrameworks"
-            )
+            self.framework_dirs = f"-F{self.luzbuild.sdk}/System/Library/PrivateFrameworks"
 
         # dirs
         self.obj_dir = resolve_path(f"{self.dir}/obj/{self.name}")
@@ -234,11 +196,7 @@ class Module:
         self.bin_dir = resolve_path(f"{self.dir}/bin/{self.name}")
 
         # hash files
-        files = (
-            module.get("files")
-            if type(module.get("files")) is list
-            else [module.get("files")]
-        )
+        files = module.get("files") if type(module.get("files")) is list else [module.get("files")]
         self.files = self.hash_files(
             files,
             "executable" if self.type == "tool" else "dylib",
@@ -292,17 +250,11 @@ class Module:
                 changed.append(file)
             elif fhash == new_hash:
                 # variables
-                object_paths = resolve_path(
-                    f"{self.dir}/obj/{self.name}/*/{file.name}*-*.o"
-                )
+                object_paths = resolve_path(f"{self.dir}/obj/{self.name}/*/{file.name}*-*.o")
                 if compile_type == "dylib":
-                    dylib_paths = resolve_path(
-                        f"{self.dir}/obj/{self.name}/*/{self.name}.dylib"
-                    )
+                    dylib_paths = resolve_path(f"{self.dir}/obj/{self.name}/*/{self.name}.dylib")
                 elif compile_type == "executable":
-                    dylib_paths = resolve_path(
-                        f"{self.dir}/obj/{self.name}/*/{self.name}"
-                    )
+                    dylib_paths = resolve_path(f"{self.dir}/obj/{self.name}/*/{self.name}")
                 if len(object_paths) < arch_count or len(dylib_paths) < arch_count:
                     changed.append(file)
             elif fhash != new_hash:
@@ -360,7 +312,7 @@ class Module:
             self.private_frameworks,
             f"-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}",
             f'-DLUZ_PACKAGE_VERSION="{self.luzbuild.control.version}"',
-            '-g' if self.luzbuild.debug else '',
+            "-g" if self.luzbuild.debug else "",
             self.c_flags,
         ]
         # add dynamic lib to args
@@ -384,17 +336,11 @@ class Module:
                 shell=True,
             )
         except:
-            return (
-                f'An error occured when trying to lipo files for module "{self.name}".'
-            )
+            return f'An error occured when trying to lipo files for module "{self.name}".'
 
         try:
             # fix rpath
-            rpath = (
-                "/var/jb/Library/Frameworks/"
-                if self.luzbuild.rootless
-                else "/Library/Frameworks"
-            )
+            rpath = "/var/jb/Library/Frameworks/" if self.luzbuild.rootless else "/Library/Frameworks"
             check_output(
                 f"{self.luzbuild.install_name_tool} -add_rpath {rpath} {out_name}",
                 shell=True,
@@ -417,9 +363,7 @@ class Module:
         except:
             return f'An error occured when trying codesign "{out_name}" for module "{self.name}".'
 
-        self.remove_log_stdout(
-            f'Linking compiled files to {compile_type} "{out_name.name}"...'
-        )
+        self.remove_log_stdout(f'Linking compiled files to {compile_type} "{out_name.name}"...')
 
     def log(self, msg):
         log(msg, self.luzbuild.lock)

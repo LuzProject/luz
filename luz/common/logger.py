@@ -38,19 +38,7 @@ colors = {
 
 
 def log_stdout(message, lock=None):
-    colorway = (
-        colors["bold"]
-        + colors["darkgrey"]
-        + "["
-        + colors["reset"]
-        + colors["bold"]
-        + colors["green"]
-        + "*"
-        + colors["bold"]
-        + colors["darkgrey"]
-        + "] "
-        + colors["reset"]
-    )
+    colorway = colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["green"] + "*" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"]
     if lock is not None:
         with lock:
             stdout.write(f"{colorway}{message}")
@@ -61,19 +49,7 @@ def log_stdout(message, lock=None):
 
 
 def remove_log_stdout(message, lock=None):
-    colorway = (
-        colors["bold"]
-        + colors["darkgrey"]
-        + "["
-        + colors["reset"]
-        + colors["bold"]
-        + colors["green"]
-        + "*"
-        + colors["bold"]
-        + colors["darkgrey"]
-        + "] "
-        + colors["reset"]
-    )
+    colorway = colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["green"] + "*" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"]
     if lock is not None:
         with lock:
             for _ in range(len(f"{colorway}{message}")):
@@ -88,118 +64,29 @@ def remove_log_stdout(message, lock=None):
 def log(message, lock=None):
     if lock is not None:
         with lock:
-            print(
-                colors["bold"]
-                + colors["darkgrey"]
-                + "["
-                + colors["reset"]
-                + colors["bold"]
-                + colors["green"]
-                + "*"
-                + colors["bold"]
-                + colors["darkgrey"]
-                + "] "
-                + colors["reset"]
-                + f"{message}"
-            )
+            print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["green"] + "*" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
     else:
-        print(
-            colors["bold"]
-            + colors["darkgrey"]
-            + "["
-            + colors["reset"]
-            + colors["bold"]
-            + colors["green"]
-            + "*"
-            + colors["bold"]
-            + colors["darkgrey"]
-            + "] "
-            + colors["reset"]
-            + f"{message}"
-        )
+        print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["green"] + "*" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
 
 
 def debug(message, dbg):
     if dbg:
-        print(
-            colors["bold"]
-            + colors["darkgrey"]
-            + "["
-            + colors["reset"]
-            + colors["bold"]
-            + colors["yellow"]
-            + "#"
-            + colors["bold"]
-            + colors["darkgrey"]
-            + "] "
-            + colors["reset"]
-            + f"{message}"
-        )
+        print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["yellow"] + "#" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
 
 
 def warn(message):
-    print(
-        colors["bold"]
-        + colors["darkgrey"]
-        + "["
-        + colors["reset"]
-        + colors["bold"]
-        + colors["yellow"]
-        + "%"
-        + colors["bold"]
-        + colors["darkgrey"]
-        + "] "
-        + colors["reset"]
-        + f"{message}"
-    )
+    print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["yellow"] + "%" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
 
 
 def error(message, lock=None):
     if lock is not None:
         with lock:
-            print(
-                colors["bold"]
-                + colors["darkgrey"]
-                + "["
-                + colors["reset"]
-                + colors["bold"]
-                + colors["red"]
-                + "!"
-                + colors["bold"]
-                + colors["darkgrey"]
-                + "] "
-                + colors["reset"]
-                + f"{message}"
-            )
+            print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["red"] + "!" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
     else:
-        print(
-            colors["bold"]
-            + colors["darkgrey"]
-            + "["
-            + colors["reset"]
-            + colors["bold"]
-            + colors["red"]
-            + "!"
-            + colors["bold"]
-            + colors["darkgrey"]
-            + "] "
-            + colors["reset"]
-            + f"{message}"
-        )
+        print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["red"] + "!" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
 
 
 def ask(message):
     return input(
-        colors["bold"]
-        + colors["darkgrey"]
-        + "["
-        + colors["reset"]
-        + colors["bold"]
-        + colors["orange"]
-        + "?"
-        + colors["bold"]
-        + colors["darkgrey"]
-        + "] "
-        + colors["reset"]
-        + f"{message} -> "
+        colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["orange"] + "?" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message} -> "
     )

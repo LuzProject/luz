@@ -21,9 +21,7 @@ def main():
     sub_parsers = parser.add_subparsers(help="sub-command help", dest="command")
 
     # build
-    parser_build = sub_parsers.add_parser(
-        "build", help="compile a luz project using a LuzBuild"
-    )
+    parser_build = sub_parsers.add_parser("build", help="compile a luz project using a LuzBuild")
     parser_build.add_argument(
         "-c",
         "--clean",
@@ -33,9 +31,7 @@ def main():
     )
 
     # gen
-    parser_gen = sub_parsers.add_parser(
-        "gen", help="generate a luz project using LuzGen"
-    )
+    parser_gen = sub_parsers.add_parser("gen", help="generate a luz project using LuzGen")
     parser_gen.add_argument(
         "-t",
         "--type",
@@ -60,9 +56,7 @@ def main():
             LuzBuild(args.clean).build_and_pack()
         elif args.command == "gen":
             if args.type is None:
-                args.type = ask(
-                    'What type of project would you like to generate? (tool/tweak/preferences) (enter for "tweak")'
-                )
+                args.type = ask('What type of project would you like to generate? (tool/tweak/preferences) (enter for "tweak")')
                 if args.type == "":
                     args.type = "tweak"
             assign_module(args.type)
