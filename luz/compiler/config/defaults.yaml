@@ -20,7 +20,13 @@ meta:
   # platform
   platform: iphoneos
   # minVers
-  minVers: 14.0
+  minVers: 15.0
+
+scripts:
+  preinst: ''
+  postinst: 'killall SpringBoard'
+  prerm: ''
+  postrm: 'killall SpringBoard'
 
 modules:
   # default module type

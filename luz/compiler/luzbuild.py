@@ -99,9 +99,11 @@ class LuzBuild:
         if self.to_inherit is not None:
             self.control = getattr(self.to_inherit, "control")
             self.control_raw = getattr(self.to_inherit, "control_raw")
+            self.scripts = getattr(self.to_inherit, "scripts")
         else:
             self.control = None
             self.control_raw = ""
+            self.scripts = {}
 
         # sdk
         self.sdk = self.__get("sdk", "meta.sdk")
@@ -289,6 +291,13 @@ class LuzBuild:
         if self.control is None:
             self.control = Control(self.control_raw)
 
+        # script formatting
+        for k in ['preinst', 'postinst', 'prerm', 'postrm']:
+            if self.scripts.get(k) == None:
+                default = self.defaults.get('scripts').get(k)
+                if default != '': self.scripts[k] = default
+
+
     def update_hashlist(self, keys):
         """Update the hashlist with a list of keys."""
         self.hashlist.update(keys)
@@ -377,6 +386,17 @@ class LuzBuild:
                         else:
                             self.control_raw += f"{c.capitalize()}: {v}{end}"
 
+        # scripts
+        if key == "scripts" and self.should_pack:
+            for script in value:
+                if script in ["preinst", "postinst", "prerm", "postrm"]:
+                    v = value.get(script)
+                    if type(v) == list:
+                        script_raw = "\n".join(v)
+                    else:
+                        script_raw = v
+                    self.scripts[script] = script_raw
+
     def __error_and_exit(self, msg):
         """Print an error and exit.
 
@@ -418,6 +438,10 @@ class LuzBuild:
             layout_path = resolve_path(f"{submodule.path}/layout")
             if layout_path.exists():
                 copytree(layout_path, f"{self.dir}/_", dirs_exist_ok=True)
+        # scripts
+        for script in self.scripts:
+            with open(f'{self.dir}/_/DEBIAN/{script}', 'w') as f:
+                f.write(self.scripts[script])
         # pack
         Pack(
             resolve_path(f"{self.dir}/_"),

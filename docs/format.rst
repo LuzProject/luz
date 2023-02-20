@@ -40,10 +40,10 @@ This is where you define the settings for the build, such as the SDK, the archit
      - List of architectures to build for. (``['arm64', 'arm64e']`` if not specified)
    * - ``platform``
      - String
-     - Platform to build for. (``iphoneos`` if not specified)
+     - Platform to build for. Can be ``macosx``, ``iphoneos`` or ``watchos``. (``iphoneos`` if not specified)
    * - ``minVers``
      - String
-     - Minimum version to build for. (``14.0`` if not specified)
+     - Minimum version to build for. (``15.0`` if not specified)
     
 Control
 *********************
@@ -83,6 +83,30 @@ This is where you define the settings for the control file.
    * - ``description``
      - String
      - Description of the package.
+
+Scripts
+*********************
+
+This is where you define your package's maintainer scripts.
+
+.. list-table::
+   :widths: 5 1 10
+
+   * - Variable
+     - Type
+     - Description
+   * - ``preinst``
+     - String / List
+     - Script to run before installing the package.
+   * - ``postinst``
+     - String / List
+     - Script to run after installing the package. (``killall SpringBoard`` if not specified)
+   * - ``prerm``
+     - String / List
+     - Script to run before removing the package.
+   * - ``postrm``
+     - String / List
+     - Script to run after removing the package. (``killall SpringBoard`` if not specified)
 
 Modules
 *********************
@@ -146,29 +170,40 @@ Example LuzBuild
 .. code:: yaml
 
     meta:
-        archs:
-            - arm64
-            - arm64e
-        cc: /usr/bin/gcc
-        swift: /usr/bin/swift
-        compression: zstd
-        platform: iphoneos
-        rootless: true
-        version: 13
+      archs:
+      - arm64
+      - arm64e
+      cc: /usr/bin/gcc
+      swift: /usr/bin/swift
+      compression: zstd
+      platform: iphoneos
+      sdk: ~/.luz/sdks/iPhoneOS14.5.sdk
+      rootless: true
+      minVers: 15.0
 
     control:
-        architecture: iphoneos-arm64
-        author: Jaidan
-        description: LuzBuild demo
-        id: com.jaidan.demo
-        name: LuzBuildDemo
-        section: Tweaks
-        version: 1.0.0
+      architecture: iphoneos-arm64
+      author: Jaidan
+      depends: firmware (>= 15.0), mobilesubstrate
+      description: LuzBuild demo
+      id: com.jaidan.demo
+      name: LuzBuildDemo
+      section: Tweaks
+      version: 1.0.0
+    
+    scripts:
+      postinst:
+      - echo 'Thank you for trying out Luz!'
+      - killall SpringBoard
+      postrm: echo 'Thank you for trying out Luz!'
     
     modules:
-        Tweak:
-            files:
-                - Tweak.xm
+      Tweak:
+        filter:
+          bundles:
+          - com.apple.SpringBoard
+        files:
+        - Tweak.xm
 
     submodules:
-        - Preferences
+    - Preferences
