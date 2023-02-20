@@ -117,6 +117,19 @@ class LuzBuild:
         elif self.debug == False:
             self.release = True
 
+        if inherit is None:
+            if self.debug:
+                build = resolve_path(f"{self.dir}/last_build")
+                if build.exists():
+                    with open(build, "r") as f:
+                        self.build_number = (int(f.read()) + 1)
+                else:
+                    self.build_number = 1
+                with open(build, "w") as f:
+                    f.write(str(self.build_number))
+        else:
+            self.build_number = getattr(self.to_inherit, "build_number")
+
         # sdk
         self.sdk = self.__get("sdk", "meta.sdk")
 
@@ -376,6 +389,10 @@ class LuzBuild:
                             self.luzbuild.get("control")
                         ):
                             self.control_raw += f"Author: {v}{end}Maintainer: {v}{end}"
+                        # debug version patch
+                        elif c == "version" and self.debug:
+                            print(f"Version: {v}-{self.build_number}+debug{end}")
+                            self.control_raw += f"Version: {v}-{self.build_number}+debug{end}"
                         # author
                         elif c == "maintainer" and not "author" in list(
                             self.luzbuild.get("control")
