@@ -1,4 +1,8 @@
 meta:
+  # debug key
+  debug: True
+  # release
+  release: False
   # default sdk path
   sdk: ''
   # default toolchain path

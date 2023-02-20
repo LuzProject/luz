@@ -53,6 +53,7 @@ class Tweak(Module):
                     self.frameworks,
                     self.private_frameworks,
                     self.swift_flags,
+                    '-g' if self.luzbuild.debug else '',
                     self.bridging_headers,
                 ]
                 # format platform
@@ -101,6 +102,7 @@ class Tweak(Module):
                         f"-arch {arch}",
                         self.include,
                         f"-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}",
+                        '-g' if self.luzbuild.debug else '',
                         self.c_flags,
                         "-c",
                     ]

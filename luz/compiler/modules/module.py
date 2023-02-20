@@ -360,6 +360,7 @@ class Module:
             self.private_frameworks,
             f"-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}",
             f'-DLUZ_PACKAGE_VERSION="{self.luzbuild.control.version}"',
+            '-g' if self.luzbuild.debug else '',
             self.c_flags,
         ]
         # add dynamic lib to args
@@ -401,7 +402,7 @@ class Module:
         except:
             return f'An error occured when trying to add rpath to "{out_name}" for module "{self.name}".'
 
-        if compile_type == "executable":
+        if compile_type == "executable" and self.luzbuild.release:
             try:
                 check_output(f"{self.luzbuild.strip} {out_name}", shell=True)
             except:

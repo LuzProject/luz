@@ -105,6 +105,18 @@ class LuzBuild:
             self.control_raw = ""
             self.scripts = {}
 
+        # debug
+        self.debug = self.__get("debug", "meta.debug")
+
+        # release
+        self.release = self.__get("release", "meta.release")
+
+        # fix up
+        if self.debug == True and self.release == True:
+            self.debug = False
+        elif self.debug == False:
+            self.release = True
+
         # sdk
         self.sdk = self.__get("sdk", "meta.sdk")
 

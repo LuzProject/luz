@@ -47,6 +47,7 @@ class Tool(Module):
                     self.frameworks,
                     self.private_frameworks,
                     self.swift_flags,
+                    '-g' if self.luzbuild.debug else '',
                     self.bridging_headers,
                 ]
                 # format platform
@@ -96,6 +97,7 @@ class Tool(Module):
                         self.include,
                         f"-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}",
                         self.c_flags,
+                        '-g' if self.luzbuild.debug else '',
                         "-c",
                     ]
                     # compile with clang using build flags

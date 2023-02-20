@@ -14,6 +14,12 @@ This is where you define the settings for the build, such as the SDK, the archit
    * - Variable
      - Type
      - Description
+   * - ``debug``
+     - Boolean
+     - Whether or not to build a debug version of the package. (``true`` if not specified)
+   * - ``release``
+     - Boolean
+     - Whether or not to build a release version of the package. (``false`` if not specified)
    * - ``sdk``
      - String
      - SDK path to use for building. (uses ``xcrun`` to find an SDK if not specified)
@@ -170,6 +176,7 @@ Example LuzBuild
 .. code:: yaml
 
     meta:
+      release: True
       archs:
       - arm64
       - arm64e
