@@ -242,6 +242,7 @@ def linux_install():
                 f"curl -LO https://github.com/CRKatri/llvm-project/releases/download/swift-5.3.2-RELEASE/swift-5.3.2-RELEASE-ubuntu20.04.tar.zst && TMP=$(mktemp -d) && tar -xvf swift-5.3.2-RELEASE-ubuntu20.04.tar.zst -C $TMP && mkdir -p {toolchain_path}/linux/iphone {toolchain_path}/swift && mv $TMP/swift-5.3.2-RELEASE-ubuntu20.04/* {toolchain_path}/linux/iphone/ && ln -s {toolchain_path}/linux/iphone {toolchain_path}/swift && rm -r swift-5.3.2-RELEASE-ubuntu20.04.tar.zst $TMP"
             )
         except Exception as e:
+            res = getoutput("rm -r swift-5.3.2-RELEASE-ubuntu20.04.tar.zst")
             print(f"[INSTALLER] Failed to download toolchain: {e}")
             exit(1)
 
