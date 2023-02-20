@@ -100,13 +100,13 @@ This is where you define your package's maintainer scripts.
      - Script to run before installing the package.
    * - ``postinst``
      - String / List
-     - Script to run after installing the package. (``killall SpringBoard`` if not specified)
+     - Script to run after installing the package.
    * - ``prerm``
      - String / List
      - Script to run before removing the package.
    * - ``postrm``
      - String / List
-     - Script to run after removing the package. (``killall SpringBoard`` if not specified)
+     - Script to run after removing the package.
 
 Modules
 *********************

@@ -291,13 +291,6 @@ class LuzBuild:
         if self.control is None:
             self.control = Control(self.control_raw)
 
-        # script formatting
-        for k in ['preinst', 'postinst', 'prerm', 'postrm']:
-            if self.scripts.get(k) == None:
-                default = self.defaults.get('scripts').get(k)
-                if default != '': self.scripts[k] = default
-
-
     def update_hashlist(self, keys):
         """Update the hashlist with a list of keys."""
         self.hashlist.update(keys)
