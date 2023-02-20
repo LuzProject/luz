@@ -99,5 +99,5 @@ class Module:
             val = ask(f"{dsc} {dsc1} this project's {key}?")
             if val == "":
                 error("You must enter a value.")
-                exit(1)
+                val = ask(f"{dsc} {dsc1} this {self.type}'s {key}?")
         return val
