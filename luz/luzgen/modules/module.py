@@ -44,7 +44,7 @@ class Module:
 
             # ask for control values
             self.control["name"] = self.ask_for("name")
-            self.control["id"] = self.ask_for("bundle ID", f'com.yourcompany.{self.control["name"]}')
+            self.control["id"] = self.ask_for("bundle ID", f'com.yourcompany.{self.control["name"].lower()}')
             self.control["version"] = self.ask_for("version", "1.0.0")
             self.control["author"] = self.ask_for("author", getpwuid(getuid())[0], dsc="Who")
             self.control["maintainer"] = self.control["author"]

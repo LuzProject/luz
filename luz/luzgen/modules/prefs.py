@@ -24,7 +24,7 @@ class Preferences(Module):
 
         # get keys
         self.name = self.__ask_for("name")
-        self.id = self.__ask_for("bundle ID", f"com.yourcompany.{self.name}")
+        self.id = self.__ask_for("bundle ID", f"com.yourcompany.{self.name.lower()}")
         # prefix
         self.prefix = self.__ask_for("unique bundle prefix", "XX") if self.srctype == "objc" else ""
         # add values to dict
