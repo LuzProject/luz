@@ -1,11 +1,11 @@
 # module imports
 from argparse import ArgumentParser
-from os import environ, getuid, makedirs
+from os import environ, getuid, makedirs, system
 from pathlib import Path
 from platform import platform
 from pkg_resources import working_set
 from shutil import which
-from subprocess import check_output, getoutput
+from subprocess import getoutput
 from typing import Union
 
 
@@ -113,7 +113,7 @@ def get_sdks():
         print("[INSTALLER] iOS SDKs not found. Downloading...")
         try:
             makedirs(sdk_path, exist_ok=True)
-            check_output(
+            system(
                 f"curl -L https://api.github.com/repos/theos/sdks/tarball -o sdks.tar.gz && TMP=$(mktemp -d) && tar -xvf sdks.tar.gz --strip=1 -C $TMP && mv $TMP/*.sdk {sdk_path} && rm -r sdks.tar.gz $TMP"
             )
         except Exception as e:
@@ -137,11 +137,11 @@ def darwin_install():
         print(f"[INSTALLER] Installing dependencies ({', '.join(need)}). Please enter your password if prompted.")
         try:
             if manager == "apt":
-                check_output(f"sudo {manager} update && sudo {manager} install -y ldid xz-utils")
+                system(f"sudo {manager} update && sudo {manager} install -y ldid xz-utils")
             elif manager == "port":
-                check_output(f"sudo {manager} selfupdate && sudo {manager} install -y ldid xz")
+                system(f"sudo {manager} selfupdate && sudo {manager} install -y ldid xz")
             elif manager == "brew":
-                check_output(f"{manager} update && {manager} install -y ldid xz")
+                system(f"{manager} update && {manager} install -y ldid xz")
             else:
                 print("[INSTALLER] Could not find a package manager.")
                 print("[INSTALLER] Please install the missing dependencies before continuing.")
@@ -162,13 +162,13 @@ def linux_install():
         print(f"[INSTALLER] Installing dependencies ({', '.join(need)}). Please enter your password if prompted.")
         try:
             if manager == "apt":
-                check_output(f"sudo {manager} update && sudo {manager} install -y build-essential curl perl git")
+                system(f"sudo {manager} update && sudo {manager} install -y build-essential curl perl git")
             elif manager == "pacman":
-                check_output(f"sudo {manager} -Syy && sudo {manager} -S --needed --noconfirm base-devel curl perl git")
+                system(f"sudo {manager} -Syy && sudo {manager} -S --needed --noconfirm base-devel curl perl git")
             elif manager == "dnf":
-                check_output(f'sudo {manager} check-update && sudo {manager} group install -y "C Development Tools and Libraries" && sudo {manager} install -y lzma libbsd curl perl git')
+                system(f'sudo {manager} check-update && sudo {manager} group install -y "C Development Tools and Libraries" && sudo {manager} install -y lzma libbsd curl perl git')
             elif manager == "zypper":
-                check_output(f"sudo {manager} refresh && sudo {manager} install -y -t pattern devel_basis && sudo {manager} install -y libbsd0 curl perl git")
+                system(f"sudo {manager} refresh && sudo {manager} install -y -t pattern devel_basis && sudo {manager} install -y libbsd0 curl perl git")
             else:
                 print("[INSTALLER] Could not find a package manager.")
                 print("[INSTALLER] Please install the missing dependencies before continuing.")
@@ -189,17 +189,17 @@ def linux_install():
             print(f"[INSTALLER] Installing toolchain dependencies ({', '.join(need)}). Please enter your password if prompted.")
             try:
                 if manager == "apt":
-                    check_output(f"sudo {manager} install -y libz3-dev zstd")
+                    system(f"sudo {manager} install -y libz3-dev zstd")
                 elif manager == "pacman":
-                    check_output(
+                    system(
                         f'sudo {manager} -S --needed --noconfirm libedit z3 zstd && LATEST_LIBZ3="$(ls -v /usr/lib/ | grep libz3 | tail -n 1)" && sudo ln -sf /usr/lib/$LATEST_LIBZ3 /usr/lib/libz3.so.4 && LATEST_LIBEDIT="$(ls -v /usr/lib/ | grep libedit | tail -n 1)" && sudo ln -sf /usr/lib/$LATEST_LIBEDIT /usr/lib/libedit.so.2'
                     )
                 elif manager == "dnf":
-                    check_output(
+                    system(
                         f'sudo {manager} install -y z3-libs zstd && LATEST_LIBZ3="$(ls -v /usr/lib64/ | grep libz3 | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBZ3 /usr/lib64/libz3.so.4 && LATEST_LIBEDIT="$(ls -v /usr/lib64/ | grep libedit | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBEDIT /usr/lib64/libedit.so.2'
                     )
                 elif manager == "zypper":
-                    check_output(
+                    system(
                         f'sudo {manager} install -y -y $(zypper search libz3 | tail -n 1 | cut -d "|" -f2) zstd && LATEST_LIBZ3="$(ls -v /usr/lib64/ | grep libz3 | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBZ3 /usr/lib64/libz3.so.4 && LATEST_LIBEDIT="$(ls -v /usr/lib64/ | grep libedit | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBEDIT /usr/lib64/libedit.so.2'
                     )
             except Exception as e:
@@ -207,7 +207,7 @@ def linux_install():
                 exit(1)
 
         try:
-            check_output(
+            system(
                 f"curl -LO https://github.com/CRKatri/llvm-project/releases/download/swift-5.3.2-RELEASE/swift-5.3.2-RELEASE-ubuntu20.04.tar.zst && TMP=$(mktemp -d) && tar -xvf swift-5.3.2-RELEASE-ubuntu20.04.tar.zst -C $TMP && mkdir -p {toolchain_path}/linux/iphone {toolchain_path}/swift && mv $TMP/swift-5.3.2-RELEASE-ubuntu20.04/* {toolchain_path}/linux/iphone/ && ln -s {toolchain_path}/linux/iphone {toolchain_path}/swift && rm -r swift-5.3.2-RELEASE-ubuntu20.04.tar.zst $TMP"
             )
         except Exception as e:
@@ -236,7 +236,7 @@ def main():
 
     print("[INSTALLER] Installing luz...")
     try:
-        check_output(f'{cmd_in_path("pip")} install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip')
+        system(f'{cmd_in_path("pip")} install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip')
     except Exception as e:
         print(f"[INSTALLER] Failed to install luz: {e}")
         exit(1)
