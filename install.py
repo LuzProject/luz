@@ -124,6 +124,7 @@ def get_sdks():
                 f"curl -L https://api.github.com/repos/theos/sdks/tarball -o sdks.tar.gz && TMP=$(mktemp -d) && tar -xvf sdks.tar.gz --strip=1 -C $TMP && mv $TMP/*.sdk {sdk_path} && rm -r sdks.tar.gz $TMP"
             )
         except Exception as e:
+            res = getoutput("rm -rf ./sdks.tar.gz")
             print(f"[INSTALLER] Failed to download iOS SDKs: {e}")
             exit(1)
 
@@ -134,8 +135,13 @@ def darwin_install():
         print("[INSTALLER] Luz depends on both Xcode and the Xcode Command Line Tools.")
         exit(1)
     manager = get_manager()
+    deps = ["ldid", "xz"]
+    need = []
+    for dep in deps:
+        if cmd_in_path(dep) is None:
+            need.append(dep)
     print(
-        "[INSTALLER] Installing dependencies. Please enter your password if prompted."
+        f"[INSTALLER] Installing dependencies ({', '.join(need)}). Please enter your password if prompted."
     )
     try:
         if manager == "apt":
@@ -161,35 +167,41 @@ def darwin_install():
 
 def linux_install():
     manager = get_manager()
-    print(
-        "[INSTALLER] Installing dependencies. Please enter your password if prompted."
-    )
-    try:
-        if manager == "apt":
-            res = getoutput(
-                f"sudo {manager} update && sudo {manager} install -y build-essential curl perl git"
-            )
-        elif manager == "pacman":
-            res = getoutput(
-                f"sudo {manager} -Syy && sudo {manager} -S --needed --noconfirm base-devel curl perl git"
-            )
-        elif manager == "dnf":
-            res = getoutput(
-                f'sudo {manager} check-update && sudo {manager} group install -y "C Development Tools and Libraries" && sudo {manager} install -y lzma libbsd curl perl git'
-            )
-        elif manager == "zypper":
-            res = getoutput(
-                f"sudo {manager} refresh && sudo {manager} install -y -t pattern devel_basis && sudo {manager} install -y libbsd0 curl perl git"
-            )
-        else:
-            print("[INSTALLER] Could not find a package manager.")
-            print(
-                "[INSTALLER] Please install the missing dependencies before continuing."
-            )
+    deps = ["clang", "curl", "perl", "git"]
+    need = []
+    for dep in deps:
+        if cmd_in_path(dep) is None:
+            need.append(dep)
+    if need != []:
+        print(
+            f"[INSTALLER] Installing dependencies ({', '.join(need)}). Please enter your password if prompted."
+        )
+        try:
+            if manager == "apt":
+                res = getoutput(
+                    f"sudo {manager} update && sudo {manager} install -y build-essential curl perl git"
+                )
+            elif manager == "pacman":
+                res = getoutput(
+                    f"sudo {manager} -Syy && sudo {manager} -S --needed --noconfirm base-devel curl perl git"
+                )
+            elif manager == "dnf":
+                res = getoutput(
+                    f'sudo {manager} check-update && sudo {manager} group install -y "C Development Tools and Libraries" && sudo {manager} install -y lzma libbsd curl perl git'
+                )
+            elif manager == "zypper":
+                res = getoutput(
+                    f"sudo {manager} refresh && sudo {manager} install -y -t pattern devel_basis && sudo {manager} install -y libbsd0 curl perl git"
+                )
+            else:
+                print("[INSTALLER] Could not find a package manager.")
+                print(
+                    "[INSTALLER] Please install the missing dependencies before continuing."
+                )
+                exit(1)
+        except Exception as e:
+            print(f"[INSTALLER] Failed to install dependencies: {e}")
             exit(1)
-    except Exception as e:
-        print(f"[INSTALLER] Failed to install dependencies: {e}")
-        exit(1)
 
     toolchain_path = f"{PATH}/toolchain"
     if (
@@ -197,24 +209,33 @@ def linux_install():
         or len(resolve_path(f"{toolchain_path}/*.toolchain")) == 0
     ):
         print("[INSTALLER] iOS toolchain not found. Downloading...")
-        try:
-            if manager == "apt":
-                res = getoutput(f"sudo {manager} install -y libz3-dev zstd")
-            elif manager == "pacman":
-                res = getoutput(
-                    f'sudo {manager} -S --needed --noconfirm libedit z3 zstd && LATEST_LIBZ3="$(ls -v /usr/lib/ | grep libz3 | tail -n 1)" && sudo ln -sf /usr/lib/$LATEST_LIBZ3 /usr/lib/libz3.so.4 && LATEST_LIBEDIT="$(ls -v /usr/lib/ | grep libedit | tail -n 1)" && sudo ln -sf /usr/lib/$LATEST_LIBEDIT /usr/lib/libedit.so.2'
-                )
-            elif manager == "dnf":
-                res = getoutput(
-                    f'sudo {manager} install -y z3-libs zstd && LATEST_LIBZ3="$(ls -v /usr/lib64/ | grep libz3 | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBZ3 /usr/lib64/libz3.so.4 && LATEST_LIBEDIT="$(ls -v /usr/lib64/ | grep libedit | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBEDIT /usr/lib64/libedit.so.2'
-                )
-            elif manager == "zypper":
-                res = getoutput(
-                    f'sudo {manager} install -y -y $(zypper search libz3 | tail -n 1 | cut -d "|" -f2) zstd && LATEST_LIBZ3="$(ls -v /usr/lib64/ | grep libz3 | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBZ3 /usr/lib64/libz3.so.4 && LATEST_LIBEDIT="$(ls -v /usr/lib64/ | grep libedit | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBEDIT /usr/lib64/libedit.so.2'
-                )
-        except Exception as e:
-            print(f"[INSTALLER] Failed to install toolchain dependencies: {e}")
-            exit(1)
+        deps = ["zstd"]
+        need = []
+        for dep in deps:
+            if cmd_in_path(dep) is None:
+                need.append(dep)
+        print(
+            f"[INSTALLER] Installing toolchain dependencies ({', '.join(need)}). Please enter your password if prompted."
+        )
+        if need != []:
+            try:
+                if manager == "apt":
+                    res = getoutput(f"sudo {manager} install -y libz3-dev zstd")
+                elif manager == "pacman":
+                    res = getoutput(
+                        f'sudo {manager} -S --needed --noconfirm libedit z3 zstd && LATEST_LIBZ3="$(ls -v /usr/lib/ | grep libz3 | tail -n 1)" && sudo ln -sf /usr/lib/$LATEST_LIBZ3 /usr/lib/libz3.so.4 && LATEST_LIBEDIT="$(ls -v /usr/lib/ | grep libedit | tail -n 1)" && sudo ln -sf /usr/lib/$LATEST_LIBEDIT /usr/lib/libedit.so.2'
+                    )
+                elif manager == "dnf":
+                    res = getoutput(
+                        f'sudo {manager} install -y z3-libs zstd && LATEST_LIBZ3="$(ls -v /usr/lib64/ | grep libz3 | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBZ3 /usr/lib64/libz3.so.4 && LATEST_LIBEDIT="$(ls -v /usr/lib64/ | grep libedit | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBEDIT /usr/lib64/libedit.so.2'
+                    )
+                elif manager == "zypper":
+                    res = getoutput(
+                        f'sudo {manager} install -y -y $(zypper search libz3 | tail -n 1 | cut -d "|" -f2) zstd && LATEST_LIBZ3="$(ls -v /usr/lib64/ | grep libz3 | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBZ3 /usr/lib64/libz3.so.4 && LATEST_LIBEDIT="$(ls -v /usr/lib64/ | grep libedit | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBEDIT /usr/lib64/libedit.so.2'
+                    )
+            except Exception as e:
+                print(f"[INSTALLER] Failed to install toolchain dependencies: {e}")
+                exit(1)
 
         try:
             res = getoutput(
