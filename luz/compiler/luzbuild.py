@@ -5,6 +5,7 @@ from json import loads
 from multiprocessing.pool import ThreadPool
 from os import makedirs
 from pathlib import Path
+from platform import platform
 from pyclang import CCompiler, SwiftCompiler
 from pydeb import Control, Pack
 from shutil import copytree, rmtree
@@ -149,6 +150,12 @@ class LuzBuild:
 
         # prefix
         self.prefix = self.__get("prefix", "meta.prefix")
+
+        if self.prefix == "" and platform().startswith("Linux"):
+            luz_prefix = resolve_path(f'{self.storage}/toolchain/linux/iphone/usr/bin')
+            if not luz_prefix.exists():
+                self.__error_and_exit("Running on Linux, and toolchain is not installed.")
+            self.prefix = luz_prefix
 
         # cc
         self.cc = self.__get("cc", "meta.cc")
