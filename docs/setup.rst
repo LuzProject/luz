@@ -26,6 +26,9 @@ You can call the install script with the following options:
    * - ``-ns``, ``--no-sdks``
      - Flag
      - Whether or not to install the SDKs. If this is set, you will need to install the SDKs manually.
+   * - ``-u``, ``--update``
+     - Flag
+     - Update Luz. (You can use ``--ref`` to specify a different ref to update to.)
    * - ``-r``, ``--ref``
      - String
      - Ref of ``luz`` to install. This can be a branch, tag, or commit hash. Defaults to ``main``.

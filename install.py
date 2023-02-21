@@ -1,47 +1,77 @@
 # module imports
 from argparse import ArgumentParser
-from os import environ, getuid, makedirs, system
+from os import environ, getuid, makedirs, name
 from pathlib import Path
 from platform import platform
 from pkg_resources import working_set
 from shutil import which
-from subprocess import getoutput
+from subprocess import check_call, DEVNULL, getoutput
+from sys import stdout
 from typing import Union
 
+# fix logging if we are running on Windows
+if name == "nt":
+    from ctypes import windll
 
+    k = windll.kernel32
+    k.SetConsoleMode(k.GetStdHandle(-11), 7)
+
+colors = {
+    "black": "\033[30m",
+    "red": "\033[31m",
+    "green": "\033[32m",
+    "orange": "\033[33m",
+    "blue": "\033[34m",
+    "purple": "\033[35m",
+    "cyan": "\033[36m",
+    "lightgrey": "\033[37m",
+    "darkgrey": "\033[90m",
+    "lightred": "\033[91m",
+    "lightgreen": "\033[92m",
+    "yellow": "\033[93m",
+    "lightblue": "\033[94m",
+    "pink": "\033[95m",
+    "lightcyan": "\033[96m",
+    "reset": "\033[0m",
+    "bold": "\033[01m",
+    "disable": "\033[02m",
+    "underline": "\033[04m",
+    "reverse": "\033[07m",
+    "strikethrough": "\033[09m",
+    "invisible": "\033[08m",
+}
+
+def log(message, lock=None):
+    if lock is not None:
+        with lock:
+            print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] +
+                  colors["green"] + "*" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
+    else:
+        print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] +
+              colors["green"] + "*" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
+
+def error(message, lock=None):
+    if lock is not None:
+        with lock:
+            print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] +
+                  colors["red"] + "!" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
+    else:
+        print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] +
+              colors["red"] + "!" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
+
+def command_wrapper(command: str) -> str:
+    """Wrapper for commands to run in the shell.
+
+    :param str command: The command to run.
+    """
+    return check_call(command, env=environ.copy(), shell=True, stdout=DEVNULL, stderr=DEVNULL)
+
+# begin install script
 platform_str = platform()
 
-
 if getuid() == 0:
-    print("[INSTALLER] Please don't run this script as root.")
+    print("Please don't run this script as root.")
     exit(1)
-
-
-required = {"luz"}
-installed = {pkg.key for pkg in working_set}
-missing = required - installed
-
-
-if not missing:
-    print("[INSTALLER] luz is already installed.")
-    exit(0)
-
-
-def should_install_deps(win, nti):
-    win.nodelay(True)
-    win.addstr('[INSTALLER] The following dependencies are missing: {}\n[INSTALLER] Press "y" to install them now.'.format(", ".join(nti)))
-    key = ""
-    while 1:
-        try:
-            key = win.getkey()
-            if key == "y":
-                return True
-            else:
-                return False
-        except Exception as e:
-            # No input
-            pass
-
 
 def resolve_path(path: str) -> Union[Path, list]:
     """Resolve a Path from a String."""
@@ -58,7 +88,6 @@ def resolve_path(path: str) -> Union[Path, list]:
     # return path
     return p
 
-
 def format_path(file: str) -> str:
     """Format a path that contains environment variables.
 
@@ -73,7 +102,6 @@ def format_path(file: str) -> str:
             new_file += f + "/"
     return new_file
 
-
 def cmd_in_path(cmd: str) -> Union[None, Path]:
     """Check if a command is in the path.
 
@@ -86,9 +114,7 @@ def cmd_in_path(cmd: str) -> Union[None, Path]:
 
     return resolve_path(path)
 
-
 PATH = resolve_path(f'{environ.get("HOME")}/.luz')
-
 
 def get_manager() -> str:
     if cmd_in_path("apt") is not None:
@@ -106,26 +132,24 @@ def get_manager() -> str:
     else:
         return ""
 
-
 def get_sdks():
     sdk_path = f"{PATH}/sdks"
     if not resolve_path(sdk_path).exists() or len(resolve_path(f"{sdk_path}/*.sdk")) == 0:
-        print("[INSTALLER] iOS SDKs not found. Downloading...")
+        log("iOS SDKs not found. Downloading...")
         try:
             makedirs(sdk_path, exist_ok=True)
-            system(
+            command_wrapper(
                 f"curl -L https://api.github.com/repos/theos/sdks/tarball -o sdks.tar.gz && TMP=$(mktemp -d) && tar -xf sdks.tar.gz --strip=1 -C $TMP && mv $TMP/*.sdk {sdk_path} && rm -r sdks.tar.gz $TMP"
             )
         except Exception as e:
-            getoutput("rm -rf ./sdks.tar.gz")
-            print(f"[INSTALLER] Failed to download iOS SDKs: {e}")
+            command_wrapper("rm -rf ./sdks.tar.gz")
+            error("Failed to download iOS SDKs: " + str(e))
             exit(1)
-
 
 def darwin_install():
     xcpath = getoutput(f'{cmd_in_path("xcode-select")} -p')
     if not xcpath.endswith(".app/Contents/Developer"):
-        print("[INSTALLER] Luz depends on both Xcode and the Xcode Command Line Tools.")
+        error("Xcode not found. Please install Xcode from the App Store.")
         exit(1)
     manager = get_manager()
     deps = ["ldid", "xz"]
@@ -134,22 +158,21 @@ def darwin_install():
         if cmd_in_path(dep) is None:
             need.append(dep)
     if need != []:
-        print(f"[INSTALLER] Installing dependencies ({', '.join(need)}). Please enter your password if prompted.")
+        log(f"Installing dependencies ({', '.join(need)}). Please enter your password if prompted.")
         try:
             if manager == "apt":
-                system(f"sudo {manager} update && sudo {manager} install -y ldid xz-utils")
+                command_wrapper(f"sudo {manager} update && sudo {manager} install -y ldid xz-utils")
             elif manager == "port":
-                system(f"sudo {manager} selfupdate && sudo {manager} install -y ldid xz")
+                command_wrapper(f"sudo {manager} selfupdate && sudo {manager} install -y ldid xz")
             elif manager == "brew":
-                system(f"{manager} update && {manager} install -y ldid xz")
+                command_wrapper(f"{manager} update && {manager} install -y ldid xz")
             else:
-                print("[INSTALLER] Could not find a package manager.")
-                print("[INSTALLER] Please install the missing dependencies before continuing.")
+                error("Could not find a package manager.")
+                error(f"Please install the missing dependencies before continuing. ({', '.join(need)})")
                 exit(1)
         except Exception as e:
-            print(f"[INSTALLER] Failed to install dependencies: {e}")
+            error(f"Failed to install dependencies: {e}")
             exit(1)
-
 
 def linux_install():
     manager = get_manager()
@@ -159,96 +182,126 @@ def linux_install():
         if cmd_in_path(dep) is None:
             need.append(dep)
     if need != []:
-        print(f"[INSTALLER] Installing dependencies ({', '.join(need)}). Please enter your password if prompted.")
+        log(f"Installing dependencies ({', '.join(need)}). Please enter your password if prompted.")
         try:
             if manager == "apt":
-                system(f"sudo {manager} update && sudo {manager} install -y build-essential curl perl git")
+                command_wrapper(f"sudo {manager} update && sudo {manager} install -y build-essential curl perl git")
             elif manager == "pacman":
-                system(f"sudo {manager} -Syy && sudo {manager} -S --needed --noconfirm base-devel curl perl git")
+                command_wrapper(f"sudo {manager} -Syy && sudo {manager} -S --needed --noconfirm base-devel curl perl git")
             elif manager == "dnf":
-                system(f'sudo {manager} check-update && sudo {manager} group install -y "C Development Tools and Libraries" && sudo {manager} install -y lzma libbsd curl perl git')
+                command_wrapper(f'sudo {manager} check-update && sudo {manager} group install -y "C Development Tools and Libraries" && sudo {manager} install -y lzma libbsd curl perl git')
             elif manager == "zypper":
-                system(f"sudo {manager} refresh && sudo {manager} install -y -t pattern devel_basis && sudo {manager} install -y libbsd0 curl perl git")
+                command_wrapper(f"sudo {manager} refresh && sudo {manager} install -y -t pattern devel_basis && sudo {manager} install -y libbsd0 curl perl git")
             else:
-                print("[INSTALLER] Could not find a package manager.")
-                print("[INSTALLER] Please install the missing dependencies before continuing.")
+                error("Could not find a package manager.")
+                error(f"Please install the missing dependencies before continuing. ({', '.join(need)})")
                 exit(1)
         except Exception as e:
-            print(f"[INSTALLER] Failed to install dependencies: {e}")
+            error(f"Failed to install dependencies: {e}")
             exit(1)
 
     toolchain_path = f"{PATH}/toolchain"
     if not resolve_path(toolchain_path).exists() or len(resolve_path(f"{toolchain_path}/linux/iphone/*")) == 0:
-        print("[INSTALLER] iOS toolchain not found. Downloading...")
+        log("iOS toolchain not found. Downloading...")
         deps = ["zstd"]
         need = []
         for dep in deps:
             if cmd_in_path(dep) is None:
                 need.append(dep)
         if need != []:
-            print(f"[INSTALLER] Installing toolchain dependencies ({', '.join(need)}). Please enter your password if prompted.")
+            log(f"Installing toolchain dependencies ({', '.join(need)}). Please enter your password if prompted.")
             try:
                 if manager == "apt":
-                    system(f"sudo {manager} install -y libz3-dev zstd")
+                    command_wrapper(f"sudo {manager} install -y libz3-dev zstd")
                 elif manager == "pacman":
-                    system(
+                    command_wrapper(
                         f'sudo {manager} -S --needed --noconfirm libedit z3 zstd && LATEST_LIBZ3="$(ls -v /usr/lib/ | grep libz3 | tail -n 1)" && sudo ln -sf /usr/lib/$LATEST_LIBZ3 /usr/lib/libz3.so.4 && LATEST_LIBEDIT="$(ls -v /usr/lib/ | grep libedit | tail -n 1)" && sudo ln -sf /usr/lib/$LATEST_LIBEDIT /usr/lib/libedit.so.2'
                     )
                 elif manager == "dnf":
-                    system(
+                    command_wrapper(
                         f'sudo {manager} install -y z3-libs zstd && LATEST_LIBZ3="$(ls -v /usr/lib64/ | grep libz3 | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBZ3 /usr/lib64/libz3.so.4 && LATEST_LIBEDIT="$(ls -v /usr/lib64/ | grep libedit | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBEDIT /usr/lib64/libedit.so.2'
                     )
                 elif manager == "zypper":
-                    system(
+                    command_wrapper(
                         f'sudo {manager} install -y -y $(zypper search libz3 | tail -n 1 | cut -d "|" -f2) zstd && LATEST_LIBZ3="$(ls -v /usr/lib64/ | grep libz3 | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBZ3 /usr/lib64/libz3.so.4 && LATEST_LIBEDIT="$(ls -v /usr/lib64/ | grep libedit | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBEDIT /usr/lib64/libedit.so.2'
                     )
             except Exception as e:
-                print(f"[INSTALLER] Failed to install toolchain dependencies: {e}")
+                error(f"Failed to install toolchain dependencies: {e}")
                 exit(1)
 
         try:
-            system(
+            command_wrapper(
                 f"curl -LO https://github.com/CRKatri/llvm-project/releases/download/swift-5.3.2-RELEASE/swift-5.3.2-RELEASE-ubuntu20.04.tar.zst && TMP=$(mktemp -d) && tar -xf swift-5.3.2-RELEASE-ubuntu20.04.tar.zst -C $TMP && mkdir -p {toolchain_path}/linux/iphone {toolchain_path}/swift && mv $TMP/swift-5.3.2-RELEASE-ubuntu20.04/* {toolchain_path}/linux/iphone/ && rm -r swift-5.3.2-RELEASE-ubuntu20.04.tar.zst $TMP"
             )
         except Exception as e:
-            getoutput("rm -r swift-5.3.2-RELEASE-ubuntu20.04.tar.zst")
-            print(f"[INSTALLER] Failed to download toolchain: {e}")
+            command_wrapper("rm -r swift-5.3.2-RELEASE-ubuntu20.04.tar.zst")
+            error(f"Failed to download toolchain: {e}")
             exit(1)
-
 
 def main():
     parser = ArgumentParser()
     parser.add_argument("-ns", "--no-sdks", action="store_true", help="Do not install SDKs.")
+    parser.add_argument("-u", "--update", action="store_true", help="Whether or not to update.")
     parser.add_argument("-r", "--ref", type=str, default="main", help="Reference tag of Luz to install.")
 
     args = parser.parse_args()
+
+    required = {"luz"}
+    installed = {pkg.key for pkg in working_set}
+    missing = required - installed
+
+    if not missing and not args.update:
+        log("luz is already installed.")
+        exit(0)
+    elif missing and args.update:
+        log("luz is not installed.")
+        exit(0)
+
+    if args.update:
+        log("Updating vendor modules...")
+        try:
+            for module in ["headers", "lib", "logos"]:
+                if resolve_path(f'$HOME/.luz/vendor/{module}').exists():
+                    command_wrapper(f'cd ~/.luz/vendor/{module} && git pull')
+        except Exception as e:
+            error(f"Failed to update vendor modules: {e}")
+            exit(1)
+
+        log("Updating luz...")
+        try:
+            command_wrapper(f'python -m pip uninstall -y luz && python -m pip install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip')
+        except Exception as e:
+            error(f"Failed to update luz: {e}")
+            exit(1)
+        
+        log("luz has been updated.")
+        exit(0)
 
     if platform_str.startswith("Darwin") or platform_str.startswith("macOS"):
         darwin_install()
     elif platform_str.startswith("Linux"):
         linux_install()
     else:
-        print(f"[INSTALLER] Luz is not supported on this platform. ({platform_str})")
+        error(f"Luz is not supported on this platform. ({platform_str})")
         exit(1)
 
     if not args.no_sdks:
         get_sdks()
 
-    print("[INSTALLER] Installing luz...")
+    log("Installing luz...")
     try:
-        system(f'{cmd_in_path("pip")} install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip')
+        command_wrapper(f'pip install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip')
     except Exception as e:
-        print(f"[INSTALLER] Failed to install luz: {e}")
+        error(f"Failed to install luz: {e}")
         exit(1)
 
-    getoutput("mkdir -p ~/.luz/lib ~/.luz/headers")
+    command_wrapper(f"mkdir -p ~/.luz/lib ~/.luz/headers")
 
-    print("[INSTALLER] luz has been installed.")
-
+    log("luz has been installed.")
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("[INSTALLER] Installation cancelled.")
+        error("Operation cancelled.")
         exit(1)
