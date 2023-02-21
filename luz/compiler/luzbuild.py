@@ -143,11 +143,12 @@ class LuzBuild:
                 with open(build, "w") as f:
                     f.write(str(self.build_number))
         else:
-            if self.debug: self.build_number = getattr(self.to_inherit, "build_number")
+            if self.debug:
+                self.build_number = getattr(self.to_inherit, "build_number")
 
         # storage dir
         self.storage = get_luz_storage()
-        
+
         # sdk
         self.sdk = self.__get("sdk", "meta.sdk")
 
@@ -155,7 +156,7 @@ class LuzBuild:
         self.prefix = self.__get("prefix", "meta.prefix")
 
         if self.prefix == "" and platform().startswith("Linux"):
-            luz_prefix = resolve_path(f'{self.storage}/toolchain/linux/iphone/usr/bin')
+            luz_prefix = resolve_path(f"{self.storage}/toolchain/linux/iphone/usr/bin")
             if not luz_prefix.exists():
                 self.__error_and_exit("Running on Linux, and toolchain is not installed.")
             self.prefix = luz_prefix
@@ -323,14 +324,14 @@ class LuzBuild:
 
     def __assign_passed_value(self, value):
         """Assign a key from the passed config."""
-        if value.lower() == 'true' or value.lower() == 'false':
-            return value.lower() == 'true'
+        if value.lower() == "true" or value.lower() == "false":
+            return value.lower() == "true"
         elif value.isdigit():
             return int(value)
-        elif value.startswith('[') and value.endswith(']'):
+        elif value.startswith("[") and value.endswith("]"):
             arr = []
-            for v in value[1:-1].split(','):
-                arr.append(self.__assign_passed_value(v.replace("'", "").replace('"', '')))
+            for v in value[1:-1].split(","):
+                arr.append(self.__assign_passed_value(v.replace("'", "").replace('"', "")))
             return arr
         else:
             return value

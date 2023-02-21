@@ -29,7 +29,7 @@ def main():
         help="clean the project before building",
         required=False,
     )
-    parser_build.add_argument('-m', '--meta', action='append', nargs='+', help='meta configuration (-m {key}={value})')
+    parser_build.add_argument("-m", "--meta", action="append", nargs="+", help="meta configuration (-m {key}={value})")
 
     # gen
     parser_gen = sub_parsers.add_parser("gen", help="generate a luz project using LuzGen")
@@ -66,6 +66,7 @@ def main():
             exit(1)
     except Exception as e:
         import traceback
+
         print(traceback.format_exc())
         error(f"An error occured: {e}")
         exit(1)

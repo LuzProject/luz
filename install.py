@@ -41,23 +41,22 @@ colors = {
     "invisible": "\033[08m",
 }
 
+
 def log(message, lock=None):
     if lock is not None:
         with lock:
-            print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] +
-                  colors["green"] + "*" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
+            print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["green"] + "*" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
     else:
-        print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] +
-              colors["green"] + "*" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
+        print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["green"] + "*" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
+
 
 def error(message, lock=None):
     if lock is not None:
         with lock:
-            print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] +
-                  colors["red"] + "!" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
+            print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["red"] + "!" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
     else:
-        print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] +
-              colors["red"] + "!" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
+        print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["red"] + "!" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
+
 
 def command_wrapper(command: str) -> str:
     """Wrapper for commands to run in the shell.
@@ -66,12 +65,14 @@ def command_wrapper(command: str) -> str:
     """
     return check_call(command, env=environ.copy(), shell=True, stdout=DEVNULL, stderr=DEVNULL)
 
+
 # begin install script
 platform_str = platform()
 
 if getuid() == 0:
     print("Please don't run this script as root.")
     exit(1)
+
 
 def resolve_path(path: str) -> Union[Path, list]:
     """Resolve a Path from a String."""
@@ -88,6 +89,7 @@ def resolve_path(path: str) -> Union[Path, list]:
     # return path
     return p
 
+
 def format_path(file: str) -> str:
     """Format a path that contains environment variables.
 
@@ -102,6 +104,7 @@ def format_path(file: str) -> str:
             new_file += f + "/"
     return new_file
 
+
 def cmd_in_path(cmd: str) -> Union[None, Path]:
     """Check if a command is in the path.
 
@@ -114,7 +117,9 @@ def cmd_in_path(cmd: str) -> Union[None, Path]:
 
     return resolve_path(path)
 
+
 PATH = resolve_path(f'{environ.get("HOME")}/.luz')
+
 
 def get_manager() -> str:
     if cmd_in_path("apt") is not None:
@@ -132,6 +137,7 @@ def get_manager() -> str:
     else:
         return ""
 
+
 def get_sdks():
     sdk_path = f"{PATH}/sdks"
     if not resolve_path(sdk_path).exists() or len(resolve_path(f"{sdk_path}/*.sdk")) == 0:
@@ -145,6 +151,7 @@ def get_sdks():
             command_wrapper("rm -rf ./sdks.tar.gz")
             error("Failed to download iOS SDKs: " + str(e))
             exit(1)
+
 
 def darwin_install():
     xcpath = getoutput(f'{cmd_in_path("xcode-select")} -p')
@@ -173,6 +180,7 @@ def darwin_install():
         except Exception as e:
             error(f"Failed to install dependencies: {e}")
             exit(1)
+
 
 def linux_install():
     manager = get_manager()
@@ -238,6 +246,7 @@ def linux_install():
             error(f"Failed to download toolchain: {e}")
             exit(1)
 
+
 def main():
     parser = ArgumentParser()
     parser.add_argument("-ns", "--no-sdks", action="store_true", help="Do not install SDKs.")
@@ -261,19 +270,19 @@ def main():
         log("Updating vendor modules...")
         try:
             for module in ["headers", "lib", "logos"]:
-                if resolve_path(f'$HOME/.luz/vendor/{module}').exists():
-                    command_wrapper(f'cd ~/.luz/vendor/{module} && git pull')
+                if resolve_path(f"$HOME/.luz/vendor/{module}").exists():
+                    command_wrapper(f"cd ~/.luz/vendor/{module} && git pull")
         except Exception as e:
             error(f"Failed to update vendor modules: {e}")
             exit(1)
 
         log("Updating luz...")
         try:
-            command_wrapper(f'python -m pip uninstall -y luz && python -m pip install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip')
+            command_wrapper(f"python -m pip uninstall -y luz && python -m pip install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip")
         except Exception as e:
             error(f"Failed to update luz: {e}")
             exit(1)
-        
+
         log("luz has been updated.")
         exit(0)
 
@@ -290,7 +299,7 @@ def main():
 
     log("Installing luz...")
     try:
-        command_wrapper(f'pip install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip')
+        command_wrapper(f"pip install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip")
     except Exception as e:
         error(f"Failed to install luz: {e}")
         exit(1)
@@ -298,6 +307,7 @@ def main():
     command_wrapper(f"mkdir -p ~/.luz/lib ~/.luz/headers")
 
     log("luz has been installed.")
+
 
 if __name__ == "__main__":
     try:
