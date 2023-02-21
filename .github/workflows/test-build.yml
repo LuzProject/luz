@@ -10,9 +10,11 @@ on:
   workflow_dispatch:
       
   push:
-    paths-ignore:
-    - '**.rst'
-    - '**.md'
+    paths:
+    - luz/**.py
+  pull_request:
+    paths:
+    - luz/**.py
 
 jobs:
   build:
