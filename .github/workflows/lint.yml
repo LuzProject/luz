@@ -1,17 +1,19 @@
 name: Run Linter
 
 on:
+  workflow_dispatch:
+  
   push:
     paths:
     - .github/workflows/lint.yml
     - luz/**.py
     - install.py
+
   pull_request:
     paths:
     - .github/workflows/lint.yml
     - luz/**.py
     - install.py
-  workflow_dispatch
 
 jobs:
   lint:
