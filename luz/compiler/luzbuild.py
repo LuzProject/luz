@@ -145,6 +145,9 @@ class LuzBuild:
         else:
             if self.debug: self.build_number = getattr(self.to_inherit, "build_number")
 
+        # storage dir
+        self.storage = get_luz_storage()
+        
         # sdk
         self.sdk = self.__get("sdk", "meta.sdk")
 
@@ -180,9 +183,6 @@ class LuzBuild:
 
         # should pack
         self.should_pack = bool(self.__get("should_pack", "meta.pack"))
-
-        # storage dir
-        self.storage = get_luz_storage()
 
         # modules
         self.modules = get_from_luzbuild(self, "modules")

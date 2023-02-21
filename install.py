@@ -178,7 +178,7 @@ def linux_install():
             exit(1)
 
     toolchain_path = f"{PATH}/toolchain"
-    if not resolve_path(toolchain_path).exists() or len(resolve_path(f"{toolchain_path}/*.toolchain")) == 0:
+    if not resolve_path(toolchain_path).exists() or len(resolve_path(f"{toolchain_path}/linux/iphone/*")) == 0:
         print("[INSTALLER] iOS toolchain not found. Downloading...")
         deps = ["zstd"]
         need = []
@@ -208,7 +208,7 @@ def linux_install():
 
         try:
             system(
-                f"curl -LO https://github.com/CRKatri/llvm-project/releases/download/swift-5.3.2-RELEASE/swift-5.3.2-RELEASE-ubuntu20.04.tar.zst && TMP=$(mktemp -d) && tar -xf swift-5.3.2-RELEASE-ubuntu20.04.tar.zst -C $TMP && mkdir -p {toolchain_path}/linux/iphone {toolchain_path}/swift && mv $TMP/swift-5.3.2-RELEASE-ubuntu20.04/* {toolchain_path}/linux/iphone/ && ln -s {toolchain_path}/linux/iphone {toolchain_path}/swift && rm -r swift-5.3.2-RELEASE-ubuntu20.04.tar.zst $TMP"
+                f"curl -LO https://github.com/CRKatri/llvm-project/releases/download/swift-5.3.2-RELEASE/swift-5.3.2-RELEASE-ubuntu20.04.tar.zst && TMP=$(mktemp -d) && tar -xf swift-5.3.2-RELEASE-ubuntu20.04.tar.zst -C $TMP && mkdir -p {toolchain_path}/linux/iphone {toolchain_path}/swift && mv $TMP/swift-5.3.2-RELEASE-ubuntu20.04/* {toolchain_path}/linux/iphone/ && rm -r swift-5.3.2-RELEASE-ubuntu20.04.tar.zst $TMP"
             )
         except Exception as e:
             getoutput("rm -r swift-5.3.2-RELEASE-ubuntu20.04.tar.zst")
