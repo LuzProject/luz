@@ -11,8 +11,8 @@ on:
       
   push:
     paths-ignore:
-      - '**.rst'
-      - '**.md'
+    - '**.rst'
+    - '**.md'
 
 jobs:
   build:

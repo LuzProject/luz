@@ -29,6 +29,7 @@ def main():
         help="clean the project before building",
         required=False,
     )
+    parser_build.add_argument('-m', '--meta', action='append', nargs='+', help='meta configuration (-m {key}={value})')
 
     # gen
     parser_gen = sub_parsers.add_parser("gen", help="generate a luz project using LuzGen")
@@ -53,7 +54,7 @@ def main():
             if not resolve_path("LuzBuild").exists():
                 error("Could not find LuzBuild file in current directory.")
                 exit(1)
-            LuzBuild(args.clean).build_and_pack()
+            LuzBuild(args).build_and_pack()
         elif args.command == "gen":
             if args.type is None:
                 args.type = ask('What type of project would you like to generate? (tool/tweak/preferences) (enter for "tweak")')
@@ -64,6 +65,8 @@ def main():
             error(f'Unknown command "{args.command}".')
             exit(1)
     except Exception as e:
+        import traceback
+        print(traceback.format_exc())
         error(f"An error occured: {e}")
         exit(1)
 

@@ -1,4 +1,5 @@
 # module imports
+from argparse import Namespace
 from atexit import register
 from json import loads
 from multiprocessing.pool import ThreadPool
@@ -28,7 +29,7 @@ from .modules.modules import assign_module
 class LuzBuild:
     def __init__(
         self,
-        clean: bool = False,
+        args: Namespace,
         path_to_file: str = "LuzBuild",
         inherit: object = None,
     ):
@@ -39,13 +40,26 @@ class LuzBuild:
         # start
         self.time = time()
 
+        # args
+        self.args = args
+
         # to inherit
         self.to_inherit = inherit
+
+        if self.to_inherit is not None:
+            self.passed_config = getattr(self.to_inherit, "passed_config")
+        else:
+            self.passed_config = {}
+            if self.args.meta:
+                passed_cfg = list(map(lambda x: x[0].lower(), self.args.meta))
+                for n in passed_cfg:
+                    spl = n.split("=")
+                    self.passed_config[spl[0]] = self.__assign_passed_value(spl[1])
 
         # path
         self.path = resolve_path(str(path_to_file).split("LuzBuild")[0])
 
-        if inherit is None:
+        if self.to_inherit is None:
             # module path
             module_path = resolve_path(resolve_path(__file__).absolute()).parent
 
@@ -64,7 +78,7 @@ class LuzBuild:
             return self.__error_and_exit("Failed to parse luzbuild file.")
 
         # clean
-        if clean:
+        if args.clean and self.to_inherit is None:
             rmtree(".luz", ignore_errors=True)
 
         # dir
@@ -117,7 +131,7 @@ class LuzBuild:
         elif self.debug == False:
             self.release = True
 
-        if inherit is None:
+        if self.to_inherit is None:
             if self.debug:
                 build = resolve_path(f"{self.dir}/last_build")
                 if build.exists():
@@ -128,7 +142,7 @@ class LuzBuild:
                 with open(build, "w") as f:
                     f.write(str(self.build_number))
         else:
-            self.build_number = getattr(self.to_inherit, "build_number")
+            if self.debug: self.build_number = getattr(self.to_inherit, "build_number")
 
         # sdk
         self.sdk = self.__get("sdk", "meta.sdk")
@@ -300,9 +314,25 @@ class LuzBuild:
         """Update the hashlist with a list of keys."""
         self.hashlist.update(keys)
 
+    def __assign_passed_value(self, value):
+        """Assign a key from the passed config."""
+        if value.lower() == 'true' or value.lower() == 'false':
+            return value.lower() == 'true'
+        elif value.isdigit():
+            return int(value)
+        elif value.startswith('[') and value.endswith(']'):
+            arr = []
+            for v in value[1:-1].split(','):
+                arr.append(self.__assign_passed_value(v.replace("'", "").replace('"', '')))
+            return arr
+        else:
+            return value
+
     def __get(self, obj_key, def_key):
         """Get a key from either the LuzBuild, inherited object, or default config."""
-        if get_from_luzbuild(self, def_key) is not None:
+        if obj_key in self.passed_config:
+            return self.passed_config[obj_key]
+        elif get_from_luzbuild(self, def_key) is not None:
             return get_from_luzbuild(self, def_key)
         elif self.to_inherit is not None:
             return getattr(self.to_inherit, obj_key)
@@ -318,7 +348,7 @@ class LuzBuild:
         if not path.exists():
             return f'Submodule "{submodule}" does not exist.'
         # get luzbuild
-        luzbuild = LuzBuild(clean=False, path_to_file=path, inherit=self)
+        luzbuild = LuzBuild(args=self.args, path_to_file=path, inherit=self)
         # add to submodules
         self.submodules.append(luzbuild)
 
