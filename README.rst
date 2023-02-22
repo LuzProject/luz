@@ -7,7 +7,7 @@ Installing
 
 Installing is incredibly simple::
 
-    sudo python -c "$(curl -fsSL https://raw.githubusercontent.com/LuzProject/luz/main/install.py)"
+    python3 -c "$(curl -fsSL https://raw.githubusercontent.com/LuzProject/luz/main/install.py)"
 
 This will install the latest version of Luz to your system.
 
