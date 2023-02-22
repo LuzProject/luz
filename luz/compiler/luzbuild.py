@@ -306,7 +306,7 @@ class LuzBuild:
                 self.__error_and_exit(result)
 
         # read control if it doesn't exist
-        if self.control_raw == "":
+        if self.control_raw == "" and self.should_pack:
             control_path = resolve_path(f"{self.path}/control")
             layout_control_path = resolve_path(f"{self.path}/layout/DEBIAN/control")
             if control_path.exists():

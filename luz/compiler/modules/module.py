@@ -311,7 +311,7 @@ class Module:
             self.frameworks,
             self.private_frameworks,
             f"-m{self.luzbuild.platform}-version-min={self.luzbuild.min_vers}",
-            f'-DLUZ_PACKAGE_VERSION="{self.luzbuild.control.version}"',
+            f'-DLUZ_PACKAGE_VERSION="{self.luzbuild.control.version}"' if self.luzbuild.control and self.luzbuild.control_raw != "" else "",
             "-g" if self.luzbuild.debug else "",
             self.c_flags,
         ]
