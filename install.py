@@ -6,7 +6,6 @@ from platform import platform
 from pkg_resources import working_set
 from shutil import which
 from subprocess import check_call, DEVNULL, getoutput
-from sys import stdout
 from typing import Union
 
 # fix logging if we are running on Windows
@@ -211,38 +210,17 @@ def linux_install():
     toolchain_path = f"{PATH}/toolchain"
     if not resolve_path(toolchain_path).exists() or len(resolve_path(f"{toolchain_path}/linux/iphone/*")) == 0:
         log("iOS toolchain not found. Downloading...")
-        deps = ["zstd"]
-        need = []
-        for dep in deps:
-            if cmd_in_path(dep) is None:
-                need.append(dep)
-        if need != []:
-            log(f"Installing toolchain dependencies ({', '.join(need)}). Please enter your password if prompted.")
-            try:
-                if manager == "apt":
-                    command_wrapper(f"sudo {manager} install -y libz3-dev zstd")
-                elif manager == "pacman":
-                    command_wrapper(
-                        f'sudo {manager} -S --needed --noconfirm libedit z3 zstd && LATEST_LIBZ3="$(ls -v /usr/lib/ | grep libz3 | tail -n 1)" && sudo ln -sf /usr/lib/$LATEST_LIBZ3 /usr/lib/libz3.so.4 && LATEST_LIBEDIT="$(ls -v /usr/lib/ | grep libedit | tail -n 1)" && sudo ln -sf /usr/lib/$LATEST_LIBEDIT /usr/lib/libedit.so.2'
-                    )
-                elif manager == "dnf":
-                    command_wrapper(
-                        f'sudo {manager} install -y z3-libs zstd && LATEST_LIBZ3="$(ls -v /usr/lib64/ | grep libz3 | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBZ3 /usr/lib64/libz3.so.4 && LATEST_LIBEDIT="$(ls -v /usr/lib64/ | grep libedit | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBEDIT /usr/lib64/libedit.so.2'
-                    )
-                elif manager == "zypper":
-                    command_wrapper(
-                        f'sudo {manager} install -y -y $(zypper search libz3 | tail -n 1 | cut -d "|" -f2) zstd && LATEST_LIBZ3="$(ls -v /usr/lib64/ | grep libz3 | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBZ3 /usr/lib64/libz3.so.4 && LATEST_LIBEDIT="$(ls -v /usr/lib64/ | grep libedit | tail -n 1)" && sudo ln -sf /usr/lib64/$LATEST_LIBEDIT /usr/lib64/libedit.so.2'
-                    )
-            except Exception as e:
-                error(f"Failed to install toolchain dependencies: {e}")
-                exit(1)
-
+        arch = getoutput("uname -m")
+        if arch == "arm64" or arch == "aarch64":
+            toolchain_uri = "https://github.com/kabiroberai/swift-toolchain-linux/releases/download/v2.2.2/swift-5.7-ubuntu20.04-aarch64.tar.xz"
+        else:
+            toolchain_uri = "https://github.com/kabiroberai/swift-toolchain-linux/releases/download/v2.2.2/swift-5.7-ubuntu20.04.tar.xz"
         try:
             command_wrapper(
-                f"curl -LO https://github.com/CRKatri/llvm-project/releases/download/swift-5.3.2-RELEASE/swift-5.3.2-RELEASE-ubuntu20.04.tar.zst && TMP=$(mktemp -d) && tar -xf swift-5.3.2-RELEASE-ubuntu20.04.tar.zst -C $TMP && mkdir -p {toolchain_path}/linux/iphone {toolchain_path}/swift && mv $TMP/swift-5.3.2-RELEASE-ubuntu20.04/* {toolchain_path}/linux/iphone/ && rm -r swift-5.3.2-RELEASE-ubuntu20.04.tar.zst $TMP"
+                f"curl -LO {toolchain_uri} && mkdir -p {toolchain_path} && tar -xf swift-5.7-ubuntu20.04*.tar.xz -C {toolchain_path} && rm -r swift-5.7-ubuntu20.04*.tar.xz $TMP"
             )
         except Exception as e:
-            command_wrapper("rm -r swift-5.3.2-RELEASE-ubuntu20.04.tar.zst")
+            command_wrapper("rm -rf swift-5.7-ubuntu20.04*.tar.xz")
             error(f"Failed to download toolchain: {e}")
             exit(1)
 
