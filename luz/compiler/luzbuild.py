@@ -266,8 +266,8 @@ class LuzBuild:
             # ensure sdk exists
             self.sdk = resolve_path(self.sdk)
             if not self.sdk.exists():
-                if resolve_path(f'{self.storage}/sdks/{self.sdk}').exists():
-                    self.sdk = resolve_path(f'{self.storage}/sdks/{self.sdk}')
+                if resolve_path(f"{self.storage}/sdks/{self.sdk}").exists():
+                    self.sdk = resolve_path(f"{self.storage}/sdks/{self.sdk}")
                 else:
                     return self.__error_and_exit("Specified SDK does not exist.")
 
@@ -452,8 +452,7 @@ class LuzBuild:
             return self.__error_and_exit("xcrun not found.")
         else:
             log_stdout("Finding an SDK...")
-            sdkA = getoutput(
-                f"{xcrun} --show-sdk-path --sdk {self.platform}").split("\n")[-1]
+            sdkA = getoutput(f"{xcrun} --show-sdk-path --sdk {self.platform}").split("\n")[-1]
             if sdkA == "" or not sdkA.startswith("/"):
                 return self.__error_and_exit("Could not find any SDKs. Please specify one manually.")
             remove_log_stdout("Finding an SDK...")
@@ -470,12 +469,11 @@ class LuzBuild:
             if len(valid_sdks) == 0:
                 return self.__xcrun()
             else:
-                minimum = min(valid_sdks, key=lambda x: abs(float(str(x.name).lower().replace(self.platform.lower(), "").replace(".sdk", ""))-float(self.min_vers)))
+                minimum = min(valid_sdks, key=lambda x: abs(float(str(x.name).lower().replace(self.platform.lower(), "").replace(".sdk", "")) - float(self.min_vers)))
                 return minimum
-        
+
         else:
-            return self.__xcrun() 
-            
+            return self.__xcrun()
 
     def __pack(self):
         """Pack up the .deb file."""
