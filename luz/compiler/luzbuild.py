@@ -156,7 +156,7 @@ class LuzBuild:
         self.prefix = self.__get("prefix", "meta.prefix")
 
         if self.prefix == "" and platform().startswith("Linux"):
-            luz_prefix = resolve_path(f"{self.storage}/toolchain/linux/iphone/usr/bin")
+            luz_prefix = resolve_path(f"{self.storage}/toolchain/linux/iphone/bin")
             if not luz_prefix.exists():
                 self.__error_and_exit("Running on Linux, and toolchain is not installed.")
             self.prefix = luz_prefix
