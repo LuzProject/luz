@@ -216,9 +216,7 @@ def linux_install():
         else:
             toolchain_uri = "https://github.com/kabiroberai/swift-toolchain-linux/releases/download/v2.2.2/swift-5.7-ubuntu20.04.tar.xz"
         try:
-            command_wrapper(
-                f"curl -LO {toolchain_uri} && mkdir -p {toolchain_path} && tar -xf swift-5.7-ubuntu20.04*.tar.xz -C {toolchain_path} && rm -r swift-5.7-ubuntu20.04*.tar.xz $TMP"
-            )
+            command_wrapper(f"curl -LO {toolchain_uri} && mkdir -p {toolchain_path} && tar -xf swift-5.7-ubuntu20.04*.tar.xz -C {toolchain_path} && rm -r swift-5.7-ubuntu20.04*.tar.xz $TMP")
         except Exception as e:
             command_wrapper("rm -rf swift-5.7-ubuntu20.04*.tar.xz")
             error(f"Failed to download toolchain: {e}")
