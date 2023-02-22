@@ -2,6 +2,6 @@
 **/.DS_Store
 poetry.lock
 **/.luz
-tweak
-tweak.zip
+./tweak
+./tweak.zip
 docs/build
