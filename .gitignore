@@ -5,3 +5,4 @@ poetry.lock
 ./tweak
 ./tweak.zip
 docs/build
+tweak/

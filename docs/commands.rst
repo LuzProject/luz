@@ -17,6 +17,9 @@ Builds a project using the LuzBuild in the working directory.
    * - ``-c`` / ``--clean``
      - Flag
      - Whether or not to clean the build directory before building.
+   * - ``-p`` / ``--path``
+     - Flag
+     - Path to the directory to build. (i.e. ``luz build -p /path/to/project``, defaults to the current working directory)
    * - ``-m`` / ``--meta``
      - Flag
      - Add meta information to the build. (i.e. ``luz build -m release=true``)

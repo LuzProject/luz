@@ -29,7 +29,9 @@ def main():
         help="clean the project before building",
         required=False,
     )
+
     parser_build.add_argument("-m", "--meta", action="append", nargs="+", help="meta configuration (-m {key}={value})")
+    parser_build.add_argument("-p", "--path", action="store", help="path to the project to build")
 
     # gen
     parser_gen = sub_parsers.add_parser("gen", help="generate a luz project using LuzGen")
@@ -51,10 +53,15 @@ def main():
 
     try:
         if args.command == "build":
-            if not resolve_path("LuzBuild").exists():
-                error("Could not find LuzBuild file in current directory.")
+            if args.path is not None:
+                args.path = resolve_path(args.path)
+            else:
+                args.path = resolve_path("./")
+            luzbuild_path = f"{args.path}/LuzBuild"
+            if not resolve_path(f"{args.path}/LuzBuild").exists():
+                error("Could not find LuzBuild file.")
                 exit(1)
-            LuzBuild(args).build_and_pack()
+            LuzBuild(args, path_to_file=luzbuild_path).build_and_pack()
         elif args.command == "gen":
             if args.type is None:
                 args.type = ask('What type of project would you like to generate? (tool/tweak/preferences) (enter for "tweak")')

@@ -355,7 +355,7 @@ class LuzBuild:
 
         :param str submodule: Directory of submodule.
         """
-        path = resolve_path(submodule + "/LuzBuild")
+        path = resolve_path(f"{self.path}/{submodule}/LuzBuild")
         if not path.exists():
             return f'Submodule "{submodule}" does not exist.'
         # get luzbuild
