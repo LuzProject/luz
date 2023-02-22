@@ -15,7 +15,7 @@ from time import time
 from yaml import safe_load
 
 # local imports
-from ..common.logger import error, log, log_stdout, remove_log_stdout
+from ..common.logger import ask, colors, error, log, log_stdout, remove_log_stdout
 from ..common.utils import (
     cmd_in_path,
     get_from_cfg,
@@ -266,7 +266,10 @@ class LuzBuild:
             # ensure sdk exists
             self.sdk = resolve_path(self.sdk)
             if not self.sdk.exists():
-                return self.__error_and_exit(f'Specified SDK path "{self.sdk}" does not exist.')
+                if resolve_path(f'{self.storage}/sdks/{self.sdk}').exists():
+                    self.sdk = resolve_path(f'{self.storage}/sdks/{self.sdk}')
+                else:
+                    return self.__error_and_exit("Specified SDK does not exist.")
 
         # parse modules
         if self.modules is not None:
@@ -443,19 +446,36 @@ class LuzBuild:
             error(msg)
             exit(1)
 
-    def __get_sdk(self):
-        """Get an SDK from Xcode using xcrun."""
+    def __xcrun(self):
         xcrun = cmd_in_path("xcrun")
         if xcrun is None:
             return self.__error_and_exit("xcrun not found.")
         else:
             log_stdout("Finding an SDK...")
-            sdkA = getoutput(f"{xcrun} --show-sdk-path --sdk {self.platform}").split("\n")[-1]
+            sdkA = getoutput(
+                f"{xcrun} --show-sdk-path --sdk {self.platform}").split("\n")[-1]
             if sdkA == "" or not sdkA.startswith("/"):
-                return self.__error_and_exit("Could not find an SDK. Please specify one manually.")
+                return self.__error_and_exit("Could not find any SDKs. Please specify one manually.")
             remove_log_stdout("Finding an SDK...")
             self.sdk = sdkA
         return resolve_path(self.sdk)
+
+    def __get_sdk(self):
+        """Get an SDK from Xcode using xcrun."""
+        sdks_path = resolve_path(f"{self.storage}/sdks")
+        if sdks_path.exists():
+            # get valid sdk paths that match the target platform
+            valid_sdks = list(filter(lambda x: self.platform.lower() in x.name.lower(), sdks_path.iterdir()))
+            # get the sdk that closest matches the minimum version
+            if len(valid_sdks) == 0:
+                return self.__xcrun()
+            else:
+                minimum = min(valid_sdks, key=lambda x: abs(float(str(x.name).lower().replace(self.platform.lower(), "").replace(".sdk", ""))-float(self.min_vers)))
+                return minimum
+        
+        else:
+            return self.__xcrun() 
+            
 
     def __pack(self):
         """Pack up the .deb file."""
