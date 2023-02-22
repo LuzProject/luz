@@ -331,8 +331,9 @@ class Module:
 
         # link
         try:
+            compiled = [f"{self.dir}/obj/{self.name}/{arch}/{self.name}" for arch in self.luzbuild.archs]
             check_output(
-                f"{self.luzbuild.lipo} -create -output {out_name} {self.dir}/obj/{self.name}/*/{self.name}",
+                f"{self.luzbuild.lipo} -create -output {out_name} {' '.join(compiled)}",
                 shell=True,
             )
         except:
