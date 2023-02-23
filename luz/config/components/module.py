@@ -7,7 +7,9 @@ from ...common.utils import resolve_path
 class Module():
     def __init__(self,
         files: Union[list, str],
+        name: str,
         module_type: str = "tweak",
+        install_dir: str = "",
         c_flags: str = "",
         swift_flags: str = "",
         optimization: int = 0,
@@ -30,7 +32,9 @@ class Module():
         
         Args:
             files (Union[list, str]): Files to compile
+            name (str): Name of module
             module_type (str, optional): Type of module (default: tweak)
+            install_dir (str, optional): Directory to install the module to
             c_flags (str, optional): C flags
             swift_flags (str, optional): Swift flags
             optimization (int, optional): Optimization level (default: 0)
@@ -48,7 +52,9 @@ class Module():
         
         # assign variables
         self.type = module_type
+        self.name = name
         self.files = files
+        self.install_dir = install_dir
         self.c_flags = c_flags
         self.swift_flags = swift_flags
         self.optimization = optimization
