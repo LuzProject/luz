@@ -317,9 +317,11 @@ class LuzBuild:
                     self.control_raw = f.read()
             else:
                 return self.__error_and_exit("No control file found, and package metadata was not declared in LuzBuild.")
-        # parse control
-        if self.control is None:
-            self.control = Control(self.control_raw)
+            # parse control
+            if self.control is None:
+                self.control = Control(self.control_raw)
+                if not self.control.package or not self.control.version or not self.control.architecture or not self.control.maintainer:
+                    return self.__error_and_exit("Invalid control file.")
 
     def update_hashlist(self, keys):
         """Update the hashlist with a list of keys."""
