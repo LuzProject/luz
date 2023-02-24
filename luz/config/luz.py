@@ -2,7 +2,7 @@
 from argparse import Namespace
 from atexit import register
 from importlib.util import module_from_spec, spec_from_file_location
-from json import loads
+from json import dump, loads
 from multiprocessing.pool import ThreadPool
 from os import makedirs
 from pyclang import CCompiler, SwiftCompiler
@@ -244,5 +244,8 @@ class Luz():
         
         if self.meta.pack:
             self.__pack()
+
+        with open(resolve_path(f"{self.build_dir}/hashlist.json"), "w") as f:
+            dump(self.hashlist, f)
         
         log(f"Build completed in {round(time() - self.now, 2)} seconds.")
