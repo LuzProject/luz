@@ -107,18 +107,18 @@ def logos(module, files: list) -> list:
         # match to case
         file_formatted = str(file).split("/")[-1].split(".")[-1]
         if file_formatted == "x" or file_formatted == "xm":
-            output = getoutput(f"{logos_exec} {file}")
-            should_exit = False
-            for l in output.splitlines():
-                if ": warning:" or ": error:" in l:
-                    error(l)
-                    should_exit = True
-            if should_exit:
+            output_value = getoutput(f"{logos_exec} {file}")
+            output_file = resolve_path(f"{output}.{'m' if file_formatted == 'x' else 'mm'}")
+            spl = output.splitlines()
+            if spl[0].startswith("./"):
+                error(f"Logos error: {spl[0]}")
                 exit(1)
+            with open(output_file, "w") as f:
+                f.write(output_value)
             new_files.append(
                 {
                     "logos": True,
-                    "new_path": resolve_path(f"{output}.{'m' if file_formatted == 'x' else 'mm'}"),
+                    "new_path": output_file,
                     "old_path": resolve_path(file),
                 }
             )

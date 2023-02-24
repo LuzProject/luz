@@ -1,6 +1,7 @@
 # module imports
+from multiprocessing.pool import ThreadPool
 from os import makedirs
-from shutil import copytree, rmtree
+from shutil import copytree
 from subprocess import check_output
 
 # local imports
@@ -29,77 +30,15 @@ class Preferences(ModuleBuilder):
         
         # compile file
         try:
+            pool = ThreadPool()
             if str(file).endswith(".swift"):
-                # define build flags
-                build_flags = [
-                    "-frontend",
-                    "-c",
-                    f"-module-name {self.module.name}",
-                    f'-sdk "{self.meta.sdk}"',
-                    ("-I" + " -I".join(self.module.include_dirs)
-                     ) if self.module.include_dirs != [] else "",
-                    ("-L" + " -L".join(self.module.library_dirs)
-                     ) if self.module.library_dirs != [] else "",
-                    ("-F" + " -F".join(self.module.framework_dirs)
-                     ) if self.module.framework_dirs != [] else "",
-                    ("-l" + " -l".join(self.module.libraries)
-                     ) if self.module.libraries != [] else "",
-                    ("-framework " + " -framework ".join(self.module.frameworks)
-                     ) if self.module.frameworks != [] else "",
-                    ("-framework " + " -framework ".join(self.module.private_frameworks)
-                     ) if self.module.private_frameworks != [] else "",
-                    " ".join(
-                        self.module.swift_flags) if self.module.swift_flags != [] else "",
-                    "-g" if self.meta.debug else "",
-                    " ".join(
-                        self.module.bridging_headers) if self.module.bridging_headers != [] else "",
-                ]
-                # format platform
-                platform = "ios" if self.meta.platform == "iphoneos" else self.meta.platform
-                for arch in self.meta.archs:
-                    rmtree(
-                        f"{self.obj_dir}/{arch}/{file.name}-*",
-                        ignore_errors=True,
-                    )
-                    out_name = f"{self.obj_dir}/{arch}/{file.name}-{self.luz.now}"
-                    # arch
-                    arch_formatted = f"-target {arch}-apple-{platform}{self.meta.min_vers}"
-                    # compile with swift using build flags
-                    self.luz.swift_compiler.compile(
-                        [file] + files_minus_to_compile,
-                        outfile=out_name + ".o",
-                        args=build_flags
-                        + [
-                            arch_formatted,
-                            f"-emit-module-path {out_name}.swiftmodule",
-                            "-primary-file",
-                        ],
-                    )
+                # compile archs
+                pool.map(lambda x: self.compile_swift_arch(
+                    file, files_minus_to_compile, x), self.meta.archs)
             else:
-                for arch in self.meta.archs:
-                    rmtree(
-                        f"{self.obj_dir}/{arch}/{file.name}-*",
-                        ignore_errors=True,
-                    )
-                    out_name = f"{self.obj_dir}/{arch}/{file.name}-{self.luz.now}.o"
-                    build_flags = [
-                        "-fobjc-arc" if self.module.use_arc else "",
-                        f"-isysroot {self.meta.sdk}",
-                        self.module.warnings,
-                        f"-O{self.module.optimization}",
-                        f"-arch {arch}",
-                        ("-I" + " -I".join(self.module.include_dirs)
-                         ) if self.module.include_dirs != [] else "",
-                        f"-m{self.meta.platform}-version-min={self.meta.min_vers}",
-                        " ".join(
-                            self.module.c_flags) if self.module.c_flags != [] else "",
-                        "-g" if self.meta.debug else "",
-                        "-c",
-                    ]
-                    # compile with clang using build flags
-                    self.luz.c_compiler.compile(
-                        file, out_name, build_flags)
-
+                # compile archs
+                pool.map(lambda x: self.compile_c_arch(file, x), self.meta.archs)
+                    
         except:
             return f'An error occured when attempting to compile for module "{self.module.name}".'
 

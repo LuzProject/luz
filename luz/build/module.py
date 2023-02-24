@@ -1,7 +1,7 @@
 # module imports
 from os import makedirs
+from shutil import rmtree
 from subprocess import getoutput
-from time import time
 
 # local imports
 from ..common.deps import clone_headers, clone_libraries, logos
@@ -203,3 +203,73 @@ class ModuleBuilder():
             )
         except:
             return f'An error occured when trying codesign "{out_name}" for module "{self.module.name}".'
+
+    def compile_swift_arch(self, file, fmtc: list, arch: str):
+        # format platform
+        platform = "ios" if self.meta.platform == "iphoneos" else self.meta.platform
+        # arch
+        arch_formatted = f"-target {arch}-apple-{platform}{self.meta.min_vers}"
+        # outname
+        out_name = f"{self.obj_dir}/{arch}/{file.name}-{self.luz.now}"
+        # define build flags
+        build_flags = [
+            "-frontend",
+            "-c",
+            f"-module-name {self.module.name}",
+            f'-sdk "{self.meta.sdk}"',
+            ("-I" + " -I".join(self.module.include_dirs)
+             ) if self.module.include_dirs != [] else "",
+            ("-L" + " -L".join(self.module.library_dirs)
+             ) if self.module.library_dirs != [] else "",
+            ("-F" + " -F".join(self.module.framework_dirs)
+             ) if self.module.framework_dirs != [] else "",
+            ("-l" + " -l".join(self.module.libraries)
+             ) if self.module.libraries != [] else "",
+            ("-framework " + " -framework ".join(self.module.frameworks)
+             ) if self.module.frameworks != [] else "",
+            ("-framework " + " -framework ".join(self.module.private_frameworks)
+             ) if self.module.private_frameworks != [] else "",
+            arch_formatted,
+            f"-emit-module-path {out_name}.swiftmodule",
+            "-g" if self.meta.debug else "",
+            "-primary-file",
+            " ".join(
+                self.module.swift_flags) if self.module.swift_flags != [] else "",
+            " ".join(
+                self.module.bridging_headers) if self.module.bridging_headers != [] else "",
+        ]
+        rmtree(
+            f"{self.obj_dir}/{arch}/{file.name}-*",
+            ignore_errors=True,
+        )
+        # compile with swift using build flags
+        self.luz.swift_compiler.compile(
+            [file] + fmtc,
+            outfile=out_name + ".o",
+            args=build_flags
+        )
+
+    def compile_c_arch(self, file, arch: str):
+        # outname
+        out_name = f"{self.obj_dir}/{arch}/{file.name}-{self.luz.now}.o"
+        build_flags = [
+            "-fobjc-arc" if self.module.use_arc else "",
+            f"-isysroot {self.meta.sdk}",
+            self.module.warnings,
+            f"-O{self.module.optimization}",
+            f"-arch {arch}",
+            ("-I" + " -I".join(self.module.include_dirs)
+             ) if self.module.include_dirs != [] else "",
+            f"-m{self.meta.platform}-version-min={self.meta.min_vers}",
+            " ".join(
+                self.module.c_flags) if self.module.c_flags != [] else "",
+            "-g" if self.meta.debug else "",
+            "-c",
+        ]
+        rmtree(
+            f"{self.obj_dir}/{arch}/{file.name}-*",
+            ignore_errors=True,
+        )
+        # compile with clang using build flags
+        self.luz.c_compiler.compile(
+            file, out_name, build_flags)

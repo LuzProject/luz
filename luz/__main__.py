@@ -59,11 +59,12 @@ def main():
                 args.path = resolve_path("./")
             luzbuild_path = f"{args.path}/luz.py"
             if not resolve_path(f"{args.path}/luz.py").exists():
-                error("Could not find build file.")
-                exit(1)
-            elif resolve_path(f"{args.path}/LuzBuild").exists():
-                error("LuzBuild has been deprecated. Luz now uses a Python file to build projects. See the docs for more information.")
-                exit(1)
+                if resolve_path(f"{args.path}/LuzBuild").exists():
+                    error("LuzBuild has been deprecated. Luz now uses a Python file to build projects. See the docs for more information.")
+                    exit(1)
+                else:
+                    error("Could not find build file.")
+                    exit(1)
             luz = Luz(luzbuild_path, args=args)
             luz.build_project()
         elif args.command == "gen":
@@ -76,6 +77,9 @@ def main():
             error(f'Unknown command "{args.command}".')
             exit(1)
     except Exception as e:
+        import traceback
+
+        traceback.print_exc()
         error(f"{e}")
         exit(1)
 
