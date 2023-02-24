@@ -2,10 +2,9 @@
 from os import getuid
 from pwd import getpwuid
 from pathlib import Path
-from yaml import dump, safe_load
 
 # local imports
-from ...common.logger import ask, error
+from ...common.logger import ask, error, log
 from ...common.tar import TAR
 from ...common.utils import resolve_path
 
@@ -48,7 +47,8 @@ class Module:
             self.control["version"] = self.ask_for("version", "1.0.0")
             self.control["author"] = self.ask_for("author", getpwuid(getuid())[0], dsc="Who")
             self.control["maintainer"] = self.control["author"]
-            self.control["depends"] = self.ask_for("dependencies", "mobilesubstrate", dsc1="are")
+            self.control["depends"] = self.ask_for("dependencies", dsc1="are", default="", extra_msg="Separated by a comma and a space").split(", ")
+            if self.control["depends"] == [""]: self.control["depends"] = []
             self.control["architecture"] = self.ask_for("architecture", "iphoneos-arm64")
 
             # add control to dict
@@ -59,30 +59,39 @@ class Module:
 
         :param Path path: The path to write to.
         """
-        if self.submodule:
-            # add subproject
-            luzbuild = None
-            # read and add subproject
-            with open("LuzBuild", "r") as f:
-                luzbuild = safe_load(f)
-                if "submodules" not in luzbuild.keys():
-                    luzbuild["submodules"] = []
-                luzbuild["submodules"].append(str(path))
-            # dump yaml
-            with open("LuzBuild", "w") as f:
-                dump(luzbuild, f)
         # resolve path
-        path = resolve_path(f"{path}/LuzBuild")
+        path = resolve_path(f"{path}/luz.py")
         # extract archive to directory
         self.tar.decompress_archive(self.template_path, path.parent)
         # check for after_untar
         if hasattr(self, "after_untar"):
             self.after_untar()
-        # dump yaml
-        with open(path, "w") as f:
-            dump(self.dict, f)
+        # format into Python
+        py = "from luz import Control, Module\n\n"
 
-    def ask_for(self, key: str, default: str = None, dsc: str = "What", dsc1: str = "is") -> str:
+        for k, v in self.dict.items():
+            if k == "control":
+                py += f"control = Control("
+                for k1, v1 in v.items():
+                    py += f"\n\t{k1}='{v1}', " if isinstance(v1, str) else f"\n\t{k1}={v1}, "
+                py = py[:-2] + "\n)\n\n"
+            else:
+                py += f"modules = [\n    Module("
+                for k1, v1 in v.items():
+                    py += f"\n\t\t{k1}='{v1}', " if isinstance(v1, str) else f"\n\t\t{k1}={v1}, "
+                py = py[:-2] + "\n\t)\n]"
+
+        # write to file
+        path.write_text(py)
+
+        log(f"Successfully wrote to {path}.")
+
+        # instructions
+        if self.submodule:
+            log(f"To add this module as a submodule, you can add Submodule(path=\"{path.parent}\") to your 'submodules' list in the parent project's `luz.py`.")
+            
+
+    def ask_for(self, key: str, default: str = None, dsc: str = "What", dsc1: str = "is", extra_msg: str = "") -> str:
         """Ask for a value.
 
         :param str key: The key to ask for.
@@ -92,12 +101,12 @@ class Module:
         :return: The value.
         """
         if default is not None:
-            val = ask(f'{dsc} {dsc1} this project\'s {key}? (enter for "{default}")')
+            val = ask(f"{dsc} {dsc1} this project\'s {key}?{f' ({extra_msg})' if extra_msg != '' else '' } (enter for '{default}')")
             if val == "":
                 return default
         else:
-            val = ask(f"{dsc} {dsc1} this project's {key}?")
+            val = ask(f"{dsc} {dsc1} this project's {key}?{f' ({extra_msg})' if extra_msg != '' else '' }")
             if val == "":
                 error("You must enter a value.")
-                val = ask(f"{dsc} {dsc1} this {self.type}'s {key}?")
+                val = ask(f"{dsc} {dsc1} this {self.type}'s {key}?{f' ({extra_msg})' if extra_msg != '' else '' }")
         return val

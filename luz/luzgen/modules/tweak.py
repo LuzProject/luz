@@ -43,11 +43,10 @@ class Tweak(Module):
         self.dict.update(
             {
                 "modules": {
-                    self.name: {
-                        "type": "tweak",
-                        "files": [f"Sources/Tweak{self.ending}"],
-                        "filter": {"bundles": [self.filter]},
-                    }
+                    "type": "tweak",
+                    "name": self.name,
+                    "files": [f"Sources/Tweak{self.ending}"],
+                    "filter": {"bundles": [self.filter]}
                 }
             }
         )

@@ -37,10 +37,9 @@ class Tool(Module):
         self.dict.update(
             {
                 "modules": {
-                    self.name: {
-                        "type": "tool",
-                        "files": [f"Sources/Tool{self.ending}" if self.srctype != "swift" else f"Sources/main.swift"],
-                    }
+                    "name": self.name,
+                    "type": "tool",
+                    "files": [f"Sources/Tool{self.ending}" if self.srctype != "swift" else f"Sources/main.swift"]
                 }
             }
         )

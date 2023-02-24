@@ -31,10 +31,9 @@ class Preferences(Module):
         self.dict.update(
             {
                 "modules": {
-                    self.name: {
-                        "type": "preferences",
-                        "files": [f"Sources/{self.prefix}RootListController.m" if self.srctype != "swift" else f"Sources/RootListController.swift"],
-                    }
+                    "name": self.name,
+                    "type": "preferences",
+                    "files": [f"Sources/{self.prefix}RootListController.m" if self.srctype != "swift" else f"Sources/RootListController.swift"]
                 }
             }
         )
