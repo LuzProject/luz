@@ -24,6 +24,21 @@ Builds a project using the LuzBuild in the working directory.
      - Flag
      - Add meta information to the build. (i.e. ``luz build -m release=true``)
 
+``verify``
+*********************
+
+Verifies the structure of ``luz.py``.
+
+.. list-table::
+   :widths: 5 1 10
+
+   * - Option
+     - Type
+     - Description
+   * - ``-p`` / ``--path``
+     - Flag
+     - Path to the directory to verify. (i.e. ``luz verify -p /path/to/project``, defaults to the current working directory)
+
 ``gen``
 *********************
 
