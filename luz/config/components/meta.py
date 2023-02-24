@@ -150,7 +150,7 @@ class Meta:
     def __xcrun(self):
         xcrun = cmd_in_path("xcrun")
         if xcrun is None:
-            return self.__error_and_exit("xcrun not found.")
+            raise Exception("xcrun not found.")
         else:
             sdkA = getoutput(f"{xcrun} --show-sdk-path --sdk {self.platform}").split("\n")[-1]
             if sdkA == "" or not sdkA.startswith("/"):
