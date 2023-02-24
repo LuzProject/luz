@@ -4,7 +4,7 @@ from pathlib import Path
 from subprocess import getoutput
 
 # local imports
-from .logger import log_stdout, remove_log_stdout
+from .logger import error, log_stdout, remove_log_stdout
 from .utils import resolve_path
 
 
@@ -106,28 +106,21 @@ def logos(module, files: list) -> list:
         output = f'{dir}/logos-processed/{str(file).split("/")[-1]}'
         # match to case
         file_formatted = str(file).split("/")[-1].split(".")[-1]
-        if file_formatted == "x":
-            log_stdout(f"Processing {file} with Logos...")
-            getoutput(f"{logos_exec} {file} > {output}.m")
+        if file_formatted == "x" or file_formatted == "xm":
+            output = getoutput(f"{logos_exec} {file}")
+            should_exit = False
+            for l in output.splitlines():
+                if ": warning:" or ": error:" in l:
+                    error(l)
+                    should_exit = True
+            if should_exit: exit(1)
             new_files.append(
                 {
                     "logos": True,
-                    "new_path": resolve_path(f"{output}.m"),
+                    "new_path": resolve_path(f"{output}.{'m' if file_formatted == 'x' else 'mm'}"),
                     "old_path": resolve_path(file),
                 }
             )
-            remove_log_stdout(f"Processing {file} with Logos...")
-        elif file_formatted == "xm":
-            log_stdout(f"Processing {file} with Logos...")
-            getoutput(f"{logos_exec} {file} > {output}.mm")
-            new_files.append(
-                {
-                    "logos": True,
-                    "new_path": resolve_path(f"{output}.mm"),
-                    "old_path": resolve_path(file),
-                }
-            )
-            remove_log_stdout(f"Processing {file} with Logos...")
         else:
             new_files.append({"logos": False, "path": resolve_path(file)})
 
