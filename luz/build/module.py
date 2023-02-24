@@ -110,7 +110,7 @@ class ModuleBuilder():
 
         # handle files not needing compilation
         if len(files) == 0:
-            log(f'Nothing to compile for module "{self.module.name}".', self.luz.lock)
+            log(f'Nothing to compile for module "{self.module.name}".', "CMP", self.luz.lock)
             return []
 
         files = files_to_compile
@@ -139,7 +139,7 @@ class ModuleBuilder():
             return
 
         # log
-        log(f"({self.module.name}) Linking compiled objects to '{self.module.install_name}'...", self.luz.lock)
+        log(f"({self.module.name}) Linking compiled objects to '{self.module.install_name}'...", "LNK", self.luz.lock)
 
         # build args
         build_flags = [

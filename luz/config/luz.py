@@ -215,7 +215,7 @@ class Luz:
     def __pack(self):
         """Package the project."""
         # log
-        log("Packaging...")
+        log("Packaging...", "PKG")
         # layout
         layout_path = resolve_path("layout")
         if layout_path.exists():

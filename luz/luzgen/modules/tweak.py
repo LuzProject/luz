@@ -9,7 +9,7 @@ class Tweak(Module):
         # type
         self.type = "tweak"
         # valid source types
-        self.VALID = ["logos", "objc", "c", "asm", "objcpp", "swift"]
+        self.VALID = ["logos", "objc", "CMP", "asm", "objcpp", "swift"]
         # srctype
         log(f"Valid source types: {', '.join(self.VALID)}")
         self.srctype = self.__ask_for("source type", "logos").lower()
@@ -25,7 +25,7 @@ class Tweak(Module):
             self.ending = ".x"
         elif self.srctype == "objc":
             self.ending = ".m"
-        elif self.srctype == "c":
+        elif self.srctype == "CMP":
             self.ending = ".c"
         elif self.srctype == "asm":
             self.ending = ".s"

@@ -37,7 +37,7 @@ class Tweak(ModuleBuilder):
                 file_formatted = "/".join(file_formatted.split("/")[1:])
             msg = f"({self.module.name}) Compiling '{file_formatted}'..."
 
-        log(msg, self.luz.lock)
+        log(msg, "CMP", self.luz.lock)
 
         file = list(
             filter(
@@ -62,7 +62,7 @@ class Tweak(ModuleBuilder):
     def __stage(self):
         """Stage a deb to be packaged."""
         # log
-        log(f"({self.module.name}) Staging...", self.luz.lock)
+        log(f"({self.module.name}) Staging...", "PKG", self.luz.lock)
         # dirs to make
         if self.module.install_dir is None:
             dirtomake = resolve_path(

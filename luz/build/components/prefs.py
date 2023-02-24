@@ -27,7 +27,7 @@ class Preferences(ModuleBuilder):
         file_formatted = str(file).replace(str(self.luz.path.absolute()), '')
         if file_formatted != str(file):
             file_formatted = "/".join(file_formatted.split("/")[1:])
-        log(f"({self.module.name}) Compiling '{file_formatted}'...", self.luz.lock)
+        log(f"({self.module.name}) Compiling '{file_formatted}'...", "CMP", self.luz.lock)
         
         # compile file
         try:
@@ -48,7 +48,7 @@ class Preferences(ModuleBuilder):
     def __stage(self):
         """Stage a deb to be packaged."""
         # log
-        log(f"({self.module.name}) Staging...", self.luz.lock)
+        log(f"({self.module.name}) Staging...", "PKG", self.luz.lock)
         """Stage a deb to be packaged."""
         # dirs to make
         dirtomake = resolve_path(f"{self.luz.build_dir}/_/Library/PreferenceBundles/") if not self.meta.rootless else resolve_path(f"{self.luz.build_dir}/_/var/jb/Library/PreferenceBundles/")

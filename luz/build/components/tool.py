@@ -27,7 +27,7 @@ class Tool(ModuleBuilder):
         file_formatted = str(file).replace(str(self.luz.path.absolute()), '')
         if file_formatted != str(file):
             file_formatted = "/".join(file_formatted.split("/")[1:])
-        log(f"({self.module.name}) Compiling '{file_formatted}'...", self.luz.lock)
+        log(f"({self.module.name}) Compiling '{file_formatted}'...", "CMP", self.luz.lock)
 
         # compile file
         try:
@@ -46,7 +46,7 @@ class Tool(ModuleBuilder):
     def __stage(self):
         """Stage a deb to be packaged."""
         # log
-        log(f"({self.module.name}) Staging...", self.luz.lock)
+        log(f"({self.module.name}) Staging...", "PKG", self.luz.lock)
         # dirs to make
         if self.module.install_dir is None:
             dirtomake = resolve_path(
