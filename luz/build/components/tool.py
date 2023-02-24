@@ -24,26 +24,29 @@ class Tool(ModuleBuilder):
         :param str file: The file to compile.
         """
         # log
-        log(f"({self.module.name}) Compiling '{str(file).replace(str(self.luz.path.absolute()), '')}'...")
-        files_minus_to_compile = list(
-            filter(lambda x: x != file and str(x).endswith(".swift"), self.files))
+        file_formatted = str(file).replace(str(self.luz.path.absolute()), '')
+        if file_formatted != str(file):
+            file_formatted = "/".join(file_formatted.split("/")[1:])
+        log(f"({self.module.name}) Compiling '{file_formatted}'...", self.luz.lock)
+
         # compile file
         try:
             pool = ThreadPool()
             if str(file).endswith(".swift"):
+                files_minus_to_compile = list(
+                    filter(lambda x: x != file and str(x).endswith(".swift"), self.files))
                 pool.map(lambda x: self.compile_swift_arch(
                     file, files_minus_to_compile, x), self.meta.archs)
             else:
                 pool.map(lambda x: self.compile_c_arch(file, x), self.meta.archs)
 
-        except Exception as e:
-            print(e)
+        except:
             return f'An error occured when attempting to compile for module "{self.module.name}".'
 
     def __stage(self):
         """Stage a deb to be packaged."""
         # log
-        log(f"({self.module.name}) Staging...")
+        log(f"({self.module.name}) Staging...", self.luz.lock)
         # dirs to make
         if self.module.install_dir is None:
             dirtomake = resolve_path(

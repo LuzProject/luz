@@ -43,7 +43,7 @@ class ModuleBuilder():
         if self.meta.platform != "iphoneos": self.meta.rootless = False
 
         # directories
-        self.logos_dir = resolve_path(f"{self.luz.build_dir}/logos-processed/{self.module.name}")
+        self.logos_dir = resolve_path(f"{self.luz.build_dir}/logos-processed")
         self.obj_dir = resolve_path(f"{self.luz.build_dir}/obj/{self.module.name}")
         self.dylib_dir = resolve_path(f"{self.luz.build_dir}/dylib/{self.module.name}")
         self.bin_dir = resolve_path(f"{self.luz.build_dir}/bin/{self.module.name}")
@@ -110,7 +110,7 @@ class ModuleBuilder():
 
         # handle files not needing compilation
         if len(files) == 0:
-            log(f'Nothing to compile for module "{self.module.name}".')
+            log(f'Nothing to compile for module "{self.module.name}".', self.luz.lock)
             return []
 
         files = files_to_compile
@@ -139,7 +139,7 @@ class ModuleBuilder():
             return
 
         # log
-        log(f"({self.module.name}) Linking compiled objects to '{self.module.install_name}'...")
+        log(f"({self.module.name}) Linking compiled objects to '{self.module.install_name}'...", self.luz.lock)
 
         # build args
         build_flags = [

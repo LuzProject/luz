@@ -25,23 +25,33 @@ class Tweak(ModuleBuilder):
         """
         # log
         if file.get("old_path") is not None:
-            log(f"({self.module.name}) Compiling '{str(file.get('old_path')).replace(str(self.luz.path.absolute()), '')}'...")
+            file_formatted = str(file.get("old_path")).replace(
+                str(self.luz.path.absolute()), '')
+            if file_formatted != str(file.get("old_path")):
+                file_formatted = "/".join(file_formatted.split("/")[1:])
+            msg = f"({self.module.name}) Compiling '{file_formatted}'..."
         else:
-            log(f"({self.module.name}) Compiling '{str(file.get('path')).replace(str(self.luz.path.absolute()), '')}'...")
-        
+            file_formatted = str(file.get("path")).replace(
+                str(self.luz.path.absolute()), '')
+            if file_formatted != str(file.get("path")):
+                file_formatted = "/".join(file_formatted.split("/")[1:])
+            msg = f"({self.module.name}) Compiling '{file_formatted}'..."
+
+        log(msg, self.luz.lock)
+
         file = list(
             filter(
                 lambda x: x == file.get("new_path") or x == file.get("path"),
                 self.files_paths,
             )
         )[0]
-        files_minus_to_compile = list(
-            filter(lambda x: x != file and str(x).endswith(".swift"), self.files_paths))
         
         # compile file
         try:
             pool = ThreadPool()
             if str(file).endswith(".swift"):
+                files_minus_to_compile = list(
+                    filter(lambda x: x != file and str(x).endswith(".swift"), self.files_paths))
                 pool.map(lambda x: self.compile_swift_arch(file, files_minus_to_compile, x), self.meta.archs)
             else:
                 pool.map(lambda x: self.compile_c_arch(file, x), self.meta.archs)
@@ -52,7 +62,7 @@ class Tweak(ModuleBuilder):
     def __stage(self):
         """Stage a deb to be packaged."""
         # log
-        log(f"({self.module.name}) Staging...")
+        log(f"({self.module.name}) Staging...", self.luz.lock)
         # dirs to make
         if self.module.install_dir is None:
             dirtomake = resolve_path(
@@ -62,7 +72,7 @@ class Tweak(ModuleBuilder):
         else:
             if self.meta.rootless:
                 warn(
-                    f'({self.module.name}) Custom install directory was specified, and rootless is enabled. Prefixing path with /var/jb.')
+                    f'({self.module.name}) Custom install directory was specified, and rootless is enabled. Prefixing path with /var/jb.', self.luz.lock)
             self.install_dir = resolve_path(self.module.install_dir)
             dirtomake = resolve_path(f"{self.luz.build_dir}/_/{self.module.install_dir.parent}") if not self.meta.rootless else resolve_path(
                 f"{self.luz.build_dir}/_/var/jb/{self.module.install_dir.parent}")

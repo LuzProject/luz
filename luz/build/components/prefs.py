@@ -24,14 +24,17 @@ class Preferences(ModuleBuilder):
         :param str file: The file to compile.
         """
         # log
-        log(f"({self.module.name}) Compiling '{str(file).replace(str(self.luz.path.absolute()), '')}'...")
-        files_minus_to_compile = list(
-            filter(lambda x: x != file and str(x).endswith(".swift"), self.files))
+        file_formatted = str(file).replace(str(self.luz.path.absolute()), '')
+        if file_formatted != str(file):
+            file_formatted = "/".join(file_formatted.split("/")[1:])
+        log(f"({self.module.name}) Compiling '{file_formatted}'...", self.luz.lock)
         
         # compile file
         try:
             pool = ThreadPool()
             if str(file).endswith(".swift"):
+                files_minus_to_compile = list(
+                    filter(lambda x: x != file and str(x).endswith(".swift"), self.files))
                 # compile archs
                 pool.map(lambda x: self.compile_swift_arch(
                     file, files_minus_to_compile, x), self.meta.archs)
@@ -45,7 +48,7 @@ class Preferences(ModuleBuilder):
     def __stage(self):
         """Stage a deb to be packaged."""
         # log
-        log(f"({self.module.name}) Staging...")
+        log(f"({self.module.name}) Staging...", self.luz.lock)
         """Stage a deb to be packaged."""
         # dirs to make
         dirtomake = resolve_path(f"{self.luz.build_dir}/_/Library/PreferenceBundles/") if not self.meta.rootless else resolve_path(f"{self.luz.build_dir}/_/var/jb/Library/PreferenceBundles/")

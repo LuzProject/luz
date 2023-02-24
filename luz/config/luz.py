@@ -3,6 +3,7 @@ from argparse import Namespace
 from atexit import register
 from importlib.util import module_from_spec, spec_from_file_location
 from json import dump, loads
+from multiprocessing import Lock
 from multiprocessing.pool import ThreadPool
 from os import makedirs
 from pyclang import CCompiler, SwiftCompiler
@@ -143,6 +144,9 @@ class Luz:
 
         # pool
         self.pool = ThreadPool() if inherit is None else inherit.pool
+
+        # lock
+        self.lock = Lock() if inherit is None else inherit.lock
 
         # initialize atexit
         register(self.pool.close)
