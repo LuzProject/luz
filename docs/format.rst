@@ -1,12 +1,16 @@
-LuzBuild Formatting
+luz.py Formatting
 ---------------------
 
-Luz uses it's own YAML based formatting for it's build files. Each build setting has a designated key.
+Luz uses a Python file to define the settings for the build. Python is used so that compile-time variables can be specified, much like a Makefile. The file is called ``luz.py`` and is located in the root of your project.
+
+``LuzGen`` will automatically generate a ``luz.py`` file for any project that you create with it. It's not recommended to create your own ``luz.py``, and you should only do so if you know what you're doing.
 
 Meta
 *********************
 
 This is where you define the settings for the build, such as the SDK, the architectures to build for, and the ``clang`` path.
+
+Meta variables are defined in a class called ``Meta`` that can be imported from ``luz``.
 
 .. list-table::
    :widths: 5 1 10
@@ -47,7 +51,7 @@ This is where you define the settings for the build, such as the SDK, the archit
    * - ``platform``
      - String
      - Platform to build for. Can be ``macosx``, ``iphoneos`` or ``watchos``. (``iphoneos`` if not specified)
-   * - ``minVers``
+   * - ``min_vers``
      - String
      - Minimum version to build for. (``15.0`` if not specified)
     
@@ -55,6 +59,8 @@ Control
 *********************
 
 This is where you define the settings for the control file.
+
+Control variables are defined in a class called ``Control`` that can be imported from ``luz``.
 
 .. list-table::
    :widths: 5 1 10
@@ -90,34 +96,14 @@ This is where you define the settings for the control file.
      - String
      - Description of the package.
 
-Scripts
-*********************
-
-This is where you define your package's maintainer scripts.
-
-.. list-table::
-   :widths: 5 1 10
-
-   * - Variable
-     - Type
-     - Description
-   * - ``preinst``
-     - String / List
-     - Script to run before installing the package.
-   * - ``postinst``
-     - String / List
-     - Script to run after installing the package.
-   * - ``prerm``
-     - String / List
-     - Script to run before removing the package.
-   * - ``postrm``
-     - String / List
-     - Script to run after removing the package.
+Additional control options can be found `here <https://github.com/LuzProject/luz/tree/main/luz/config/components/control.py#L26/>`_.
 
 Modules
 *********************
 
-This is where a dictionary of modules are defined.
+Modules are where you define the files to compile and the settings for the build.
+
+Modules are defined in a class called ``Modules`` that can be imported from ``luz``.
 
 .. list-table::
    :widths: 5 1 10
@@ -128,10 +114,10 @@ This is where a dictionary of modules are defined.
    * - ``type``
      - String
      - Type of module to build. (``tweak`` if not specified)
-   * - ``cflags``
+   * - ``c_flags``
      - String
      - Flags to pass to ``clang`` when compiling C files.
-   * - ``swiftflags``
+   * - ``swift_flags``
      - String
      - Flags to pass to ``swift`` when compiling Swift files.
    * - ``optimization``
@@ -140,77 +126,93 @@ This is where a dictionary of modules are defined.
    * - ``warnings``
      - String
      - Warnings level to use for ``clang``. (``-Wall`` if not specified)
-   * - ``entflag``
+   * - ``ent_flags``
      - String
      - Entitlements flag to use for ``ldid``. (``-S`` if not specified)
-   * - ``entfile``
-     - String
-     - Path to entitlements plist to use for ``ldid``.
-   * - ``useArc``
+   * - ``use_arc``
      - Boolean
      - Whether or not to use ARC for ``clang``. (``true`` if not specified)
-   * - ``onlyCompileChanged``
+   * - ``only_compile_changed``
      - Boolean
      - Whether or not to only compile changed files. (``true`` if not specified)
-   * - ``bridgingHeaders``
+   * - ``bridging_headers``
      - List
      - List of bridging headers to use for ``swift``.
    * - ``frameworks``
      - List
      - List of frameworks to link against.
-   * - ``privateFrameworks``
+   * - ``private_frameworks``
      - List
      - List of private frameworks to link against.
    * - ``libraries``
      - List
      - List of libraries to link against.
 
+Additional module options can be found `here <https://github.com/LuzProject/luz/tree/main/luz/config/components/module.py#L35/>`_.
+
 Submodules
 *********************
 
-This is where an array of submodule paths are defined.
+Submodules are where you define paths to directories with ``luz.py`` files to include in your project.
 
-Example LuzBuild
+Submodules are defined in a class called ``Submodule`` that can be imported from ``luz``.
+
+.. list-table::
+   :widths: 5 1 10
+
+   * - Variable
+     - Type
+     - Description
+   * - ``path``
+     - String
+     - Path to the submodule.
+   * - ``inherit``
+     - String
+     - Whether or not to inherit non-specified ``meta`` options from the parent project. (``true`` if not specified)
+
+Example ``luz.py``
 *********************
 
-.. code:: yaml
 
-    meta:
-      release: True
-      archs:
-      - arm64
-      - arm64e
-      cc: /usr/bin/gcc
-      swift: /usr/bin/swift
-      compression: zstd
-      platform: iphoneos
-      sdk: ~/.luz/sdks/iPhoneOS14.5.sdk
-      rootless: true
-      minVers: 15.0
+.. code:: Python
 
-    control:
-      architecture: iphoneos-arm64
-      author: Jaidan
-      depends: firmware (>= 15.0), mobilesubstrate
-      description: LuzBuild demo
-      id: com.jaidan.demo
-      name: LuzBuildDemo
-      section: Tweaks
-      version: 1.0.0
-    
-    scripts:
-      postinst:
-      - echo 'Thank you for trying out Luz!'
-      - killall SpringBoard
-      postrm: echo 'Thank you for trying out Luz!'
-    
-    modules:
-      Tweak:
-        filter:
-          bundles:
-          - com.apple.SpringBoard
-        files:
-        - Tweak.xm
+    from luz import Control, Meta, Modules, Submodule
 
-    submodules:
-    - Preferences
+    # define meta options
+    meta = Meta(
+        release=True,
+        archs=['arm64', 'arm64e'],
+        cc='/usr/bin/gcc',
+        swift='/usr/bin/swift',
+        compression='zstd',
+        platform='iphoneos',
+        sdk='~/.luz/sdks/iPhoneOS14.5.sdk',
+        rootless=True,
+        min_vers='15.0'
+    )
+
+    # define control options
+    control = Control(
+        id='com.jaidan.demo',
+        name='LuzBuildDemo',
+        author='Jaidan',
+        description='LuzBuild demo',
+        section='Tweaks',
+        version='1.0.0',
+        dependencies='firmware (>= 15.0), mobilesubstrate'
+    )
+
+    # define modules
+    modules = [
+        Module(
+            filter={
+              'bundles': ['com.apple.SpringBoard']
+            },
+            files=['Tweak.xm']
+        )
+    ]
+
+    # define submodules
+    submodules = [
+        Submodule(path="./Preferences")
+    ]
