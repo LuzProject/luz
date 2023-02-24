@@ -10,7 +10,6 @@ packages = [{include = "luz"}]
 python = "^3.7"
 pyclang = {git = "https://github.com/LuzProject/pyclang"}
 pydeb = {git = "https://github.com/LuzProject/pydeb"}
-pyyaml = "^6.0"
 
 [tool.poetry.scripts]
 luz = 'luz.__main__:main'
