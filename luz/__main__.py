@@ -76,9 +76,6 @@ def main():
             error(f'Unknown command "{args.command}".')
             exit(1)
     except Exception as e:
-        import traceback
-
-        print(traceback.format_exc())
         error(f"{e}")
         exit(1)
 
