@@ -4,8 +4,8 @@ from pathlib import Path
 from subprocess import getoutput
 
 # local imports
-from ..common.logger import log_stdout, remove_log_stdout
-from ..common.utils import resolve_path
+from .logger import log_stdout, remove_log_stdout
+from .utils import resolve_path
 
 
 def clone_logos(module, update: bool = False) -> Path:
@@ -93,7 +93,7 @@ def logos(module, files: list) -> list:
     :param list files: The files to use logos on.
     :return: The list of logos'd files.
     """
-    dir = module.dir
+    dir = module.luz_dir
     # logos dir
     logos = clone_logos(module)
     # logos executable

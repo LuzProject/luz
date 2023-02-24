@@ -2,9 +2,9 @@
 from argparse import ArgumentParser
 
 # local imports
+from .config.luz import Luz
 from .common.logger import ask, error
 from .common.utils import get_version, resolve_path
-from .compiler.luzbuild import LuzBuild
 from .luzgen.modules.modules import assign_module
 
 
@@ -57,11 +57,12 @@ def main():
                 args.path = resolve_path(args.path)
             else:
                 args.path = resolve_path("./")
-            luzbuild_path = f"{args.path}/LuzBuild"
-            if not resolve_path(f"{args.path}/LuzBuild").exists():
-                error("Could not find LuzBuild file.")
+            luzbuild_path = f"{args.path}/luz.py"
+            if not resolve_path(f"{args.path}/luz.py").exists():
+                error("Could not find build file.")
                 exit(1)
-            LuzBuild(args, path_to_file=luzbuild_path).build_and_pack()
+            luz = Luz(luzbuild_path, args=args)
+            luz.build_project()
         elif args.command == "gen":
             if args.type is None:
                 args.type = ask('What type of project would you like to generate? (tool/tweak/preferences) (enter for "tweak")')
@@ -75,7 +76,7 @@ def main():
         import traceback
 
         print(traceback.format_exc())
-        error(f"An error occured: {e}")
+        error(f"{e}")
         exit(1)
 
 

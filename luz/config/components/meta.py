@@ -1,9 +1,10 @@
 # module imports
+from json import loads
 from platform import platform as plat
 from subprocess import getoutput
 
 # local imports
-from ...common.utils import cmd_in_path, resolve_path, get_luz_storage
+from ...common.utils import cmd_in_path, get_luz_storage, resolve_path, setup_luz_dir
 
 class Meta():
     def __init__(self,
@@ -50,8 +51,14 @@ class Meta():
         self.platform = platform
         self.min_vers = min_vers
 
+        # handle debug
+        if self.debug and self.release: self.debug = False
+
         # storage
         self.storage = get_luz_storage()
+
+        # luz dir
+        self.luz_dir = setup_luz_dir()
 
         # attempt to fetch prefix
         if self.prefix == "" and plat().startswith("Linux"):

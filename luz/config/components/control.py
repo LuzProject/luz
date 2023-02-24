@@ -90,6 +90,8 @@ class Control():
         string = ""
         # loop through keys
         for key in self.__dict__:
+            # raw
+            if key == "raw": continue
             # get value
             value = self.__dict__[key]
             # check if value is not None
