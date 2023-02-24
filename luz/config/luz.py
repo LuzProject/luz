@@ -56,10 +56,10 @@ class Luz:
         rmtree(resolve_path(f"{self.path}/__pycache__").absolute(), ignore_errors=True)
 
         # import file
-        self.__luz_raw = luz
+        self.raw = luz
 
         # meta
-        self.meta = getattr(self.__luz_raw, "meta", Meta() if inherit is None else inherit.meta)
+        self.meta = getattr(self.raw, "meta", Meta() if inherit is None else inherit.meta)
 
         if inherit is not None:
             self.passed_config = getattr(inherit, "passed_config")
@@ -99,7 +99,7 @@ class Luz:
             self.swift_compiler = SwiftCompiler().set_compiler(self.meta.swift)
 
         # control
-        self.control = getattr(self.__luz_raw, "control", None if inherit is None else inherit.control)
+        self.control = getattr(self.raw, "control", None if inherit is None else inherit.control)
 
         # read manual control
         if self.control is None:
@@ -130,10 +130,10 @@ class Luz:
                 raise ValueError("No control file found. Please create a control file or use the Control class to create a control file.")
 
         # modules
-        self.modules = getattr(self.__luz_raw, "modules", [])
+        self.modules = getattr(self.raw, "modules", [])
 
         # submodules
-        self.submodules = getattr(self.__luz_raw, "submodules", [])
+        self.submodules = getattr(self.raw, "submodules", [])
 
         # pack
         if self.control is None:
