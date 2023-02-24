@@ -48,7 +48,8 @@ def main():
     args = parser.parse_args()
 
     if args.command is None:
-        error("Please specify an operation.")
+        error("No command specified. Showing help message.")
+        parser.print_help()
         exit(1)
 
     try:
