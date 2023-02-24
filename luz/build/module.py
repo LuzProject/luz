@@ -135,7 +135,7 @@ class ModuleBuilder():
             out_name = resolve_path(f"{self.bin_dir}/{self.module.install_name}")
 
         # check if linked files exist
-        if len(self.module.files) == 0 and out_name.exists():
+        if len(self.files) == 0 and out_name.exists():
             return
 
         # log
