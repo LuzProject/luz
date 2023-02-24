@@ -29,13 +29,7 @@ class Preferences(Module):
         self.prefix = self.__ask_for("unique bundle prefix", "XX") if self.srctype == "objc" else ""
         # add values to dict
         self.dict.update(
-            {
-                "modules": {
-                    "name": self.name,
-                    "type": "preferences",
-                    "files": [f"Sources/{self.prefix}RootListController.m" if self.srctype != "swift" else f"Sources/RootListController.swift"]
-                }
-            }
+            {"modules": {"name": self.name, "type": "preferences", "files": [f"Sources/{self.prefix}RootListController.m" if self.srctype != "swift" else f"Sources/RootListController.swift"]}}
         )
         # add swift bridging header
         if self.srctype == "swift":

@@ -5,8 +5,10 @@ from typing import Union
 # local imports
 from ...common.utils import resolve_path
 
-class Module():
-    def __init__(self,
+
+class Module:
+    def __init__(
+        self,
         files: Union[list, str],
         name: str,
         type: str = "tweak",
@@ -17,11 +19,7 @@ class Module():
         optimization: int = 0,
         warnings: str = "-Wall",
         codesign_flags: str = "-S",
-        filter: dict = {
-            "bundles": [
-                "com.apple.SpringBoard"
-            ]
-        },
+        filter: dict = {"bundles": ["com.apple.SpringBoard"]},
         use_arc: bool = True,
         only_compile_changed: bool = True,
         bridging_headers: list = [],
@@ -30,10 +28,10 @@ class Module():
         library_dirs: list = [],
         frameworks: list = [],
         private_frameworks: list = [],
-        libraries: list = []
+        libraries: list = [],
     ):
         """Initialize Module
-        
+
         Args:
             files (Union[list, str]): Files to compile
             name (str): Name of module
@@ -56,12 +54,12 @@ class Module():
             private_frameworks (list, optional): Private frameworks to link
             libraries (list, optional): Libraries to link
         """
-        
+
         # assign variables
         self.type = type
         self.name = name
         self.files = files
-        self.install_name =  install_name
+        self.install_name = install_name
         self.install_dir = resolve_path(install_dir) if install_dir != "" else None
         self.c_flags = c_flags
         self.swift_flags = swift_flags
@@ -82,7 +80,7 @@ class Module():
         # convert files to list
         if isinstance(self.files, str):
             self.files = [self.files]
-        
+
         # check that files is not none
         if self.files is None:
             raise Exception("Files cannot be None")
@@ -139,4 +137,3 @@ class Module():
 
         # resolve library dirs
         self.library_dirs = [resolve_path(f) for f in self.library_dirs]
-        

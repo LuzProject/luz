@@ -7,6 +7,7 @@ from shutil import which
 from subprocess import getoutput
 from typing import Union
 
+
 def resolve_path(path: str) -> Union[Path, list]:
     """Resolve a Path from a String."""
     # format env vars in path
@@ -21,6 +22,7 @@ def resolve_path(path: str) -> Union[Path, list]:
         return list(Path(p.root).glob(str(Path("").joinpath(*parts))))
     # return path
     return p
+
 
 def chained_dict_get(dictionary, key: str):
     """Get a value nested in a dictionary by its nested path.
@@ -38,6 +40,7 @@ def chained_dict_get(dictionary, key: str):
             return None
     return dict_chain
 
+
 def get_from_default(luzbuild, key):
     """Get the specified value from the default config file.
 
@@ -47,6 +50,7 @@ def get_from_default(luzbuild, key):
     """
     return chained_dict_get(luzbuild.defaults, key)
 
+
 def get_from_luzbuild(luzbuild, key):
     """Get the specified value from the LuzBuild config file.
 
@@ -55,6 +59,7 @@ def get_from_luzbuild(luzbuild, key):
     :return: The value of the key.
     """
     return chained_dict_get(luzbuild.luzbuild, key)
+
 
 def get_from_cfg(luzbuild, key, default_look_path: str = None):
     """Get the specified value from either the LuzBuild or the default config file.
@@ -71,6 +76,7 @@ def get_from_cfg(luzbuild, key, default_look_path: str = None):
             value = get_from_default(luzbuild, key)
     return value
 
+
 def format_path(file: str) -> str:
     """Format a path that contains environment variables.
 
@@ -84,6 +90,7 @@ def format_path(file: str) -> str:
         else:
             new_file += f + "/"
     return new_file
+
 
 def get_hash(filepath: str):
     """Gets the hash of a specified file.
@@ -99,6 +106,7 @@ def get_hash(filepath: str):
             block = source.read(2**16)
     return md5sum.hexdigest()
 
+
 def setup_luz_dir() -> Path:
     """Setup the tmp directory."""
     luz_dir = resolve_path(f"{getcwd()}/.luz")
@@ -106,6 +114,7 @@ def setup_luz_dir() -> Path:
         mkdir(luz_dir)
 
     return luz_dir
+
 
 def cmd_in_path(cmd: str) -> Union[None, Path]:
     """Check if a command is in the path.
@@ -119,12 +128,14 @@ def cmd_in_path(cmd: str) -> Union[None, Path]:
 
     return resolve_path(path)
 
+
 def get_luz_storage() -> str:
     """Gets the Luz storage directory."""
     storage_dir = resolve_path("$HOME/.luz")
     if not storage_dir.exists():
         mkdir(storage_dir)
     return storage_dir
+
 
 def get_version() -> str:
     # Check if running from a git repository,

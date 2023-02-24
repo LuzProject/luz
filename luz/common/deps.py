@@ -113,7 +113,8 @@ def logos(module, files: list) -> list:
                 if ": warning:" or ": error:" in l:
                     error(l)
                     should_exit = True
-            if should_exit: exit(1)
+            if should_exit:
+                exit(1)
             new_files.append(
                 {
                     "logos": True,

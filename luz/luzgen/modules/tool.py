@@ -34,15 +34,7 @@ class Tool(Module):
         # get keys
         self.name = self.__ask_for("name")
         # add values to dict
-        self.dict.update(
-            {
-                "modules": {
-                    "name": self.name,
-                    "type": "tool",
-                    "files": [f"Sources/Tool{self.ending}" if self.srctype != "swift" else f"Sources/main.swift"]
-                }
-            }
-        )
+        self.dict.update({"modules": {"name": self.name, "type": "tool", "files": [f"Sources/Tool{self.ending}" if self.srctype != "swift" else f"Sources/main.swift"]}})
         # folder
         folder = resolve_path(
             self.__ask_for(

@@ -48,7 +48,8 @@ class Module:
             self.control["author"] = self.ask_for("author", getpwuid(getuid())[0], dsc="Who")
             self.control["maintainer"] = self.control["author"]
             self.control["depends"] = self.ask_for("dependencies", dsc1="are", default="", extra_msg="Separated by a comma and a space").split(", ")
-            if self.control["depends"] == [""]: self.control["depends"] = []
+            if self.control["depends"] == [""]:
+                self.control["depends"] = []
             self.control["architecture"] = self.ask_for("architecture", "iphoneos-arm64")
 
             # add control to dict
@@ -89,7 +90,6 @@ class Module:
         # instructions
         if self.submodule:
             log(f"To add this module as a submodule, you can add Submodule(path=\"{path.parent}\") to your 'submodules' list in the parent project's `luz.py`.")
-            
 
     def ask_for(self, key: str, default: str = None, dsc: str = "What", dsc1: str = "is", extra_msg: str = "") -> str:
         """Ask for a value.
@@ -101,7 +101,7 @@ class Module:
         :return: The value.
         """
         if default is not None:
-            val = ask(f"{dsc} {dsc1} this project\'s {key}?{f' ({extra_msg})' if extra_msg != '' else '' } (enter for '{default}')")
+            val = ask(f"{dsc} {dsc1} this project's {key}?{f' ({extra_msg})' if extra_msg != '' else '' } (enter for '{default}')")
             if val == "":
                 return default
         else:

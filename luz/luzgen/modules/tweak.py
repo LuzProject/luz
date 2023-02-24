@@ -40,16 +40,7 @@ class Tweak(Module):
         self.filter = self.__ask_for("executable filter", "com.apple.SpringBoard")
 
         # add values to dict
-        self.dict.update(
-            {
-                "modules": {
-                    "type": "tweak",
-                    "name": self.name,
-                    "files": [f"Sources/Tweak{self.ending}"],
-                    "filter": {"bundles": [self.filter]}
-                }
-            }
-        )
+        self.dict.update({"modules": {"type": "tweak", "name": self.name, "files": [f"Sources/Tweak{self.ending}"], "filter": {"bundles": [self.filter]}}})
 
         # folder
         folder = resolve_path(

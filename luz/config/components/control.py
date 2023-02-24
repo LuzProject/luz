@@ -1,5 +1,6 @@
-class Control():
-    def __init__(self,
+class Control:
+    def __init__(
+        self,
         id: str,
         version: str,
         maintainer: str,
@@ -21,7 +22,7 @@ class Control():
         uploaders: list = [],
         priority: str = None,
         section: str = None,
-        homepage: str = None
+        homepage: str = None,
     ):
         """The project's control metadata.
 
@@ -79,7 +80,7 @@ class Control():
 
         # get raw control
         self.raw = self.__str__()
-    
+
     def __str__(self):
         """Returns the control's string representation.
 
@@ -91,7 +92,8 @@ class Control():
         # loop through keys
         for key in self.__dict__:
             # raw
-            if key == "raw": continue
+            if key == "raw":
+                continue
             # get value
             value = self.__dict__[key]
             # check if value is not None
@@ -108,7 +110,7 @@ class Control():
                     if value is False:
                         continue
                     value = "yes"
-                
+
                 # check for id
                 if key == "id":
                     string += f"Package: {value}\n"

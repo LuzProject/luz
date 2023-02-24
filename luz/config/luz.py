@@ -20,10 +20,11 @@ from ..common.utils import resolve_path, setup_luz_dir
 from .components.control import Control
 from .components.meta import Meta
 
-class Luz():
-    def __init__(self, file_path: str = 'luz.py', args: Namespace = None, inherit = None):
+
+class Luz:
+    def __init__(self, file_path: str = "luz.py", args: Namespace = None, inherit=None):
         """Initialize Luz
-        
+
         :param str file_path: Path to luz.py
         """
         if inherit is None:
@@ -32,33 +33,32 @@ class Luz():
             self.now = inherit.now
         # ensure that the file exists
         if not resolve_path(file_path).exists():
-            raise FileNotFoundError(f'File {file_path} not found')
-    
+            raise FileNotFoundError(f"File {file_path} not found")
+
         # path
         self.path = resolve_path(file_path).parent
 
         # nuke build dir if clean
         if args is not None and args.clean:
-            rmtree(resolve_path(f'{self.path}/.luz').absolute(), ignore_errors=True)
+            rmtree(resolve_path(f"{self.path}/.luz").absolute(), ignore_errors=True)
 
         # clean
         self.clean = args.clean if args is not None else False
 
         # convert absolute file path to python import path
-        spec = spec_from_file_location(
-            "build", resolve_path(file_path).absolute())
+        spec = spec_from_file_location("build", resolve_path(file_path).absolute())
         luz = module_from_spec(spec)
         modules["build"] = luz
         spec.loader.exec_module(luz)
 
         # remove pycache
-        rmtree(resolve_path(f'{self.path}/__pycache__').absolute(), ignore_errors=True)
-        
+        rmtree(resolve_path(f"{self.path}/__pycache__").absolute(), ignore_errors=True)
+
         # import file
         self.__luz_raw = luz
 
         # meta
-        self.meta = getattr(self.__luz_raw, 'meta', Meta() if inherit is None else inherit.meta)
+        self.meta = getattr(self.__luz_raw, "meta", Meta() if inherit is None else inherit.meta)
 
         if inherit is not None:
             self.passed_config = getattr(inherit, "passed_config")
@@ -88,7 +88,7 @@ class Luz():
                 self.c_compiler = CCompiler().set_compiler(self.meta.cc)
             else:
                 self.c_compiler = inherit.c_compiler
-            
+
             if inherit.meta.swift != self.meta.swift:
                 self.swift_compiler = SwiftCompiler().set_compiler(self.meta.swift)
             else:
@@ -98,7 +98,7 @@ class Luz():
             self.swift_compiler = SwiftCompiler().set_compiler(self.meta.swift)
 
         # control
-        self.control = getattr(self.__luz_raw, 'control', None if inherit is None else inherit.control)
+        self.control = getattr(self.__luz_raw, "control", None if inherit is None else inherit.control)
 
         # read manual control
         if self.control is None:
@@ -114,18 +114,29 @@ class Luz():
             if control is not None:
                 # add values to control
                 warn("Using manual control file. Please use the Control class to create a control file.")
-                self.control = Control(id=control.package, version=control.version, maintainer=control.maintainer, architecture=control.architecture, name=control.name, description=control.description, author=control.author, depends=control.depends, section=control.section)
+                self.control = Control(
+                    id=control.package,
+                    version=control.version,
+                    maintainer=control.maintainer,
+                    architecture=control.architecture,
+                    name=control.name,
+                    description=control.description,
+                    author=control.author,
+                    depends=control.depends,
+                    section=control.section,
+                )
             else:
                 raise ValueError("No control file found. Please create a control file or use the Control class to create a control file.")
 
         # modules
-        self.modules = getattr(self.__luz_raw, 'modules', [])
+        self.modules = getattr(self.__luz_raw, "modules", [])
 
         # submodules
-        self.submodules = getattr(self.__luz_raw, 'submodules', [])
+        self.submodules = getattr(self.__luz_raw, "submodules", [])
 
         # pack
-        if self.control is None: self.meta.pack = False
+        if self.control is None:
+            self.meta.pack = False
 
         # luz dir
         self.build_dir = setup_luz_dir() if inherit is None else inherit.build_dir
@@ -164,7 +175,7 @@ class Luz():
                 self.control.raw = self.control.__str__()
             else:
                 self.build_number = getattr(inherit, "build_number")
-        
+
         # assign submodules
         submodules = self.pool.map(self.__assign_submodule, self.submodules)
         self.submodules = submodules
@@ -178,8 +189,7 @@ class Luz():
         elif value.startswith("[") and value.endswith("]"):
             arr = []
             for v in value[1:-1].split(","):
-                arr.append(self.__assign_passed_value(
-                    v.replace("'", "").replace('"', "")))
+                arr.append(self.__assign_passed_value(v.replace("'", "").replace('"', "")))
             return arr
         else:
             return value
@@ -241,11 +251,11 @@ class Luz():
 
         if build_results is not None:
             raise Exception(build_results)
-        
+
         if self.meta.pack:
             self.__pack()
 
         with open(resolve_path(f"{self.build_dir}/hashlist.json"), "w") as f:
             dump(self.hashlist, f)
-        
+
         log(f"Build completed in {round(time() - self.now, 2)} seconds.")

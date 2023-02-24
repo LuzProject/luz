@@ -6,20 +6,22 @@ from subprocess import getoutput
 # local imports
 from ...common.utils import cmd_in_path, get_luz_storage, resolve_path, setup_luz_dir
 
-class Meta():
-    def __init__(self,
+
+class Meta:
+    def __init__(
+        self,
         debug: bool = True,
         release: bool = False,
-        sdk: str = '',
-        prefix: str = '',
-        cc: str = 'clang',
-        swift: str = 'swift',
+        sdk: str = "",
+        prefix: str = "",
+        cc: str = "clang",
+        swift: str = "swift",
         rootless: bool = True,
-        compression: str = 'xz',
+        compression: str = "xz",
         pack: bool = True,
-        archs: list = ['arm64', 'arm64e'],
-        platform: str = 'iphoneos',
-        min_vers: str = '15.0'
+        archs: list = ["arm64", "arm64e"],
+        platform: str = "iphoneos",
+        min_vers: str = "15.0",
     ):
         """Initialize Meta
 
@@ -52,7 +54,8 @@ class Meta():
         self.min_vers = min_vers
 
         # handle debug
-        if self.debug and self.release: self.debug = False
+        if self.debug and self.release:
+            self.debug = False
 
         # storage
         self.storage = get_luz_storage()
@@ -62,8 +65,7 @@ class Meta():
 
         # attempt to fetch prefix
         if self.prefix == "" and plat().startswith("Linux"):
-            luz_prefix = resolve_path(
-                f"{self.storage}/toolchain/linux/iphone/bin")
+            luz_prefix = resolve_path(f"{self.storage}/toolchain/linux/iphone/bin")
             if not luz_prefix.exists():
                 raise Exception("Running on Linux, and toolchain is not installed.")
             self.prefix = luz_prefix
@@ -94,8 +96,7 @@ class Meta():
             self.swift = prefix_path
 
         # format install_name_tool with prefix
-        self.install_name_tool = cmd_in_path(
-            f'{(str(self.prefix) + "/") if self.prefix is not None else ""}install_name_tool')
+        self.install_name_tool = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}install_name_tool')
         if self.install_name_tool is None:
             # fall back to path
             self.install_name_tool = cmd_in_path("install_name_tool")
@@ -103,8 +104,7 @@ class Meta():
                 raise Exception("Could not find install_name_tool.")
 
         # format ldid with prefix
-        self.ldid = cmd_in_path(
-            f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ldid')
+        self.ldid = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ldid')
         if self.ldid is None:
             # fall back to path
             self.ldid = cmd_in_path("ldid")
@@ -112,8 +112,7 @@ class Meta():
                 raise Exception("Could not find ldid.")
 
         # format ld with prefix
-        self.ld = cmd_in_path(
-            f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ld')
+        self.ld = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ld')
         if self.ld is None:
             # fall back to path
             self.ld = cmd_in_path("ld")
@@ -121,8 +120,7 @@ class Meta():
                 raise Exception("Could not find ld.")
 
         # format ldid with prefix
-        self.strip = cmd_in_path(
-            f'{(str(self.prefix) + "/") if self.prefix is not None else ""}strip')
+        self.strip = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}strip')
         if self.strip is None:
             # fall back to path
             self.strip = cmd_in_path("strip")
@@ -130,8 +128,7 @@ class Meta():
                 raise Exception("Could not find strip.")
 
         # format lipo with prefix
-        self.lipo = cmd_in_path(
-            f'{(str(self.prefix) + "/") if self.prefix is not None else ""}lipo')
+        self.lipo = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}lipo')
         if self.lipo is None:
             # fall back to path
             self.lipo = cmd_in_path("lipo")
@@ -155,8 +152,7 @@ class Meta():
         if xcrun is None:
             return self.__error_and_exit("xcrun not found.")
         else:
-            sdkA = getoutput(
-                f"{xcrun} --show-sdk-path --sdk {self.platform}").split("\n")[-1]
+            sdkA = getoutput(f"{xcrun} --show-sdk-path --sdk {self.platform}").split("\n")[-1]
             if sdkA == "" or not sdkA.startswith("/"):
                 raise Exception("Could not find an SDK.")
             self.sdk = sdkA
@@ -167,14 +163,12 @@ class Meta():
         sdks_path = resolve_path(f"{self.storage}/sdks")
         if sdks_path.exists():
             # get valid sdk paths that match the target platform
-            valid_sdks = list(
-                filter(lambda x: self.platform.lower() in x.name.lower(), sdks_path.iterdir()))
+            valid_sdks = list(filter(lambda x: self.platform.lower() in x.name.lower(), sdks_path.iterdir()))
             # get the sdk that closest matches the minimum version
             if len(valid_sdks) == 0:
                 return self.__xcrun()
             else:
-                minimum = min(valid_sdks, key=lambda x: abs(float(str(x.name).lower().replace(
-                    self.platform.lower(), "").replace(".sdk", "")) - float(self.min_vers)))
+                minimum = min(valid_sdks, key=lambda x: abs(float(str(x.name).lower().replace(self.platform.lower(), "").replace(".sdk", "")) - float(self.min_vers)))
                 return minimum
 
         else:
