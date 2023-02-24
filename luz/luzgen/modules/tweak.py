@@ -38,7 +38,7 @@ class Tweak(Module):
         self.name = self.__ask_for("name")
 
         # filter process
-        self.filter = self.__ask_for("executable filter", "com.apple.SpringBoard")
+        self.filter = self.__ask_for("executable filter", "com.apple.springboard")
 
         # add values to dict
         self.dict.update({"modules": {"type": "tweak", "name": self.name, "files": [f"Sources/Tweak{self.ending}"], "filter": {"bundles": [self.filter]}}})
