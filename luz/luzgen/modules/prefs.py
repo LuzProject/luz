@@ -2,7 +2,7 @@
 from os import rename
 
 # local imports
-from ...common.logger import ask, error
+from ...common.logger import ask, error, log
 from ...common.utils import resolve_path
 from .module import Module
 
@@ -14,6 +14,7 @@ class Preferences(Module):
         # valid source types
         self.VALID = ["objc", "swift"]
         # srctype
+        log(f"Valid source types: {', '.join(self.VALID)}")
         self.srctype = self.__ask_for("source type", "objc").lower()
         if self.srctype not in self.VALID:
             error(f'Invalid source type: {self.srctype}. Valid types: {", ".join(self.VALID)}')
