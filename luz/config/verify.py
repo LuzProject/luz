@@ -9,11 +9,8 @@ from ..common.logger import error, log, warn
 
 def get_default_args(func):
     sig = signature(func)
-    return {
-        k: v.default
-        for k, v in sig.parameters.items()
-        if v.default is not Parameter.empty
-    }
+    return {k: v.default for k, v in sig.parameters.items() if v.default is not Parameter.empty}
+
 
 class Verify(Luz):
     def __init__(self, file_path: str = "luz.py", args: Namespace = None):
@@ -25,8 +22,8 @@ class Verify(Luz):
             error(f"Failed to parse '{file_path}'.")
             error(f"Error: {e}")
             errors += 1
-        
-        if 'raw' in self.__dict__:
+
+        if "raw" in self.__dict__:
             # default meta
             default_meta = get_default_args(Meta.__init__)
 
@@ -49,7 +46,7 @@ class Verify(Luz):
                         if f"{attr}=" in file_contents:
                             warnings += 1
                             warn(f"Meta attribute '{attr}' is set to default value. You can remove it from the file.")
-            
+
             # verify modules
             for module in self.modules:
                 for attr in default_module:
@@ -57,7 +54,7 @@ class Verify(Luz):
                         if f"{attr}=" in file_contents:
                             warnings += 1
                             warn(f"{module.name} module attribute '{attr}' is set to default value. You can remove it from the file.")
-            
+
             # verify submodules
             for sm in self.submodules:
                 for attr in default_submodule:

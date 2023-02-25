@@ -80,7 +80,7 @@ def warn(message, char: str = "WRN"):
     print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["yellow"] + char + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
 
 
-def error(message, char: str="ERR", lock=None):
+def error(message, char: str = "ERR", lock=None):
     char = char.replace(":", colors["darkgrey"] + ":" + colors["reset"] + colors["bold"] + colors["red"])
     if lock is not None:
         with lock:

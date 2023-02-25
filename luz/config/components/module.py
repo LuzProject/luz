@@ -138,4 +138,5 @@ class Module:
         # resolve library dirs
         self.library_dirs = [resolve_path(f) for f in self.library_dirs]
 
-    def abbreviate(self): return self.name[:3].upper()
+    def abbreviate(self):
+        return self.name[:3].upper()
