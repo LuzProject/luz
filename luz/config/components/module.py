@@ -139,5 +139,7 @@ class Module:
         self.library_dirs = [resolve_path(f) for f in self.library_dirs]
 
     def abbreviate(self):
-        if len(self.name) >= 3: return self.name[:3].upper()
-        else: return (" " * (3 - len(self.name))) + self.name.upper()
+        if len(self.name) >= 3:
+            return self.name[:3].upper()
+        else:
+            return (" " * (3 - len(self.name))) + self.name.upper()
