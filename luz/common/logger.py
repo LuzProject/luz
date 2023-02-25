@@ -77,7 +77,6 @@ def debug(message, dbg):
 def warn(message, char: str = "⚠️"):
     print(colors["bold"] + colors["yellow"] + char + colors["bold"] + colors["darkgrey"] + ": " + colors["reset"] + f"{message}")
 
-
 def error(message, char: str="❌", lock=None):
     if lock is not None:
         with lock:
