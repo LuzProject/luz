@@ -62,6 +62,7 @@ def remove_log_stdout(message, lock=None):
 
 
 def log(message, char: str = "INF", lock=None):
+    char = char.replace(":", colors["darkgrey"] + ":" + colors["reset"] + colors["bold"] + colors["green"])
     if lock is not None:
         with lock:
             print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["green"] + char + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
@@ -75,10 +76,12 @@ def debug(message, dbg):
 
 
 def warn(message, char: str = "WRN"):
+    char = char.replace(":", colors["darkgrey"] + ":" + colors["reset"] + colors["bold"] + colors["yellow"])
     print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["yellow"] + char + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
 
 
 def error(message, char: str="ERR", lock=None):
+    char = char.replace(":", colors["darkgrey"] + ":" + colors["reset"] + colors["bold"] + colors["red"])
     if lock is not None:
         with lock:
             print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["red"] + char + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")

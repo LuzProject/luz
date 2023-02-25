@@ -27,7 +27,7 @@ class Tool(ModuleBuilder):
         file_formatted = str(file).replace(str(self.luz.path.absolute()), '')
         if file_formatted != str(file):
             file_formatted = "/".join(file_formatted.split("/")[1:])
-        log(f"({self.module.name}) Compiling '{file_formatted}'...", "CMP", self.luz.lock)
+        log(f'Compiling "{file_formatted}"...', f"CMP:{self.module.abbreviate()}", self.luz.lock)
 
         # compile file
         try:
@@ -46,7 +46,7 @@ class Tool(ModuleBuilder):
     def __stage(self):
         """Stage a deb to be packaged."""
         # log
-        log(f"({self.module.name}) Staging...", "PKG", self.luz.lock)
+        log(f"Staging...", f"PKG:{self.module.abbreviate()}", self.luz.lock)
         # dirs to make
         if self.module.install_dir is None:
             dirtomake = resolve_path(
@@ -55,8 +55,7 @@ class Tool(ModuleBuilder):
                 f"{self.luz.build_dir}/_/usr/bin") if not self.meta.rootless else resolve_path(f"{self.luz.build_dir}/_/var/jb/usr/bin")
         else:
             if self.meta.rootless:
-                warn(
-                    f'({self.module.name}) Custom install directory was specified, and rootless is enabled. Prefixing path with /var/jb.')
+                warn(f'Custom install directory was specified, and rootless is enabled. Prefixing path with /var/jb.', f"WRN:{self.module.abbreviate()}")
             self.install_dir = resolve_path(self.module.install_dir)
             dirtomake = resolve_path(f"{self.luz.build_dir}/_/{self.module.install_dir.parent}") if not self.meta.rootless else resolve_path(
                 f"{self.luz.build_dir}/_/var/jb/{self.module.install_dir.parent}")

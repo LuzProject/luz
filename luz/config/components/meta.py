@@ -1,5 +1,4 @@
 # module imports
-from json import loads
 from platform import platform as plat
 from subprocess import getoutput
 
