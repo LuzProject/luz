@@ -119,7 +119,7 @@ class ModuleBuilder():
         if run_logos and filter(lambda x: ".x" in x, files) != []:
             if not self.logos_dir.exists():
                 makedirs(self.logos_dir, exist_ok=True)
-            files = logos(self.meta, files)
+            files = logos(self.meta, self.module, files)
 
         # return files
         return files

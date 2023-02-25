@@ -1,7 +1,7 @@
 # module imports
 from os import makedirs
 from pathlib import Path
-from subprocess import getoutput
+from subprocess import getoutput, check_call
 
 # local imports
 from .logger import error, log_stdout, remove_log_stdout
@@ -86,16 +86,16 @@ def clone_headers(module, update: bool = False) -> Path:
     return headers_path
 
 
-def logos(module, files: list) -> list:
+def logos(meta, module, files: list) -> list:
     """Use logos on the specified files.
 
     :param Tweak module: The module to use logos on.
     :param list files: The files to use logos on.
     :return: The list of logos'd files.
     """
-    dir = module.luz_dir
+    dir = meta.luz_dir
     # logos dir
-    logos = clone_logos(module)
+    logos = clone_logos(meta)
     # logos executable
     logos_exec = f"{logos}/bin/logos.pl"
     # new files
@@ -109,9 +109,9 @@ def logos(module, files: list) -> list:
         if file_formatted == "x" or file_formatted == "xm":
             output_value = getoutput(f"{logos_exec} {file}")
             output_file = resolve_path(f"{output}.{'m' if file_formatted == 'x' else 'mm'}")
-            spl = output.splitlines()
-            if spl[0].startswith("./"):
-                error(f"Logos error: {spl[0]}")
+            spl = output_value.splitlines()
+            if not spl[0].startswith("#"):
+                error(f"Logos Error: {spl[0]}", f"ERR:{module.abbreviate()}")
                 exit(1)
             with open(output_file, "w") as f:
                 f.write(output_value)
