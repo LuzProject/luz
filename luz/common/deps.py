@@ -1,11 +1,11 @@
 # module imports
 from os import makedirs
 from pathlib import Path
-from subprocess import getoutput
+from subprocess import getoutput, check_call
 
 # local imports
-from ..common.logger import log_stdout, remove_log_stdout
-from ..common.utils import resolve_path
+from .logger import error, log_stdout, remove_log_stdout
+from .utils import resolve_path
 
 
 def clone_logos(module, update: bool = False) -> Path:
@@ -86,16 +86,16 @@ def clone_headers(module, update: bool = False) -> Path:
     return headers_path
 
 
-def logos(module, files: list) -> list:
+def logos(meta, module, files: list) -> list:
     """Use logos on the specified files.
 
     :param Tweak module: The module to use logos on.
     :param list files: The files to use logos on.
     :return: The list of logos'd files.
     """
-    dir = module.dir
+    dir = meta.luz_dir
     # logos dir
-    logos = clone_logos(module)
+    logos = clone_logos(meta)
     # logos executable
     logos_exec = f"{logos}/bin/logos.pl"
     # new files
@@ -106,28 +106,22 @@ def logos(module, files: list) -> list:
         output = f'{dir}/logos-processed/{str(file).split("/")[-1]}'
         # match to case
         file_formatted = str(file).split("/")[-1].split(".")[-1]
-        if file_formatted == "x":
-            log_stdout(f"Processing {file} with Logos...")
-            getoutput(f"{logos_exec} {file} > {output}.m")
+        if file_formatted == "x" or file_formatted == "xm":
+            output_value = getoutput(f"{logos_exec} {file}")
+            output_file = resolve_path(f"{output}.{'m' if file_formatted == 'x' else 'mm'}")
+            spl = output_value.splitlines()
+            if not spl[0].startswith("#"):
+                error(f"Logos Error: {spl[0]}", f"❌ {module.abbreviate()}")
+                exit(1)
+            with open(output_file, "w") as f:
+                f.write(output_value)
             new_files.append(
                 {
                     "logos": True,
-                    "new_path": resolve_path(f"{output}.m"),
+                    "new_path": output_file,
                     "old_path": resolve_path(file),
                 }
             )
-            remove_log_stdout(f"Processing {file} with Logos...")
-        elif file_formatted == "xm":
-            log_stdout(f"Processing {file} with Logos...")
-            getoutput(f"{logos_exec} {file} > {output}.mm")
-            new_files.append(
-                {
-                    "logos": True,
-                    "new_path": resolve_path(f"{output}.mm"),
-                    "old_path": resolve_path(file),
-                }
-            )
-            remove_log_stdout(f"Processing {file} with Logos...")
         else:
             new_files.append({"logos": False, "path": resolve_path(file)})
 

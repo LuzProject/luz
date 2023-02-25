@@ -1,5 +1,5 @@
 # local imports
-from ...common.logger import ask, error
+from ...common.logger import ask, error, log
 from ...common.utils import resolve_path
 from .module import Module
 
@@ -11,6 +11,7 @@ class Tool(Module):
         # valid source types
         self.VALID = ["objc", "c", "asm", "objcpp", "swift"]
         # srctype
+        log(f"Valid source types: {', '.join(self.VALID)}")
         self.srctype = self.__ask_for("source type", "objc").lower()
         if self.srctype not in self.VALID:
             error(f'Invalid source type: {self.srctype}. Valid types: {", ".join(self.VALID)}')
@@ -34,16 +35,7 @@ class Tool(Module):
         # get keys
         self.name = self.__ask_for("name")
         # add values to dict
-        self.dict.update(
-            {
-                "modules": {
-                    self.name: {
-                        "type": "tool",
-                        "files": [f"Sources/Tool{self.ending}" if self.srctype != "swift" else f"Sources/main.swift"],
-                    }
-                }
-            }
-        )
+        self.dict.update({"modules": {"name": self.name, "type": "tool", "files": [f"Sources/Tool{self.ending}" if self.srctype != "swift" else f"Sources/main.swift"]}})
         # folder
         folder = resolve_path(
             self.__ask_for(

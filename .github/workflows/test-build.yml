@@ -1,7 +1,7 @@
 name: Build test package
 
 env:
-  zip-link: https://cdn.discordapp.com/attachments/820399697125965844/1067555101704736788/tweak.zip
+  zip-link: https://cdn.discordapp.com/attachments/820399697125965844/1078534203811057724/tweak.zip
 
 on:
   release:
@@ -22,9 +22,6 @@ jobs:
     runs-on: macos-12
 
     steps:
-      - name: Checkout Project
-        uses: actions/checkout@v3
-        
       - name: Select Xcode version (14.2)
         run: |
           sudo xcode-select --switch /Applications/Xcode_14.2.app
@@ -39,8 +36,8 @@ jobs:
         with:
           python-version: '3.11'
       
-      - name: Build and install project
-        run: pip install . && echo $HOME
+      - name: Install project
+        run: python -c "$(curl -fsSL https://raw.githubusercontent.com/LuzProject/luz/main/install.py)" -ns --ref="new-format"
         
       - name: Get tweak zip
         run: |

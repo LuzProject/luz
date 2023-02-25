@@ -1,5 +1,5 @@
 # local imports
-from ...common.logger import ask, error
+from ...common.logger import ask, error, log
 from ...common.utils import resolve_path
 from .module import Module
 
@@ -11,6 +11,7 @@ class Tweak(Module):
         # valid source types
         self.VALID = ["logos", "objc", "c", "asm", "objcpp", "swift"]
         # srctype
+        log(f"Valid source types: {', '.join(self.VALID)}")
         self.srctype = self.__ask_for("source type", "logos").lower()
         if self.srctype not in self.VALID:
             error(f'Invalid source type: {self.srctype}. Valid types: {", ".join(self.VALID)}')
@@ -37,20 +38,10 @@ class Tweak(Module):
         self.name = self.__ask_for("name")
 
         # filter process
-        self.filter = self.__ask_for("executable filter", "com.apple.SpringBoard")
+        self.filter = self.__ask_for("executable filter", "com.apple.springboard")
 
         # add values to dict
-        self.dict.update(
-            {
-                "modules": {
-                    self.name: {
-                        "type": "tweak",
-                        "files": [f"Sources/Tweak{self.ending}"],
-                        "filter": {"bundles": [self.filter]},
-                    }
-                }
-            }
-        )
+        self.dict.update({"modules": {"type": "tweak", "name": self.name, "files": [f"Sources/Tweak{self.ending}"], "filter": {"bundles": [self.filter]}}})
 
         # folder
         folder = resolve_path(
