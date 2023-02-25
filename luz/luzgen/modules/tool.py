@@ -9,7 +9,7 @@ class Tool(Module):
         # type
         self.type = "tool"
         # valid source types
-        self.VALID = ["objc", "CMP", "asm", "objcpp", "swift"]
+        self.VALID = ["objc", "c", "asm", "objcpp", "swift"]
         # srctype
         log(f"Valid source types: {', '.join(self.VALID)}")
         self.srctype = self.__ask_for("source type", "objc").lower()
@@ -23,7 +23,7 @@ class Tool(Module):
         # calculate ending
         if self.srctype == "objc":
             self.ending = ".m"
-        elif self.srctype == "CMP":
+        elif self.srctype == "c":
             self.ending = ".c"
         elif self.srctype == "asm":
             self.ending = ".s"

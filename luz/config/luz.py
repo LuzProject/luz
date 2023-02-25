@@ -114,7 +114,7 @@ class Luz:
             # assign values
             if control is not None:
                 # add values to control
-                warn("Using manual control file. Please use the Control class to create a control file.", "WRN:LUZ")
+                warn("Using manual control file. Please use the Control class to create a control file.", "⚠️ LUZ")
                 self.control = Control(
                     id=control.package,
                     version=control.version,
@@ -215,7 +215,7 @@ class Luz:
     def __pack(self):
         """Package the project."""
         # log
-        log("Packaging...", "PKG:LUZ")
+        log("Packaging...", "📦 LUZ")
         # layout
         layout_path = resolve_path("layout")
         if layout_path.exists():
@@ -268,4 +268,4 @@ class Luz:
         with open(resolve_path(f"{self.build_dir}/hashlist.json"), "w") as f:
             dump(self.hashlist, f)
 
-        log(f"Build completed in {round(time() - self.now, 2)} seconds.", "INF:LUZ")
+        log(f"Build completed in {round(time() - self.now, 2)} seconds.", "💡 LUZ")
