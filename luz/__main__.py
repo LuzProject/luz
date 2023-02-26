@@ -82,7 +82,7 @@ def main():
             luzbuild_path = f"{args.path}/luz.py"
             if not resolve_path(f"{args.path}/luz.py").exists():
                 if resolve_path(f"{args.path}/LuzBuild").exists():
-                    error("LuzBuild has been deprecated. Luz now uses a Python file to build projects. See the docs for more information.")
+                    error("LuzBuild has been removed. Luz now uses a Python file to build projects. See the docs for more information. (https://luz.jaidan.dev/en/latest/format.html)")
                     exit(1)
                 else:
                     error("Could not find build file.")
