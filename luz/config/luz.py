@@ -102,7 +102,7 @@ class Luz:
         self.control = getattr(self.raw, "control", None if inherit is None else inherit.control)
 
         # read manual control
-        if self.control is None:
+        if self.control is None and self.meta.pack:
             dot_path = resolve_path(f"{self.path}/control")
             layout_path = resolve_path(f"{self.path}/layout/DEBIAN/control")
             if dot_path.exists():
@@ -111,6 +111,8 @@ class Luz:
             elif layout_path.exists():
                 with open(layout_path, "r") as f:
                     control = pControl(f.read())
+            else:
+                control = None
             # assign values
             if control is not None:
                 # add values to control
@@ -163,7 +165,7 @@ class Luz:
             else:
                 self.hashlist = {}
 
-        if self.meta.debug:
+        if self.meta.debug and self.meta.pack:
             # get build number
             if inherit is None:
                 build = resolve_path(f"{self.build_dir}/last_build")
