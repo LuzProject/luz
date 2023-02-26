@@ -208,7 +208,7 @@ class Luz:
         if not str(submodule.path).startswith("/"):
             submodule.path = f"{self.path}/{submodule.path}"
 
-        return Luz(f"{submodule.path}/luz.py", inherit=self)
+        return Luz(f"{submodule.path}/luz.py", inherit=self if submodule.inherit else None)
 
     def update_hashlist(self, keys):
         """Update the hashlist with a list of keys."""
