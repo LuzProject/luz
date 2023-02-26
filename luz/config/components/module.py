@@ -5,6 +5,37 @@ from typing import Union
 # local imports
 from ...common.utils import resolve_path
 
+# map of default values
+default_values = {
+    "tweak": {
+        "frameworks": [
+            "Foundation", "CoreFoundation"
+        ],
+        "libraries": [
+            "substrate", "system"
+        ]
+    },
+    "tool": {
+        "frameworks": [
+            "Foundation", "CoreFoundation"
+        ],
+        "libraries": [
+            "system"
+        ]
+    },
+    "preferences": {
+        "frameworks": [
+            "Foundation", "CoreFoundation"
+        ],
+        "private_frameworks": [
+            "preferences"
+        ],
+        "libraries": [
+            "system"
+        ]
+    }
+}
+
 
 class Module:
     def __init__(
@@ -77,6 +108,9 @@ class Module:
         self.private_frameworks = private_frameworks
         self.libraries = libraries
 
+        # prefs -> preferences
+        if self.type == "prefs": self.type = "preferences"
+
         # convert files to list
         if isinstance(self.files, str):
             self.files = [self.files]
@@ -137,6 +171,12 @@ class Module:
 
         # resolve library dirs
         self.library_dirs = [resolve_path(f) for f in self.library_dirs]
+
+        # add default values
+        if self.type in default_values:
+            for key in default_values[self.type]:
+                # add keys in array to array
+                self.__dict__[key].extend(default_values[self.type][key])
 
     def abbreviate(self):
         if len(self.name) >= 3:
