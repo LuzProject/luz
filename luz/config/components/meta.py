@@ -3,6 +3,7 @@ from platform import platform as plat
 from subprocess import getoutput
 
 # local imports
+from ...common.logger import warn
 from ...common.utils import cmd_in_path, get_luz_storage, resolve_path, setup_luz_dir
 
 
@@ -145,6 +146,11 @@ class Meta:
                     self.sdk = resolve_path(f"{self.storage}/sdks/{self.sdk}")
                 else:
                     raise Exception("Specified SDK does not exist.")
+                
+        # rootless
+        if self.rootless and self.platform != "iphoneos":
+            warn("Rootless is only supported on iOS. Overriding...", "⚠️ LUZ")
+            self.rootless = False
 
     def __xcrun(self):
         xcrun = cmd_in_path("xcrun")
