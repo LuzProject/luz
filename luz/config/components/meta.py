@@ -95,14 +95,6 @@ class Meta:
                 raise Exception(f'Swift compiler "{self.swift}" not in prefix path.')
             self.swift = prefix_path
 
-        # format install_name_tool with prefix
-        self.install_name_tool = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}install_name_tool')
-        if self.install_name_tool is None:
-            # fall back to path
-            self.install_name_tool = cmd_in_path("install_name_tool")
-            if self.install_name_tool is None:
-                raise Exception("Could not find install_name_tool.")
-
         # format ldid with prefix
         self.ldid = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ldid')
         if self.ldid is None:

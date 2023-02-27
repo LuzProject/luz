@@ -156,6 +156,7 @@ class ModuleBuilder():
             f"-m{self.meta.platform}-version-min={self.meta.min_vers}",
             f'-DLUZ_PACKAGE_VERSION="{self.control.version}"' if self.control and self.control.raw != "" else "",
             "-g" if self.meta.debug else "",
+            f"-Wl,-install_name,{self.module.install_name},-rpath,{'/var/jb' if self.meta.rootless else ''}/usr/lib/,-rpath,{'/var/jb' if self.meta.rootless else ''}/Library/Frameworks/",
             self.module.c_flags,
         ]
         # add dynamic lib to args
@@ -180,15 +181,6 @@ class ModuleBuilder():
             )
         except:
             return f'An error occured when trying to lipo files for module "{self.module.name}".'
-
-        try:
-            # fix rpath
-            rpath = "/var/jb/Library/Frameworks/" if self.meta.rootless else "/Library/Frameworks"
-            getoutput(
-                f"{self.meta.install_name_tool} -add_rpath {rpath} {out_name}"
-            )
-        except:
-            return f'An error occured when trying to add rpath to "{out_name}" for module "{self.module.name}".'
 
         if compile_type == "executable" and self.meta.release:
             try:
@@ -219,17 +211,6 @@ class ModuleBuilder():
             f'-sdk "{self.meta.sdk}"',
             ("-I" + " -I".join(self.module.include_dirs)
              ) if self.module.include_dirs != [] else "",
-            ("-L" + " -L".join(self.module.library_dirs)
-             ) if self.module.library_dirs != [] else "",
-            ("-F" + " -F".join(self.module.framework_dirs)
-             ) if self.module.framework_dirs != [] else "",
-            ("-l" + " -l".join(self.module.libraries)
-             ) if self.module.libraries != [] else "",
-            ("-framework " + " -framework ".join(self.module.frameworks)
-             ) if self.module.frameworks != [] else "",
-            ("-framework " + " -framework ".join(self.module.private_frameworks)
-             ) if self.module.private_frameworks != [] else "",
-            arch_formatted,
             f"-emit-module-path {out_name}.swiftmodule",
             "-g" if self.meta.debug else "",
             "-primary-file",
