@@ -138,7 +138,7 @@ class Meta:
                     self.sdk = resolve_path(f"{self.storage}/sdks/{self.sdk}")
                 else:
                     raise Exception("Specified SDK does not exist.")
-                
+
         # rootless
         if self.rootless and self.platform != "iphoneos":
             warn("Rootless is only supported on iOS. Overriding...", "⚠️ LUZ")

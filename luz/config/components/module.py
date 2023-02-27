@@ -7,33 +7,9 @@ from ...common.utils import resolve_path
 
 # map of default values
 default_values = {
-    "tweak": {
-        "frameworks": [
-            "Foundation", "CoreFoundation"
-        ],
-        "libraries": [
-            "substrate", "system"
-        ]
-    },
-    "tool": {
-        "frameworks": [
-            "Foundation", "CoreFoundation"
-        ],
-        "libraries": [
-            "system"
-        ]
-    },
-    "preferences": {
-        "frameworks": [
-            "Foundation", "CoreFoundation"
-        ],
-        "private_frameworks": [
-            "preferences"
-        ],
-        "libraries": [
-            "system"
-        ]
-    }
+    "tweak": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["substrate", "system"]},
+    "tool": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["system"]},
+    "preferences": {"frameworks": ["Foundation", "CoreFoundation"], "private_frameworks": ["preferences"], "libraries": ["system"]},
 }
 
 
@@ -109,7 +85,8 @@ class Module:
         self.libraries = libraries
 
         # prefs -> preferences
-        if self.type == "prefs": self.type = "preferences"
+        if self.type == "prefs":
+            self.type = "preferences"
 
         # convert files to list
         if isinstance(self.files, str):
