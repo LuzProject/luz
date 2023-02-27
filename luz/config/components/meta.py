@@ -103,14 +103,6 @@ class Meta:
             if self.ldid is None:
                 raise Exception("Could not find ldid.")
 
-        # format ld with prefix
-        self.ld = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ld')
-        if self.ld is None:
-            # fall back to path
-            self.ld = cmd_in_path("ld")
-            if self.ld is None:
-                raise Exception("Could not find ld.")
-
         # format ldid with prefix
         self.strip = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}strip')
         if self.strip is None:
