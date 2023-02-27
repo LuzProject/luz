@@ -211,6 +211,8 @@ class ModuleBuilder():
             f'-sdk "{self.meta.sdk}"',
             ("-I" + " -I".join(self.module.include_dirs)
              ) if self.module.include_dirs != [] else "",
+            ("-import-objc-header" + " -import-objc-header".join(self.module.bridging_headers)) if self.module.bridging_headers != [] else "",
+            arch_formatted,
             f"-emit-module-path {out_name}.swiftmodule",
             "-g" if self.meta.debug else "",
             "-primary-file",
