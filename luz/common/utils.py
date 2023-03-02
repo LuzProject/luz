@@ -19,7 +19,7 @@ def resolve_path(path: str) -> Union[Path, list]:
     if "*" in str(path):
         p = Path(path)
         parts = p.parts[1:] if p.is_absolute() else p.parts
-        return list(Path(p.root).glob(str(Path("").joinpath(*parts))))
+        return list(Path(p.root).expanduser().glob(str(Path("").joinpath(*parts))))
     # return path
     return p
 
