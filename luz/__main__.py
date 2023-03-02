@@ -1,5 +1,5 @@
 # module imports
-from argparse import ArgumentParser
+from argparse import ArgumentParser, SUPPRESS
 
 # local imports
 from .config.luz import Luz
@@ -33,8 +33,9 @@ def main():
 
     parser_build.add_argument("-m", "--meta", action="append", nargs="+", help="meta configuration (-m {key}={value})")
     parser_build.add_argument("-p", "--path", action="store", help="path to the project to build")
+    parser_build.add_argument("-f", "--funny-time", action="store_true", help=SUPPRESS)
 
-    # build
+    # verify
     parser_verify = sub_parsers.add_parser("verify", help="verify the format of luz.py")
 
     parser_verify.add_argument("-p", "--path", action="store", help="path to the project to verify")

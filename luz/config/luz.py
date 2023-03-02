@@ -15,6 +15,7 @@ from time import time
 # local imports
 from ..build.assign import assign
 from ..common.logger import log, warn
+from ..common.time import Ctime
 from ..common.utils import resolve_path, setup_luz_dir
 
 # import components
@@ -42,6 +43,9 @@ class Luz:
         # nuke build dir if clean
         if args is not None and args.clean:
             rmtree(resolve_path(f"{self.path}/.luz").absolute(), ignore_errors=True)
+
+        # funnytime
+        self.funny_time = args.funny_time if args is not None else False
 
         # clean
         self.clean = args.clean if args is not None else False
@@ -270,4 +274,5 @@ class Luz:
         with open(resolve_path(f"{self.build_dir}/hashlist.json"), "w") as f:
             dump(self.hashlist, f)
 
-        log(f"Build completed in {round(time() - self.now, 2)} seconds.", "💡 LUZ")
+        t = time() - self.now
+        log(f"Build completed in {round(t, 2)} seconds.{f' ({Ctime(t).get_random()})' if self.funny_time else ''}", "💡 LUZ")
