@@ -12,3 +12,4 @@ class Submodule:
         # path
         self.path = resolve_path(path)
         self.name = self.path.name
+        self.inherit = inherit

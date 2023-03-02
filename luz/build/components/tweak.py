@@ -63,6 +63,8 @@ class Tweak(ModuleBuilder):
         """Stage a deb to be packaged."""
         # log
         log(f"Staging...", f"📦 {self.module.abbreviate()}", self.luz.lock)
+        # before stage
+        if self.module.before_stage is not None: self.module.before_stage()
         # dirs to make
         if self.module.install_dir is None:
             dirtomake = resolve_path(
@@ -100,6 +102,8 @@ class Tweak(ModuleBuilder):
                 filtermsg = filtermsg[:-2] + " );\n"
             filtermsg += "};"
             f.write(filtermsg)
+        # after stage
+        if self.module.after_stage is not None: self.module.after_stage()
 
     def compile(self):
         """Compile module."""

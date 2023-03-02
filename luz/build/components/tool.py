@@ -47,6 +47,8 @@ class Tool(ModuleBuilder):
         """Stage a deb to be packaged."""
         # log
         log(f"Staging...", f"📦 {self.module.abbreviate()}", self.luz.lock)
+        # before stage
+        if self.module.before_stage: self.module.before_stage()
         # dirs to make
         if self.module.install_dir is None:
             dirtomake = resolve_path(
@@ -65,6 +67,8 @@ class Tool(ModuleBuilder):
         if not dirtomake.exists():
             makedirs(dirtomake, exist_ok=True)
         copytree(self.bin_dir, dirtocopy, dirs_exist_ok=True)
+        # after stage
+        if self.module.after_stage: self.module.after_stage()
 
     def compile(self):
         """Compile module."""

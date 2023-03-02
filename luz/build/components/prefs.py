@@ -6,7 +6,7 @@ from subprocess import check_output
 
 # local imports
 from ..module import ModuleBuilder
-from ...common.logger import log, warn
+from ...common.logger import log
 from ...common.utils import resolve_path
 
 class Preferences(ModuleBuilder):
@@ -49,7 +49,8 @@ class Preferences(ModuleBuilder):
         """Stage a deb to be packaged."""
         # log
         log(f"Staging...", f"📦 {self.module.abbreviate()}", self.luz.lock)
-        """Stage a deb to be packaged."""
+        # before stage
+        if self.module.before_stage: self.module.before_stage()
         # dirs to make
         dirtomake = resolve_path(f"{self.luz.build_dir}/_/Library/PreferenceBundles/") if not self.meta.rootless else resolve_path(f"{self.luz.build_dir}/_/var/jb/Library/PreferenceBundles/")
         dirtocopy = (
@@ -67,6 +68,8 @@ class Preferences(ModuleBuilder):
             return f'Resources/ folder for "{self.module.name}" does not exist'
         # copy resources
         copytree(resources_path, dirtocopy, dirs_exist_ok=True)
+        # after stage
+        if self.module.after_stage: self.module.after_stage()
 
     def compile(self):
         """Compile module."""

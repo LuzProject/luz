@@ -147,6 +147,12 @@ Modules are defined in a class called ``Modules`` that can be imported from ``lu
    * - ``libraries``
      - List
      - List of libraries to link against.
+   * - ``before_stage``
+     - Callable
+     - Function to run before staging.
+   * - ``after_stage``
+     - Callable
+     - Function to run after staging.
 
 Additional module options can be found `here <https://github.com/LuzProject/luz/tree/main/luz/config/components/module.py#L35/>`_.
 

@@ -1,6 +1,6 @@
 # module imports
 from inspect import stack
-from typing import Union
+from typing import Callable, Union
 
 # local imports
 from ...common.utils import resolve_path
@@ -36,6 +36,8 @@ class Module:
         frameworks: list = [],
         private_frameworks: list = [],
         libraries: list = [],
+        before_stage: Callable = None,
+        after_stage: Callable = None,
     ):
         """Initialize Module
 
@@ -83,6 +85,8 @@ class Module:
         self.frameworks = frameworks
         self.private_frameworks = private_frameworks
         self.libraries = libraries
+        self.before_stage = before_stage
+        self.after_stage = after_stage
 
         # prefs -> preferences
         if self.type == "prefs":
