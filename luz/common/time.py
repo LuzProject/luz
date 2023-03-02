@@ -1,6 +1,7 @@
 # credit to Fiore (https://github.com/donato-fiore)
 import random
 
+
 class Ctime:
     """
     A class to represent times in a comprehensible way.
@@ -11,7 +12,7 @@ class Ctime:
     ----------
     seconds : int
         number of seconds to represent
-    
+
     Methods
     -------
     get_random()
@@ -62,9 +63,7 @@ class Ctime:
         unit = self.seconds * multiplier
         s = "s" if unit != 1 else ""
         an = "an " if unit == 1 else ""
-        ret = (self.MAP[multiplier].replace("{s}", s).replace("{AN}", an)).format(
-            RESULT=unit
-        )
+        ret = (self.MAP[multiplier].replace("{s}", s).replace("{AN}", an)).format(RESULT=unit)
         if unit > 1:
             ret = ret.replace("persons", "people")
 
