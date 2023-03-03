@@ -115,20 +115,23 @@ Modules are defined in a class called ``Modules`` that can be imported from ``lu
      - String
      - Type of module to build. (``tweak`` if not specified)
    * - ``c_flags``
-     - String
+     - List
      - Flags to pass to ``clang`` when compiling C files.
    * - ``swift_flags``
-     - String
+     - List
      - Flags to pass to ``swift`` when compiling Swift files.
+   * - ``linker_flags``
+     - List
+     - Flags to pass to the linker.
    * - ``optimization``
      - String
      - Optimization level to use for ``clang``. (``0`` if not specified)
    * - ``warnings``
-     - String
-     - Warnings level to use for ``clang``. (``-Wall`` if not specified)
+     - List
+     - Warnings flags to pass to ``clang``. (``["-Wall"]`` if not specified)
    * - ``ent_flags``
-     - String
-     - Entitlements flag to use for ``ldid``. (``-S`` if not specified)
+     - List
+     - Entitlement flags to pass to ``ldid``. (``["-S"]`` if not specified)
    * - ``use_arc``
      - Boolean
      - Whether or not to use ARC for ``clang``. (``true`` if not specified)

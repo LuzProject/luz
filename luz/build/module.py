@@ -145,7 +145,6 @@ class ModuleBuilder():
         build_flags = [
             "-fobjc-arc" if self.module.use_arc else "",
             f"-isysroot {self.meta.sdk}",
-            self.module.warnings,
             f"-O{self.module.optimization}",
             ("-I" + " -I".join(self.module.include_dirs)) if self.module.include_dirs != [] else "",
             ("-L" + " -L".join(self.module.library_dirs)) if self.module.library_dirs != [] else "",
@@ -156,9 +155,10 @@ class ModuleBuilder():
             f"-m{self.meta.platform}-version-min={self.meta.min_vers}",
             f'-DLUZ_PACKAGE_VERSION="{self.control.version}"' if self.control and self.control.raw != "" else "",
             "-g" if self.meta.debug else "",
-            f"-Wl,-install_name,{self.module.install_name},-rpath,{'/var/jb' if self.meta.rootless else ''}/usr/lib/,-rpath,{'/var/jb' if self.meta.rootless else ''}/Library/Frameworks/",
-            self.module.c_flags,
+            f"-Wl,-install_name,{self.module.install_name},-rpath,{'/var/jb' if self.meta.rootless else ''}/usr/lib/,-rpath,{'/var/jb' if self.meta.rootless else ''}/Library/Frameworks/"
         ]
+        build_flags.extend(self.module.warnings)
+        build_flags.extend(self.module.linker_flags)
         # add dynamic lib to args
         if compile_type == "dylib":
             build_flags.append("-dynamiclib")
@@ -191,7 +191,7 @@ class ModuleBuilder():
         try:
             # run ldid
             getoutput(
-                f"{self.meta.ldid} {self.module.codesign_flags} {out_name}"
+                f"{self.meta.ldid} {' '.join(self.module.codesign_flags)} {out_name}"
             )
         except:
             return f'An error occured when trying codesign "{out_name}" for module "{self.module.name}".'
@@ -215,12 +215,9 @@ class ModuleBuilder():
             arch_formatted,
             f"-emit-module-path {out_name}.swiftmodule",
             "-g" if self.meta.debug else "",
-            "-primary-file",
-            " ".join(
-                self.module.swift_flags) if self.module.swift_flags != [] else "",
-            " ".join(
-                self.module.bridging_headers) if self.module.bridging_headers != [] else "",
+            "-primary-file"
         ]
+        build_flags.extend(self.module.swift_flags)
         rmtree(
             f"{self.obj_dir}/{arch}/{file.name}-*",
             ignore_errors=True,
@@ -238,17 +235,16 @@ class ModuleBuilder():
         build_flags = [
             "-fobjc-arc" if self.module.use_arc else "",
             f"-isysroot {self.meta.sdk}",
-            self.module.warnings,
             f"-O{self.module.optimization}",
             f"-arch {arch}",
             ("-I" + " -I".join(self.module.include_dirs)
              ) if self.module.include_dirs != [] else "",
             f"-m{self.meta.platform}-version-min={self.meta.min_vers}",
-            " ".join(
-                self.module.c_flags) if self.module.c_flags != [] else "",
             "-g" if self.meta.debug else "",
             "-c",
         ]
+        build_flags.extend(self.module.c_flags)
+        build_flags.extend(self.module.warnings)
         rmtree(
             f"{self.obj_dir}/{arch}/{file.name}-*",
             ignore_errors=True,

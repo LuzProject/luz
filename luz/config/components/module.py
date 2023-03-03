@@ -21,11 +21,12 @@ class Module:
         type: str = "tweak",
         install_name: str = "",
         install_dir: str = "",
-        c_flags: str = "",
-        swift_flags: str = "",
+        c_flags: list = [],
+        swift_flags: list = [],
+        linker_flags: list = [],
         optimization: int = 0,
-        warnings: str = "-Wall",
-        codesign_flags: str = "-S",
+        warnings: list = ["-Wall"],
+        codesign_flags: list = ["-S"],
         filter: dict = {"bundles": ["com.apple.SpringBoard"]},
         use_arc: bool = True,
         only_compile_changed: bool = True,
@@ -47,11 +48,12 @@ class Module:
             type (str, optional): Type of module (default: tweak)
             install_name (str, optional): Name to install the module as (defaults to the module name)
             install_dir (str, optional): Directory to install the module to
-            c_flags (str, optional): C flags
-            swift_flags (str, optional): Swift flags
+            c_flags (list, optional): C flags
+            swift_flags (list, optional): Swift flags
+            linker_flags (list, optional): Linker flags
             optimization (int, optional): Optimization level (default: 0)
-            warnings (str, optional): Warnings (default: -Wall)
-            codesign_flags (str, optional): Entitlements flag (default: -S)
+            warnings (list, optional): Warnings (default: -Wall)
+            codesign_flags (list, optional): Entitlements flag (default: -S)
             filter (dict, optional): Filter
             use_arc (bool, optional): Use ARC (default: True)
             only_compile_changed (bool, optional): Only compile changed files (default: True)
@@ -72,6 +74,7 @@ class Module:
         self.install_dir = resolve_path(install_dir) if install_dir != "" else None
         self.c_flags = c_flags
         self.swift_flags = swift_flags
+        self.linker_flags = linker_flags
         self.optimization = optimization
         self.warnings = warnings
         self.codesign_flags = codesign_flags
