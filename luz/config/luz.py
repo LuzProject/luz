@@ -87,20 +87,26 @@ class Luz:
             for key, value in self.passed_config.items():
                 setattr(self.meta, key, value)
 
+        # pool
+        self.pool = ThreadPool() if inherit is None else inherit.pool
+
+        # lock
+        self.lock = Lock() if inherit is None else inherit.lock
+        
         # compilers
         if inherit is not None:
             if inherit.meta.cc != self.meta.cc:
-                self.c_compiler = CCompiler().set_compiler(self.meta.cc)
+                self.c_compiler = CCompiler(lock=self.lock).set_compiler(self.meta.cc)
             else:
                 self.c_compiler = inherit.c_compiler
 
             if inherit.meta.swift != self.meta.swift:
-                self.swift_compiler = SwiftCompiler().set_compiler(self.meta.swift)
+                self.swift_compiler = SwiftCompiler(lock=self.lock).set_compiler(self.meta.swift)
             else:
                 self.swift_compiler = inherit.swift_compiler
         else:
-            self.c_compiler = CCompiler().set_compiler(self.meta.cc)
-            self.swift_compiler = SwiftCompiler().set_compiler(self.meta.swift)
+            self.c_compiler = CCompiler(lock=self.lock).set_compiler(self.meta.cc)
+            self.swift_compiler = SwiftCompiler(lock=self.lock).set_compiler(self.meta.swift)
 
         # control
         self.control = getattr(self.raw, "control", None if inherit is None else inherit.control)
@@ -147,12 +153,6 @@ class Luz:
 
         # luz dir
         self.build_dir = setup_luz_dir() if inherit is None else inherit.build_dir
-
-        # pool
-        self.pool = ThreadPool() if inherit is None else inherit.pool
-
-        # lock
-        self.lock = Lock() if inherit is None else inherit.lock
 
         # initialize atexit
         register(self.pool.close)
