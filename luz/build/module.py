@@ -38,6 +38,13 @@ class ModuleBuilder():
                 self.module.library_dirs.append('/usr/lib/swift')
                 self.module.library_dirs.append(f'{self.meta.sdk}/usr/lib/swift')
                 break
+                
+        # private frameworks
+        if self.module.private_frameworks != []:
+            if resolve_path(f"{self.meta.sdk}/System/Library/PrivateFrameworks").exists():
+                self.module.library_dirs.append(f'{self.meta.sdk}/System/Library/PrivateFrameworks')
+            else:
+                raise Exception(f'Private frameworks are not available on the SDK being used. ({self.meta.sdk})')
 
         # fix rootless
         if self.meta.platform != "iphoneos": self.meta.rootless = False
