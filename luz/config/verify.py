@@ -47,23 +47,4 @@ class Verify(Luz):
                             warnings += 1
                             warn(f"Meta attribute '{attr}' is set to default value. You can remove it from the file.")
 
-            # verify modules
-            for module in self.modules:
-                for attr in default_module:
-                    if getattr(module, attr) == default_module[attr]:
-                        if f"{attr}=" in file_contents:
-                            warnings += 1
-                            warn(f"{module.name} module attribute '{attr}' is set to default value. You can remove it from the file.")
-
-            # verify submodules
-            for sm in self.submodules:
-                for attr in default_submodule:
-                    try:
-                        if getattr(sm, attr) == default_submodule[attr]:
-                            if f"{attr}=" in file_contents:
-                                warnings += 1
-                                warn(f"{sm.name} submodule attribute '{attr}' is set to default value. You can remove it from the file.")
-                    except AttributeError:
-                        pass
-
         log(f"Verification complete. {warnings} warning{'s' if warnings != 1 else ''} and {errors} error{'s' if errors != 1 else ''}.")
