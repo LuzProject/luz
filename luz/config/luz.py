@@ -92,7 +92,7 @@ class Luz:
 
         # lock
         self.lock = Lock() if inherit is None else inherit.lock
-        
+
         # compilers
         if inherit is not None:
             if inherit.meta.cc != self.meta.cc:
