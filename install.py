@@ -252,9 +252,9 @@ def main():
             error(f"Failed to update vendor modules: {e}")
             exit(1)
 
-        log("Updating luz...")
+        log("Updating luz and its dependencies...")
         try:
-            command_wrapper(f"python -m pip uninstall -y luz && python -m pip install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip")
+            command_wrapper(f"python -m pip uninstall -y luz pydeb pyclang && python -m pip install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip https://github.com/LuzProject/pydeb/archive/refs/heads/main.zip https://github.com/LuzProject/pyclang/archive/refs/heads/main.zip")
         except Exception as e:
             error(f"Failed to update luz: {e}")
             exit(1)
