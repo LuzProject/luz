@@ -1,60 +1,41 @@
+colors = {"black": "\033[30m", "red": "\033[31m", "green": "\033[32m", "darkgrey": "\033[90m", "reset": "\033[0m", "bold": "\033[01m"}
+
+
+def log(message):
+    print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["green"] + "*" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
+
+
+def error(message):
+    print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["red"] + "!" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
+
+
 # module imports
-from argparse import ArgumentParser
-from os import environ, getuid, makedirs, name
-from pathlib import Path
-from platform import platform
-from pkg_resources import working_set
-from shutil import which
-from subprocess import check_call, DEVNULL, getoutput
-from typing import Union
+try:
+    from argparse import ArgumentParser
+    from os import environ, getuid, makedirs
+    from pathlib import Path
+    from platform import platform
+    from pkg_resources import working_set
+    from shutil import which
+    from subprocess import check_call, DEVNULL, getoutput
+    from sys import executable
+    from typing import Union
+except:
+    error("Failed to import required modules. Perhaps your Python installation is out of date?")
+    error("Required modules: argparse, os, pathlib, platform, pkg_resources, shutil, subprocess, sys, typing")
+    exit(1)
 
-# fix logging if we are running on Windows
-if name == "nt":
-    from ctypes import windll
+# check that python is 3.7 or higher
+if not float(getoutput(f"{executable} --version | cut -d ' ' -f 2 | cut -d '.' -f 1,2")) < 3.7:
+    error("Python 3.7 or higher is required to run this script.")
+    exit(1)
 
-    k = windll.kernel32
-    k.SetConsoleMode(k.GetStdHandle(-11), 7)
-
-colors = {
-    "black": "\033[30m",
-    "red": "\033[31m",
-    "green": "\033[32m",
-    "orange": "\033[33m",
-    "blue": "\033[34m",
-    "purple": "\033[35m",
-    "cyan": "\033[36m",
-    "lightgrey": "\033[37m",
-    "darkgrey": "\033[90m",
-    "lightred": "\033[91m",
-    "lightgreen": "\033[92m",
-    "yellow": "\033[93m",
-    "lightblue": "\033[94m",
-    "pink": "\033[95m",
-    "lightcyan": "\033[96m",
-    "reset": "\033[0m",
-    "bold": "\033[01m",
-    "disable": "\033[02m",
-    "underline": "\033[04m",
-    "reverse": "\033[07m",
-    "strikethrough": "\033[09m",
-    "invisible": "\033[08m",
-}
-
-
-def log(message, lock=None):
-    if lock is not None:
-        with lock:
-            print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["green"] + "*" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
-    else:
-        print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["green"] + "*" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
-
-
-def error(message, lock=None):
-    if lock is not None:
-        with lock:
-            print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["red"] + "!" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
-    else:
-        print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["red"] + "!" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
+# check that pip is installed
+try:
+    import pip
+except:
+    error("pip is not installed. Please install pip before running this script.")
+    exit(1)
 
 
 def command_wrapper(command: str) -> str:
@@ -254,9 +235,7 @@ def main():
 
         log("Updating luz and its dependencies...")
         try:
-            command_wrapper(
-                f"python -m pip uninstall -y luz pydeb pyclang && python -m pip install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip https://github.com/LuzProject/pydeb/archive/refs/heads/main.zip https://github.com/LuzProject/pyclang/archive/refs/heads/main.zip"
-            )
+            command_wrapper(f"{executable} -m pip uninstall -y luz pydeb pyclang && {executable} -m pip install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip")
         except Exception as e:
             error(f"Failed to update luz: {e}")
             exit(1)
@@ -277,7 +256,7 @@ def main():
 
     log("Installing luz...")
     try:
-        command_wrapper(f"pip install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip")
+        command_wrapper(f"{executable} -m pip install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip")
     except Exception as e:
         error(f"Failed to install luz: {e}")
         exit(1)
