@@ -1,5 +1,4 @@
 # module imports
-from multiprocessing.pool import ThreadPool
 from os import makedirs
 from shutil import copytree
 from subprocess import check_output
@@ -48,13 +47,13 @@ class Tweak(ModuleBuilder):
         
         # compile file
         try:
-            pool = ThreadPool()
             if str(file).endswith(".swift"):
                 files_minus_to_compile = list(
                     filter(lambda x: x != file and str(x).endswith(".swift"), self.files_paths))
-                pool.map(lambda x: self.compile_swift_arch(file, files_minus_to_compile, x), self.meta.archs)
+                futures=[self.pool.submit(self.compile_swift_arch, file, files_minus_to_compile, x) for x in self.meta.archs]
             else:
-                pool.map(lambda x: self.compile_c_arch(file, x), self.meta.archs)
+                futures = [self.pool.submit(self.compile_c_arch, file, x) for x in self.meta.archs]
+            self.wait(futures)
 
         except:
             return f'An error occured when attempting to compile for module "{self.module.name}".'
@@ -135,10 +134,10 @@ class Tweak(ModuleBuilder):
             makedirs(f"{self.obj_dir}/{arch}", exist_ok=True)
 
         # compile files
-        compile_results = self.luz.pool.map(
-            self.__compile_tweak_file, self.files)
-        for result in compile_results:
-            if result is not None:
+        futures=[self.luz.pool.submit(self.__compile_tweak_file, file) for file in self.files]
+        self.wait(futures)
+        for result in futures:
+            if result.result() is not None:
                 return result
         # link files
         linker_results = self.linker("dylib")

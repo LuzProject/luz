@@ -1,4 +1,5 @@
 # module imports
+from concurrent.futures import ThreadPoolExecutor, wait
 from os import makedirs
 from shutil import rmtree
 from subprocess import getoutput
@@ -129,6 +130,9 @@ class ModuleBuilder():
             if not self.logos_dir.exists():
                 makedirs(self.logos_dir, exist_ok=True)
             files = logos(self.meta, self.module, files)
+        
+        # pool
+        self.pool = ThreadPoolExecutor(max_workers=(len(files) * arch_count))
 
         # return files
         return files
@@ -261,3 +265,5 @@ class ModuleBuilder():
         # compile with clang using build flags
         self.luz.c_compiler.compile(
             file, out_name, build_flags)
+
+    def wait(self, thread): wait(thread)

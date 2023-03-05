@@ -1,10 +1,10 @@
 # module imports
 from argparse import Namespace
 from atexit import register
+from concurrent.futures import ThreadPoolExecutor
 from importlib.util import module_from_spec, spec_from_file_location
 from json import dump, loads
 from multiprocessing import Lock
-from multiprocessing.pool import ThreadPool
 from os import makedirs
 from pyclang import CCompiler, SwiftCompiler
 from pydeb import Control as pControl, Pack
@@ -88,7 +88,7 @@ class Luz:
                 setattr(self.meta, key, value)
 
         # pool
-        self.pool = ThreadPool() if inherit is None else inherit.pool
+        self.pool = ThreadPoolExecutor(max_workers=20) if inherit is None else inherit.pool
 
         # lock
         self.lock = Lock() if inherit is None else inherit.lock
@@ -155,7 +155,7 @@ class Luz:
         self.build_dir = setup_luz_dir() if inherit is None else inherit.build_dir
 
         # initialize atexit
-        register(self.pool.close)
+        register(self.pool.shutdown)
 
         # hashlist
         if inherit is not None:
