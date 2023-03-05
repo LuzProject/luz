@@ -92,7 +92,9 @@ class ModuleBuilder():
         # loop files
         for file in files_to_compile:
             # get file hash
-            fhash = self.luz.hashlist.get(str(file))
+            if "hashlist" not in self.luz.build_info:
+                self.luz.build_info["hashlist"] = {}
+            fhash = self.luz.build_info["hashlist"].get(str(file))
             new_hash = get_hash(file)
             if fhash is None:
                 changed.append(file)

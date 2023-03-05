@@ -159,27 +159,25 @@ class Luz:
 
         # hashlist
         if inherit is not None:
-            self.hashlist = getattr(inherit, "hashlist")
+            self.build_info = getattr(inherit, "build_info")
         else:
-            hash_file = resolve_path(f"{self.build_dir}/hashlist.json")
+            hash_file = resolve_path(f"{self.build_dir}/build_info.json")
             # check if hashlist exists
             if hash_file.exists():
                 with open(hash_file, "r") as f:
-                    self.hashlist = loads(f.read())
+                    self.build_info = loads(f.read())
             else:
-                self.hashlist = {}
+                self.build_info = {}
 
         if self.meta.debug and self.meta.pack:
             # get build number
             if inherit is None:
-                build = resolve_path(f"{self.build_dir}/last_build")
-                if build.exists():
-                    with open(build, "r") as f:
-                        self.build_number = int(f.read()) + 1
+                if self.build_info != {} and "build_number" in self.build_info:
+                    self.build_info["build_number"] += 1
+                    self.build_number = self.build_info["build_number"]
                 else:
+                    self.build_info["build_number"] = 1
                     self.build_number = 1
-                with open(build, "w") as f:
-                    f.write(str(self.build_number))
                 # update control with build number
                 self.control.version = f"{self.control.version}-{self.build_number}+debug"
                 self.control.raw = self.control.__str__()
@@ -216,7 +214,7 @@ class Luz:
 
     def update_hashlist(self, keys):
         """Update the hashlist with a list of keys."""
-        self.hashlist.update(keys)
+        self.build_info["hashlist"].update(keys)
 
     def __pack(self):
         """Package the project."""
@@ -271,8 +269,8 @@ class Luz:
         if self.meta.pack:
             self.__pack()
 
-        with open(resolve_path(f"{self.build_dir}/hashlist.json"), "w") as f:
-            dump(self.hashlist, f)
+        with open(resolve_path(f"{self.build_dir}/build_info.json"), "w") as f:
+            dump(self.build_info, f)
 
         t = time() - self.now
         log(f"Build completed in {round(t, 2)} seconds.{f' ({Ctime(t).get_random()})' if self.funny_time else ''}", "💡 LUZ")
