@@ -61,7 +61,8 @@ def remove_log_stdout(message, lock=None):
             stdout.flush()
 
 
-def log(message, char: str = "💡", lock=None):
+def log(message, emoji: str = "💡", msg: str = "LUZ", lock=None):
+    char = emoji + " " + msg
     if lock is not None:
         with lock:
             print(colors["bold"] + colors["green"] + char + colors["bold"] + colors["darkgrey"] + ": " + colors["reset"] + f"{message}")
@@ -74,11 +75,13 @@ def debug(message, dbg):
         print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["yellow"] + "#" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
 
 
-def warn(message, char: str = "⚠️"):
+def warn(message, emoji: str = "⚠️", msg: str = "LUZ"):
+    char = emoji + " " + msg
     print(colors["bold"] + colors["yellow"] + char + colors["bold"] + colors["darkgrey"] + ": " + colors["reset"] + f"{message}")
 
 
-def error(message, char: str = "❌", lock=None):
+def error(message, emoji: str = "❌", msg: str = "LUZ", lock=None):
+    char = emoji + " " + msg
     if lock is not None:
         with lock:
             print(colors["bold"] + colors["red"] + char + colors["bold"] + colors["darkgrey"] + ": " + colors["reset"] + f"{message}")

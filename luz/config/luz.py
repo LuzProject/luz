@@ -86,6 +86,11 @@ class Luz:
         if self.passed_config != {}:
             for key, value in self.passed_config.items():
                 setattr(self.meta, key, value)
+        
+        # rootless
+        if self.meta.rootless and self.meta.platform != "iphoneos":
+            warn("Rootless is only supported on iOS. Overriding...")
+            self.meta.rootless = False
 
         # pool
         self.pool = ThreadPoolExecutor(max_workers=20) if inherit is None else inherit.pool
@@ -126,7 +131,7 @@ class Luz:
             # assign values
             if control is not None:
                 # add values to control
-                warn("Using manual control file. Please use the Control class to create a control file.", "⚠️ LUZ")
+                warn("Using manual control file. Please use the Control class to create a control file.")
                 self.control = Control(
                     id=control.package,
                     version=control.version,
@@ -219,7 +224,7 @@ class Luz:
     def __pack(self):
         """Package the project."""
         # log
-        log("Packaging...", "📦 LUZ")
+        log("Packaging...", "📦")
         # layout
         layout_path = resolve_path("layout")
         if layout_path.exists():
@@ -273,4 +278,4 @@ class Luz:
             dump(self.build_info, f)
 
         t = time() - self.now
-        log(f"Build completed in {round(t, 2)} seconds.{f' ({Ctime(t).get_random()})' if self.funny_time else ''}", "💡 LUZ")
+        log(f"Build completed in {round(t, 2)} seconds.{f' ({Ctime(t).get_random()})' if self.funny_time else ''}")

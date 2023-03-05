@@ -131,11 +131,6 @@ class Meta:
                 else:
                     raise Exception("Specified SDK does not exist.")
 
-        # rootless
-        if self.rootless and self.platform != "iphoneos":
-            warn("Rootless is only supported on iOS. Overriding...", "⚠️ LUZ")
-            self.rootless = False
-
     def __xcrun(self):
         xcrun = cmd_in_path("xcrun")
         if xcrun is None:
