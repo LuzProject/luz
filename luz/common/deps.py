@@ -111,7 +111,7 @@ def logos(meta, module, files: list) -> list:
             output_file = resolve_path(f"{output}.{'m' if file_formatted == 'x' else 'mm'}")
             spl = output_value.splitlines()
             if not spl[0].startswith("#"):
-                error(f"Logos Error: {spl[0]}", f"{module.abbreviate()}")
+                error(f"Logos Error: {spl[0]}", f"{module.abbreviated_name}")
                 exit(1)
             with open(output_file, "w") as f:
                 f.write(output_value)

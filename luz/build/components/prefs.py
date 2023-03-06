@@ -27,7 +27,7 @@ class Preferences(ModuleBuilder):
         file_formatted = str(file).replace(str(self.luz.path.absolute()), '')
         if file_formatted != str(file):
             file_formatted = "/".join(file_formatted.split("/")[1:])
-        log(f'Compiling "{file_formatted}"...', "🔨", self.module.abbreviate(), self.luz.lock)
+        log(f'Compiling "{file_formatted}"...', "🔨", self.module.abbreviated_name, self.luz.lock)
         
         # compile file
         try:
@@ -47,7 +47,7 @@ class Preferences(ModuleBuilder):
     def __stage(self):
         """Stage a deb to be packaged."""
         # log
-        log(f"Staging...", "📦", self.module.abbreviate(), self.luz.lock)
+        log(f"Staging...", "📦", self.module.abbreviated_name, self.luz.lock)
         # before stage
         if self.module.before_stage: self.module.before_stage()
         # dirs to make

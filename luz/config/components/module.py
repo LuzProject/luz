@@ -162,7 +162,8 @@ class Module:
                 # add keys in array to array
                 self.__dict__[key].extend(default_values[self.type][key])
 
-    def abbreviate(self):
+    @property
+    def abbreviated_name(self):
         if len(self.name) >= 3:
             return self.name[:3].upper()
         else:

@@ -22,12 +22,11 @@ class Ctime:
     MAP = {
         4.76: "The ISS traveled {RESULT:,} mile{s}",
         18.5: "The Earth traveled {RESULT:,} mile{s}",
-        80: "Your heart beat {RESULT:,} time{s}",
         4: "{RESULT:,} person{s} was born",
         2: "{RESULT:,} person{s} died",
         3391204: "{RESULT:,} email{s} was sent",
-        250: "Bill gates made ${RESULT:,.0f} USD",
-        13324: "The US national debt increased by ${RESULT:,.0f} USD",
+        250: "Bill Gates made ${RESULT:,.0f} USD",
+        13324: "The US' national debt increased by ${RESULT:,.0f} USD",
         166: "{RESULT:,} rainforest tree{s} was cut down",
         30: "{RESULT:,} star{s} exploded",
         4800: "{RESULT:,} star{s} was created",
@@ -60,12 +59,13 @@ class Ctime:
         """
 
         multiplier = random.choice(list(self.MAP.keys()))
-        unit = self.seconds * multiplier
+        unit = round(self.seconds * multiplier, 2)
         s = "s" if unit != 1 else ""
         an = "an " if unit == 1 else ""
         ret = (self.MAP[multiplier].replace("{s}", s).replace("{AN}", an)).format(RESULT=unit)
         if unit > 1:
             ret = ret.replace("persons", "people")
+            ret = ret.replace("was", "were")
 
         if random.randint(0, 1):
             return f"{ret} in that time."

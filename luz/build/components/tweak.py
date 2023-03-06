@@ -36,7 +36,7 @@ class Tweak(ModuleBuilder):
                 file_formatted = "/".join(file_formatted.split("/")[1:])
             msg = f'Compiling "{file_formatted}"...'
 
-        log(msg, "🔨", self.module.abbreviate(), self.luz.lock)
+        log(msg, "🔨", self.module.abbreviated_name, self.luz.lock)
 
         file = list(
             filter(
@@ -61,7 +61,7 @@ class Tweak(ModuleBuilder):
     def __stage(self):
         """Stage a deb to be packaged."""
         # log
-        log(f"Staging...", "📦", self.module.abbreviate(), self.luz.lock)
+        log(f"Staging...", "📦", self.module.abbreviated_name, self.luz.lock)
         # before stage
         if self.module.before_stage is not None: self.module.before_stage()
         # dirs to make
@@ -73,7 +73,7 @@ class Tweak(ModuleBuilder):
         else:
             if self.meta.rootless:
                 warn(
-                    f'Custom install directory was specified, and rootless is enabled. Prefixing path with /var/jb.', msg=self.module.abbreviate())
+                    f'Custom install directory was specified, and rootless is enabled. Prefixing path with /var/jb.', msg=self.module.abbreviated_name)
             self.install_dir = resolve_path(self.module.install_dir)
             dirtomake = resolve_path(f"{self.luz.build_dir}/_/{self.module.install_dir.parent}") if not self.meta.rootless else resolve_path(
                 f"{self.luz.build_dir}/_/var/jb/{self.module.install_dir.parent}")
