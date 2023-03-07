@@ -138,9 +138,4 @@ def get_luz_storage() -> str:
 
 
 def get_version() -> str:
-    # Check if running from a git repository,
-    # then, construct version in the following format: version-branch-hash
-    if resolve_path(".git").exists():
-        return f'{get_distribution(__package__.split(".")[0]).version}-{getoutput("git rev-parse --abbrev-ref HEAD")}-{getoutput("git rev-parse --short HEAD")}'
-    else:
-        return get_distribution(__package__.split(".")[0]).version
+    return get_distribution(__package__.split(".")[0]).version
