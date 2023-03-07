@@ -107,7 +107,9 @@ def cmd_in_path(cmd: str) -> Union[None, Path]:
 
     return resolve_path(path)
 
+
 PATH = resolve_path(f'{environ.get("HOME")}/.luz')
+
 
 def get_manager() -> str:
     """Get the package manager for the current system."""

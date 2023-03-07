@@ -88,7 +88,7 @@ class Luz:
         if self.passed_config != {}:
             for key, value in self.passed_config.items():
                 setattr(self.meta, key, value)
-        
+
         # rootless
         if self.meta.rootless and self.meta.platform != "iphoneos":
             warn("Rootless is only supported on iOS. Overriding...")

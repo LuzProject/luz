@@ -17,7 +17,7 @@ def get_default_args(func):
 class Verify(Luz):
     def __init__(self, file_path: str = "luz.py", args: Namespace = None):
         """Verify the Luz.py config.
-        
+
         :param str file_path: The path to the file to verify.
         :param Namespace args: The arguments passed to the program.
         """
