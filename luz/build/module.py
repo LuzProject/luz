@@ -56,7 +56,7 @@ class ModuleBuilder():
         self.dylib_dir = resolve_path(f"{self.luz.build_dir}/dylib/{self.module.name}")
         self.bin_dir = resolve_path(f"{self.luz.build_dir}/bin/{self.module.name}")
 
-    def hash_files(self, files, compile_type: str = "dylib", run_logos: bool = False):
+    def hash_files(self, files, compile_type: str = "dylib"):
         """Hash source files, and check if their objects exist.
 
         :param list files: The list of files to hash.
@@ -125,11 +125,10 @@ class ModuleBuilder():
 
         files = files_to_compile
 
-        # use logos files if necessary
-        if run_logos and filter(lambda x: ".x" in x, files) != []:
-            if not self.logos_dir.exists():
-                makedirs(self.logos_dir, exist_ok=True)
-            files = logos(self.meta, self.module, files)
+        # use logos on files
+        if not self.logos_dir.exists() and list(filter(lambda x: ".x" in x, [str(f) for f in files])) != []:
+            makedirs(self.logos_dir, exist_ok=True)
+        files = logos(self.meta, self.module, files)
         
         # pool
         self.pool = ThreadPoolExecutor(max_workers=(len(files) * arch_count))
@@ -208,6 +207,66 @@ class ModuleBuilder():
             )
         except:
             return f'An error occured when trying codesign "{out_name}" for module "{self.module.name}".'
+        
+    def handle_logos(self):
+        """Handle files that have had Logos ran on them."""
+        self.files_paths = []
+        for file in self.files:
+            new_path = ""
+            # handle logos files
+            if file.get("logos") == True:
+                # new path
+                new_path = file.get("new_path")
+                # set original path
+                orig_path = file.get("old_path")
+                # include path
+                include_path = "/".join(str(orig_path).split("/")[:-1])
+                # add it to include if it's not already there
+                if include_path not in self.module.include_dirs:
+                    self.module.include_dirs.append(include_path)
+            # handle normal files
+            else:
+                new_path = file.get("path")
+            
+            # add to files paths
+            self.files_paths.append(new_path)
+    
+    def compile_file(self, file):
+        # log
+        if file.get("old_path") is not None:
+            file_formatted = str(file.get("old_path")).replace(
+                str(self.luz.path.absolute()), '')
+            if file_formatted != str(file.get("old_path")):
+                file_formatted = "/".join(file_formatted.split("/")[1:])
+            msg = f'Compiling "{file_formatted}"...'
+        else:
+            file_formatted = str(file.get("path")).replace(
+                str(self.luz.path.absolute()), '')
+            if file_formatted != str(file.get("path")):
+                file_formatted = "/".join(file_formatted.split("/")[1:])
+            msg = f'Compiling "{file_formatted}"...'
+
+        log(msg, "🔨", self.module.abbreviated_name, self.luz.lock)
+
+        file = list(
+            filter(
+                lambda x: x == file.get("new_path") or x == file.get("path"),
+                self.files_paths,
+            )
+        )[0]
+        
+        # compile file
+        try:
+            if str(file).endswith(".swift"):
+                files_minus_to_compile = list(
+                    filter(lambda x: x != file and str(x).endswith(".swift"), self.files_paths))
+                futures=[self.pool.submit(self.compile_swift_arch, file, files_minus_to_compile, x) for x in self.meta.archs]
+            else:
+                futures = [self.pool.submit(self.compile_c_arch, file, x) for x in self.meta.archs]
+            self.wait(futures)
+
+        except:
+            return f'An error occured when attempting to compile for module "{self.module.name}".'
 
     def compile_swift_arch(self, file, fmtc: list, arch: str):
         # format platform

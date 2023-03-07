@@ -17,30 +17,6 @@ class Tool(ModuleBuilder):
         # files
         self.files = self.hash_files(self.module.files, "executable")
 
-    def __compile_tool_file(self, file) -> bool:
-        """Compile a tool file.
-
-        :param str file: The file to compile.
-        """
-        # log
-        file_formatted = str(file).replace(str(self.luz.path.absolute()), '')
-        if file_formatted != str(file):
-            file_formatted = "/".join(file_formatted.split("/")[1:])
-        log(f'Compiling "{file_formatted}"...', "🔨", self.module.abbreviated_name, self.luz.lock)
-
-        # compile file
-        try:
-            if str(file).endswith(".swift"):
-                files_minus_to_compile = list(
-                    filter(lambda x: x != file and str(x).endswith(".swift"), self.files))
-                futures = [self.pool.submit(self.compile_swift_arch, file, files_minus_to_compile, x) for x in self.meta.archs]
-            else:
-                futures = [self.pool.submit(self.compile_c_arch, file, x) for x in self.meta.archs]
-            self.wait(futures)
-
-        except:
-            return f'An error occured when attempting to compile for module "{self.module.name}".'
-
     def __stage(self):
         """Stage a deb to be packaged."""
         # log
@@ -70,12 +46,15 @@ class Tool(ModuleBuilder):
 
     def compile(self):
         """Compile module."""
+        # handle logos
+        self.handle_logos()
+        # clean arch dirs
         for arch in self.meta.archs:
-            for x in self.files:
+            for x in self.files_paths:
                 check_output(f"rm -rf {self.obj_dir}/{arch}/{x.name}-*", shell=True)
             makedirs(f"{self.obj_dir}/{arch}", exist_ok=True)
         # compile files
-        futures = [self.luz.pool.submit(self.__compile_tool_file, file) for file in self.files]
+        futures = [self.luz.pool.submit(self.compile_file, file) for file in self.files]
         self.wait(futures)
         for result in futures:
             if result.result() is not None:
