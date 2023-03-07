@@ -1,11 +1,21 @@
+"""Installer for Luz, a build system targeting Apple Darwin-based systems.
+
+Created by Jaidan (@aja1dan)
+"""
+
+# exit
+from sys import exit as sys_exit
+
 colors = {"black": "\033[30m", "red": "\033[31m", "green": "\033[32m", "darkgrey": "\033[90m", "reset": "\033[0m", "bold": "\033[01m"}
 
 
 def log(message):
+    """Log a message to the console."""
     print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["green"] + "*" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
 
 
 def error(message):
+    """Log an error message to the console."""
     print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["red"] + "!" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
 
 
@@ -23,19 +33,19 @@ try:
 except:
     error("Failed to import required modules. Perhaps your Python installation is out of date?")
     error("Required modules: argparse, os, pathlib, platform, pkg_resources, shutil, subprocess, sys, typing")
-    exit(1)
+    sys_exit(1)
 
 # check that python is 3.7 or higher
-if not float(getoutput(f"{executable} --version | cut -d ' ' -f 2 | cut -d '.' -f 1,2")) < 3.7:
+if float(getoutput(f"{executable} --version | cut -d ' ' -f 2 | cut -d '.' -f 1,2")) >= 3.7:
     error("Python 3.7 or higher is required to run this script.")
-    exit(1)
+    sys_exit(1)
 
 # check that pip is installed
 try:
     import pip
 except:
     error("pip is not installed. Please install pip before running this script.")
-    exit(1)
+    sys_exit(1)
 
 
 def command_wrapper(command: str) -> str:
@@ -51,7 +61,7 @@ platform_str = platform()
 
 if getuid() == 0:
     print("Please don't run this script as root.")
-    exit(1)
+    sys_exit(1)
 
 
 def resolve_path(path: str) -> Union[Path, list]:
@@ -97,11 +107,10 @@ def cmd_in_path(cmd: str) -> Union[None, Path]:
 
     return resolve_path(path)
 
-
 PATH = resolve_path(f'{environ.get("HOME")}/.luz')
 
-
 def get_manager() -> str:
+    """Get the package manager for the current system."""
     if cmd_in_path("apt") is not None:
         return "apt"
     elif cmd_in_path("pacman") is not None:
@@ -119,6 +128,7 @@ def get_manager() -> str:
 
 
 def get_sdks():
+    """Install iOS SDKs."""
     sdk_path = f"{PATH}/sdks"
     if not resolve_path(sdk_path).exists() or len(resolve_path(f"{sdk_path}/*.sdk")) == 0:
         log("iOS SDKs not found. Downloading...")
@@ -127,17 +137,18 @@ def get_sdks():
             command_wrapper(
                 f"curl -L https://api.github.com/repos/theos/sdks/tarball -o sdks.tar.gz && TMP=$(mktemp -d) && tar -xf sdks.tar.gz --strip=1 -C $TMP && mv $TMP/*.sdk {sdk_path} && rm -r sdks.tar.gz $TMP"
             )
-        except Exception as e:
+        except Exception as err:
             command_wrapper("rm -rf ./sdks.tar.gz")
-            error("Failed to download iOS SDKs: " + str(e))
-            exit(1)
+            error("Failed to download iOS SDKs: " + str(err))
+            sys_exit(1)
 
 
 def darwin_install():
+    """Install Darwin dependencies."""
     xcpath = getoutput(f'{cmd_in_path("xcode-select")} -p')
     if not xcpath.endswith(".app/Contents/Developer"):
         error("Xcode not found. Please install Xcode from the App Store.")
-        exit(1)
+        sys_exit(1)
     manager = get_manager()
     deps = ["ldid", "xz"]
     need = []
@@ -156,13 +167,14 @@ def darwin_install():
             else:
                 error("Could not find a package manager.")
                 error(f"Please install the missing dependencies before continuing. ({', '.join(need)})")
-                exit(1)
-        except Exception as e:
-            error(f"Failed to install dependencies: {e}")
-            exit(1)
+                sys_exit(1)
+        except Exception as err:
+            error(f"Failed to install dependencies: {err}")
+            sys_exit(1)
 
 
 def linux_install():
+    """Install Linux dependencies."""
     manager = get_manager()
     deps = ["clang", "curl", "perl", "git"]
     need = []
@@ -183,10 +195,10 @@ def linux_install():
             else:
                 error("Could not find a package manager.")
                 error(f"Please install the missing dependencies before continuing. ({', '.join(need)})")
-                exit(1)
-        except Exception as e:
-            error(f"Failed to install dependencies: {e}")
-            exit(1)
+                sys_exit(1)
+        except Exception as err:
+            error(f"Failed to install dependencies: {err}")
+            sys_exit(1)
 
     toolchain_path = f"{PATH}/toolchain"
     if not resolve_path(toolchain_path).exists() or len(resolve_path(f"{toolchain_path}/linux/iphone/*")) == 0:
@@ -198,13 +210,14 @@ def linux_install():
             toolchain_uri = "https://github.com/kabiroberai/swift-toolchain-linux/releases/download/v2.2.2/swift-5.7-ubuntu20.04.tar.xz"
         try:
             command_wrapper(f"curl -LO {toolchain_uri} && mkdir -p {toolchain_path} && tar -xf swift-5.7-ubuntu20.04*.tar.xz -C {toolchain_path} && rm -r swift-5.7-ubuntu20.04*.tar.xz $TMP")
-        except Exception as e:
+        except Exception as err:
             command_wrapper("rm -rf swift-5.7-ubuntu20.04*.tar.xz")
-            error(f"Failed to download toolchain: {e}")
-            exit(1)
+            error(f"Failed to download toolchain: {err}")
+            sys_exit(1)
 
 
 def main():
+    """Main function."""
     parser = ArgumentParser()
     parser.add_argument("-ns", "--no-sdks", action="store_true", help="Do not install SDKs.")
     parser.add_argument("-u", "--update", action="store_true", help="Whether or not to update.")
@@ -218,10 +231,10 @@ def main():
 
     if not missing and not args.update:
         log("luz is already installed.")
-        exit(0)
+        sys_exit(0)
     elif missing and args.update:
         log("luz is not installed.")
-        exit(0)
+        sys_exit(0)
 
     if args.update:
         log("Updating vendor modules...")
@@ -229,19 +242,19 @@ def main():
             for module in ["headers", "lib", "logos"]:
                 if resolve_path(f"$HOME/.luz/vendor/{module}").exists():
                     command_wrapper(f"cd ~/.luz/vendor/{module} && git pull")
-        except Exception as e:
-            error(f"Failed to update vendor modules: {e}")
-            exit(1)
+        except Exception as err:
+            error(f"Failed to update vendor modules: {err}")
+            sys_exit(1)
 
         log("Updating luz and its dependencies...")
         try:
             command_wrapper(f"{executable} -m pip uninstall -y luz pydeb pyclang && {executable} -m pip install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip")
-        except Exception as e:
-            error(f"Failed to update luz: {e}")
-            exit(1)
+        except Exception as err:
+            error(f"Failed to update luz: {err}")
+            sys_exit(1)
 
         log("luz has been updated.")
-        exit(0)
+        sys_exit(0)
 
     if platform_str.startswith("Darwin") or platform_str.startswith("macOS"):
         darwin_install()
@@ -249,7 +262,7 @@ def main():
         linux_install()
     else:
         error(f"Luz is not supported on this platform. ({platform_str})")
-        exit(1)
+        sys_exit(1)
 
     if not args.no_sdks:
         get_sdks()
@@ -257,9 +270,9 @@ def main():
     log("Installing luz...")
     try:
         command_wrapper(f"{executable} -m pip install https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip")
-    except Exception as e:
-        error(f"Failed to install luz: {e}")
-        exit(1)
+    except Exception as err:
+        error(f"Failed to install luz: {err}")
+        sys_exit(1)
 
     command_wrapper(f"mkdir -p ~/.luz/lib ~/.luz/headers")
 
@@ -271,4 +284,4 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         error("Operation cancelled.")
-        exit(1)
+        sys_exit(1)

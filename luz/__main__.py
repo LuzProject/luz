@@ -1,5 +1,8 @@
+"""Main entry point for Luz."""
+
 # module imports
 from argparse import ArgumentParser, SUPPRESS
+import sys
 
 # local imports
 from .config.luz import Luz
@@ -10,6 +13,7 @@ from .luzgen.modules.modules import assign_module
 
 
 def main():
+    """Main Luz function."""
     parser = ArgumentParser()
 
     parser.add_argument(
@@ -57,7 +61,7 @@ def main():
     if args.command is None:
         error("No command specified. Showing help message.")
         parser.print_help()
-        exit(1)
+        sys.exit(1)
 
     try:
         if args.command == "build":
@@ -69,10 +73,10 @@ def main():
             if not resolve_path(f"{args.path}/luz.py").exists():
                 if resolve_path(f"{args.path}/LuzBuild").exists():
                     error("LuzBuild has been deprecated. Luz now uses a Python file to build projects. See the docs for more information.")
-                    exit(1)
+                    sys.exit(1)
                 else:
                     error("Could not find build file.")
-                    exit(1)
+                    sys.exit(1)
             luz = Luz(luzbuild_path, args=args)
             luz.build_project()
         elif args.command == "verify":
@@ -84,10 +88,10 @@ def main():
             if not resolve_path(f"{args.path}/luz.py").exists():
                 if resolve_path(f"{args.path}/LuzBuild").exists():
                     error("LuzBuild has been removed. Luz now uses a Python file to build projects. See the docs for more information. (https://luz.jaidan.dev/en/latest/format.html)")
-                    exit(1)
+                    sys.exit(1)
                 else:
                     error("Could not find build file.")
-                    exit(1)
+                    sys.exit(1)
             luz = Verify(luzbuild_path)
         elif args.command == "gen":
             if args.type is None:
@@ -97,12 +101,10 @@ def main():
             assign_module(args.type)
         else:
             error(f'Unknown command "{args.command}".')
-            exit(1)
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        error(e)
-        exit(1)
+            sys.exit(1)
+    except Exception as err:
+        error(err)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

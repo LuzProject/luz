@@ -79,13 +79,13 @@ class Preferences(Module):
             )
             # fix files
             content = open(f"{self.folder}/Sources/{self.prefix}RootListController.m", "r").read()
-            with open(f"{self.folder}/Sources/{self.prefix}RootListController.m", "w") as f:
+            with open(f"{self.folder}/Sources/{self.prefix}RootListController.m", "w") as file:
                 content = content.replace("REPLACEWITHPREFIX", self.prefix)
-                f.write(content)
+                file.write(content)
             content = open(f"{self.folder}/Sources/{self.prefix}RootListController.h", "r").read()
-            with open(f"{self.folder}/Sources/{self.prefix}RootListController.h", "w") as f:
+            with open(f"{self.folder}/Sources/{self.prefix}RootListController.h", "w") as file:
                 content = content.replace("REPLACEWITHPREFIX", self.prefix)
-                f.write(content)
+                file.write(content)
         else:
             rename(
                 f"{self.folder}/Sources/X-Bridging-Header.h",
@@ -105,25 +105,25 @@ class Preferences(Module):
         with open(
             f"{self.folder}/layout/Library/PreferenceLoader/Preferences/{self.name}.plist",
             "w",
-        ) as f:
+        ) as file:
             content = content.replace("REPLACEWITHNAME", self.name)
             content = content.replace("REPLACEWITHPREFIX", self.prefix)
             content = content.replace("REPLACEWITHID", self.id)
             content = content.replace("REPLACEWITHCLASS", f"{self.name}.RootListController")
-            f.write(content)
+            file.write(content)
         # info.plist
         content = open(f"{self.folder}/Resources/Info.plist", "r").read()
-        with open(f"{self.folder}/Resources/Info.plist", "w") as f:
+        with open(f"{self.folder}/Resources/Info.plist", "w") as file:
             content = content.replace("REPLACEWITHNAME", self.name)
             content = content.replace("REPLACEWITHPREFIX", self.prefix)
             content = content.replace("REPLACEWITHID", self.id)
             content = content.replace("REPLACEWITHCLASS", f"{self.name}.RootListController")
-            f.write(content)
+            file.write(content)
         # root.plist
         content = open(f"{self.folder}/Resources/Root.plist", "r").read()
-        with open(f"{self.folder}/Resources/Root.plist", "w") as f:
+        with open(f"{self.folder}/Resources/Root.plist", "w") as file:
             content = content.replace("REPLACEWITHNAME", self.name)
             content = content.replace("REPLACEWITHPREFIX", self.prefix)
             content = content.replace("REPLACEWITHID", self.id)
             content = content.replace("REPLACEWITHCLASS", f"{self.name}.RootListController")
-            f.write(content)
+            file.write(content)

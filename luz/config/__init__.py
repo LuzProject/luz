@@ -1,3 +1,5 @@
+"""Luz configuration module."""
+
 # import all the components
 from .components.control import Control
 from .components.meta import Meta

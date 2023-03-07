@@ -85,7 +85,7 @@ class Tweak(ModuleBuilder):
         copytree(self.dylib_dir, dirtocopy, dirs_exist_ok=True)
 
         # plist
-        with open(f"{dirtocopy}/{''.join(self.module.install_name.split('.')[:-1])}.plist", "w") as f:
+        with open(f"{dirtocopy}/{''.join(self.module.install_name.split('.')[:-1])}.plist", "w") as file:
             filtermsg = "Filter = {\n"
             # bundle filters
             if self.module.filter.get("bundles") is not None:
@@ -100,7 +100,7 @@ class Tweak(ModuleBuilder):
                     filtermsg += f'"{executable}", '
                 filtermsg = filtermsg[:-2] + " );\n"
             filtermsg += "};"
-            f.write(filtermsg)
+            file.write(filtermsg)
         # after stage
         if self.module.after_stage is not None: self.module.after_stage()
 

@@ -1,3 +1,5 @@
+"""Luz runner module."""
+
 # module imports
 from argparse import Namespace
 from atexit import register
@@ -121,11 +123,11 @@ class Luz:
             dot_path = resolve_path(f"{self.path}/control")
             layout_path = resolve_path(f"{self.path}/layout/DEBIAN/control")
             if dot_path.exists():
-                with open(dot_path, "r") as f:
-                    control = pControl(f.read())
+                with open(dot_path, "r") as file:
+                    control = pControl(file.read())
             elif layout_path.exists():
-                with open(layout_path, "r") as f:
-                    control = pControl(f.read())
+                with open(layout_path, "r") as file:
+                    control = pControl(file.read())
             else:
                 control = None
             # assign values
@@ -169,8 +171,8 @@ class Luz:
             hash_file = resolve_path(f"{self.build_dir}/build_info.json")
             # check if hashlist exists
             if hash_file.exists():
-                with open(hash_file, "r") as f:
-                    self.build_info = loads(f.read())
+                with open(hash_file, "r") as file:
+                    self.build_info = loads(file.read())
             else:
                 self.build_info = {}
 
@@ -237,8 +239,8 @@ class Luz:
         # makedirs
         makedirs(f"{self.build_dir}/_/DEBIAN", exist_ok=True)
         # add control
-        with open(f"{self.build_dir}/_/DEBIAN/control", "w") as f:
-            f.write(self.control.raw)
+        with open(f"{self.build_dir}/_/DEBIAN/control", "w") as file:
+            file.write(self.control.raw)
         # pack
         Pack(
             resolve_path(f"{self.build_dir}/_"),
@@ -274,8 +276,8 @@ class Luz:
         if self.meta.pack:
             self.__pack()
 
-        with open(resolve_path(f"{self.build_dir}/build_info.json"), "w") as f:
-            dump(self.build_info, f)
+        with open(resolve_path(f"{self.build_dir}/build_info.json"), "w") as file:
+            dump(self.build_info, file)
 
         t = time() - self.now
         log(f"Build completed in {round(t, 2)} seconds.{f' ({Ctime(t).get_random()})' if self.funny_time else ''}")
