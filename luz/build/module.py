@@ -43,7 +43,7 @@ class ModuleBuilder():
         # private frameworks
         if self.module.private_frameworks != []:
             if resolve_path(f"{self.meta.sdk}/System/Library/PrivateFrameworks").exists():
-                self.module.library_dirs.append(f'{self.meta.sdk}/System/Library/PrivateFrameworks')
+                self.module.framework_dirs.append(f'{self.meta.sdk}/System/Library/PrivateFrameworks')
             else:
                 raise Exception(f'Private frameworks are not available on the SDK being used. ({self.meta.sdk})')
 
