@@ -1,9 +1,9 @@
-luz.py Formatting
+luzconf.py Formatting
 ---------------------
 
-Luz uses a Python file to define the settings for the build. Python is used so that compile-time variables can be specified, much like a Makefile. The file is called ``luz.py`` and is located in the root of your project.
+Luz uses a Python file to define the settings for the build. Python is used so that compile-time variables can be specified, much like a Makefile. The file is called ``luzconf.py`` and is located in the root of your project.
 
-``LuzGen`` will automatically generate a ``luz.py`` file for any project that you create with it. It's not recommended to create your own ``luz.py``, and you should only do so if you know what you're doing.
+``LuzGen`` will automatically generate a ``luzconf.py`` file for any project that you create with it. It's not recommended to create your own ``luzconf.py``, and you should only do so if you know what you're doing.
 
 Meta
 *********************
@@ -179,7 +179,7 @@ Submodules are defined in a class called ``Submodule`` that can be imported from
      - String
      - Whether or not to inherit non-specified ``meta`` options from the parent project. (``true`` if not specified)
 
-Example ``luz.py``
+Example ``luzconf.py``
 *********************
 
 

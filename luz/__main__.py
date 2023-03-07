@@ -69,10 +69,13 @@ def main():
                 args.path = resolve_path(args.path)
             else:
                 args.path = resolve_path("./")
-            luzbuild_path = f"{args.path}/luz.py"
-            if not resolve_path(f"{args.path}/luz.py").exists():
+            luzbuild_path = f"{args.path}/luzconf.py"
+            if not resolve_path(luzbuild_path).exists():
                 if resolve_path(f"{args.path}/LuzBuild").exists():
-                    error("LuzBuild has been deprecated. Luz now uses a Python file to build projects. See the docs for more information.")
+                    error("LuzBuild has been removed. Luz now uses a Python file to build projects. See the docs for more information. (https://luz.jaidan.dev/en/latest/format.html)")
+                    sys.exit(1)
+                elif resolve_path(f"{args.path}/luz.py").exists():
+                    error("Luz.py has been renamed to luzconf.py due to a conflict with the Python package.")
                     sys.exit(1)
                 else:
                     error("Could not find build file.")
@@ -84,10 +87,13 @@ def main():
                 args.path = resolve_path(args.path)
             else:
                 args.path = resolve_path("./")
-            luzbuild_path = f"{args.path}/luz.py"
-            if not resolve_path(f"{args.path}/luz.py").exists():
+            luzbuild_path = f"{args.path}/luzconf.py"
+            if not resolve_path(luzbuild_path).exists():
                 if resolve_path(f"{args.path}/LuzBuild").exists():
                     error("LuzBuild has been removed. Luz now uses a Python file to build projects. See the docs for more information. (https://luz.jaidan.dev/en/latest/format.html)")
+                    sys.exit(1)
+                elif resolve_path(f"{args.path}/luz.py").exists():
+                    error("Luz.py has been renamed to luzconf.py due to a conflict with the Python package.")
                     sys.exit(1)
                 else:
                     error("Could not find build file.")
@@ -103,6 +109,8 @@ def main():
             error(f'Unknown command "{args.command}".')
             sys.exit(1)
     except Exception as err:
+        import traceback
+        traceback.print_exc()
         error(err)
         sys.exit(1)
 

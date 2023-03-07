@@ -26,7 +26,7 @@ from .components.meta import Meta
 
 
 class Luz:
-    def __init__(self, file_path: str = "luz.py", args: Namespace = None, inherit=None):
+    def __init__(self, file_path: str = "luzconf.py", args: Namespace = None, inherit=None):
         """Initialize Luz
 
         :param str file_path: Path to luz.py

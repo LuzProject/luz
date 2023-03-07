@@ -63,7 +63,7 @@ class Module:
         :param Path path: The path to write to.
         """
         # resolve path
-        path = resolve_path(f"{path}/luz.py")
+        path = resolve_path(f"{path}/luzconf.py")
         # extract archive to directory
         self.tar.decompress_archive(self.template_path, path.parent)
         # check for after_untar
@@ -91,7 +91,7 @@ class Module:
 
         # instructions
         if self.submodule:
-            log(f"To add this module as a submodule, you can add Submodule(path=\"{path.parent}\") to your 'submodules' list in the parent project's `luz.py`.")
+            log(f"To add this module as a submodule, you can add Submodule(path=\"{path.parent}\") to your 'submodules' list in the parent project's `luzconf.py`.")
 
     def ask_for(self, key: str, default: str = None, dsc: str = "What", dsc1: str = "is", extra_msg: str = "") -> str:
         """Ask for a value.
