@@ -268,6 +268,11 @@ class ModuleBuilder:
                 futures = [self.pool.submit(self.compile_c_arch, file, x) for x in self.meta.archs]
             self.wait(futures)
 
+            # check results
+            for future in futures:
+                if future.result() is not None:
+                    return f'An error occured when attempting to compile for module "{self.module.name}".'
+
         except:
             return f'An error occured when attempting to compile for module "{self.module.name}".'
 
@@ -297,7 +302,10 @@ class ModuleBuilder:
             ignore_errors=True,
         )
         # compile with swift using build flags
-        self.luz.swift_compiler.compile([file] + fmtc, outfile=out_name + ".o", args=build_flags)
+        try:
+            self.luz.swift_compiler.compile([file] + fmtc, outfile=out_name + ".o", args=build_flags)
+        except:
+            return f'An error occured when trying to compile "{file}" for module "{self.module.name}".'
 
     def compile_c_arch(self, file, arch: str):
         # outname
@@ -320,7 +328,10 @@ class ModuleBuilder:
             ignore_errors=True,
         )
         # compile with clang using build flags
-        self.luz.c_compiler.compile(file, out_name, build_flags)
+        try:
+            self.luz.c_compiler.compile(file, out_name, build_flags)
+        except:
+            return f'An error occured when attempting to compile "{file}" for module "{self.module.name}".'
 
     def wait(self, thread):
         wait(thread)

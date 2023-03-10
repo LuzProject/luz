@@ -109,9 +109,6 @@ def main():
             error(f'Unknown command "{args.command}".')
             sys.exit(1)
     except Exception as err:
-        import traceback
-
-        traceback.print_exc()
         error(err)
         sys.exit(1)
 

@@ -60,7 +60,7 @@ class Preferences(ModuleBuilder):
         self.wait(futures)
         for result in futures:
             if result.result() is not None:
-                return result
+                return result.result()
         # link files
         linker_results = self.linker("dylib")
         if linker_results is not None:
