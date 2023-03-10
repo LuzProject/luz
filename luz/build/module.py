@@ -171,7 +171,6 @@ class ModuleBuilder:
             ("-framework " + " -framework ".join(self.module.frameworks)) if self.module.frameworks != [] else "",
             ("-framework " + " -framework ".join(self.module.private_frameworks)) if self.module.private_frameworks != [] else "",
             f"-m{self.meta.platform}-version-min={self.meta.min_vers}",
-            f'-DLUZ_PACKAGE_VERSION="{self.control.version}"' if self.control and self.control.raw != "" else "",
             "-g" if self.meta.debug else "",
             f"-Wl,-install_name,{self.module.install_name},-rpath,{'/var/jb' if self.meta.rootless else ''}/usr/lib/,-rpath,{'/var/jb' if self.meta.rootless else ''}/Library/Frameworks/",
         ]
@@ -311,6 +310,7 @@ class ModuleBuilder:
             ("-I" + " -I".join(self.module.include_dirs)) if self.module.include_dirs != [] else "",
             f"-m{self.meta.platform}-version-min={self.meta.min_vers}",
             "-g" if self.meta.debug else "",
+            f'-DLUZ_PACKAGE_VERSION=\\"{self.control.version}\\"' if self.control and self.control.raw != "" else "",
             "-c",
         ]
         build_flags.extend(self.module.c_flags)
