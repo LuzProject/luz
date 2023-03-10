@@ -2,7 +2,6 @@
 from os import name
 from sys import stdout
 
-
 # fix logging if we are running on Windows
 if name == "nt":
     from ctypes import windll

@@ -9,7 +9,8 @@ from ..common.deps import clone_headers, clone_libraries, logos
 from ..common.logger import log
 from ..common.utils import get_hash, resolve_path
 
-class ModuleBuilder():
+
+class ModuleBuilder:
     """Module builder class."""
 
     def __init__(self, module, luz):
@@ -30,25 +31,22 @@ class ModuleBuilder():
         self.module.library_dirs.append(str(clone_libraries(self.meta)))
 
         # add custom files
-        self.module.include_dirs.append(f'{self.meta.storage}/headers')
-        self.module.library_dirs.append(f'{self.meta.storage}/lib')
+        self.module.include_dirs.append(f"{self.meta.storage}/headers")
+        self.module.library_dirs.append(f"{self.meta.storage}/lib")
 
         # swift
         for file in self.module.files:
             if str(file).endswith(".swift"):
-                self.module.library_dirs.append('/usr/lib/swift')
-                self.module.library_dirs.append(f'{self.meta.sdk}/usr/lib/swift')
+                self.module.library_dirs.append("/usr/lib/swift")
+                self.module.library_dirs.append(f"{self.meta.sdk}/usr/lib/swift")
                 break
-                
+
         # private frameworks
         if self.module.private_frameworks != []:
             if resolve_path(f"{self.meta.sdk}/System/Library/PrivateFrameworks").exists():
-                self.module.framework_dirs.append(f'{self.meta.sdk}/System/Library/PrivateFrameworks')
+                self.module.framework_dirs.append(f"{self.meta.sdk}/System/Library/PrivateFrameworks")
             else:
-                raise Exception(f'Private frameworks are not available on the SDK being used. ({self.meta.sdk})')
-
-        # fix rootless
-        if self.meta.platform != "iphoneos": self.meta.rootless = False
+                raise Exception(f"Private frameworks are not available on the SDK being used. ({self.meta.sdk})")
 
         # directories
         self.logos_dir = resolve_path(f"{self.luz.build_dir}/logos-processed")
@@ -101,10 +99,8 @@ class ModuleBuilder():
                 changed.append(file)
             elif fhash == new_hash:
                 # variables
-                object_paths = resolve_path(
-                    f"{self.obj_dir}/*/{file.name}*-*.o")
-                lipod_paths = resolve_path(
-                    f"{self.obj_dir}/*/{self.module.install_name}")
+                object_paths = resolve_path(f"{self.obj_dir}/*/{file.name}*-*.o")
+                lipod_paths = resolve_path(f"{self.obj_dir}/*/{self.module.install_name}")
                 if len(object_paths) < arch_count or len(lipod_paths) < arch_count:
                     changed.append(file)
             elif fhash != new_hash:
@@ -120,7 +116,12 @@ class ModuleBuilder():
 
         # handle files not needing compilation
         if len(files) == 0:
-            log(f'Nothing to compile for module "{self.module.name}".', "🔨", self.module.abbreviated_name, self.luz.lock)
+            log(
+                f'Nothing to compile for module "{self.module.name}".',
+                "🔨",
+                self.module.abbreviated_name,
+                self.luz.lock,
+            )
             return []
 
         files = files_to_compile
@@ -129,7 +130,7 @@ class ModuleBuilder():
         if not self.logos_dir.exists() and list(filter(lambda x: ".x" in x, [str(f) for f in files])) != []:
             makedirs(self.logos_dir, exist_ok=True)
         files = logos(self.meta, self.module, files)
-        
+
         # pool
         self.pool = ThreadPoolExecutor(max_workers=(len(files) * arch_count))
 
@@ -151,7 +152,12 @@ class ModuleBuilder():
             return
 
         # log
-        log(f'Linking compiled objects to "{self.module.install_name}"...', "🔗", self.module.abbreviated_name, self.luz.lock)
+        log(
+            f'Linking compiled objects to "{self.module.install_name}"...',
+            "🔗",
+            self.module.abbreviated_name,
+            self.luz.lock,
+        )
 
         # build args
         build_flags = [
@@ -167,7 +173,7 @@ class ModuleBuilder():
             f"-m{self.meta.platform}-version-min={self.meta.min_vers}",
             f'-DLUZ_PACKAGE_VERSION="{self.control.version}"' if self.control and self.control.raw != "" else "",
             "-g" if self.meta.debug else "",
-            f"-Wl,-install_name,{self.module.install_name},-rpath,{'/var/jb' if self.meta.rootless else ''}/usr/lib/,-rpath,{'/var/jb' if self.meta.rootless else ''}/Library/Frameworks/"
+            f"-Wl,-install_name,{self.module.install_name},-rpath,{'/var/jb' if self.meta.rootless else ''}/usr/lib/,-rpath,{'/var/jb' if self.meta.rootless else ''}/Library/Frameworks/",
         ]
         build_flags.extend(self.module.warnings)
         build_flags.extend(self.module.linker_flags)
@@ -188,9 +194,7 @@ class ModuleBuilder():
         # link
         try:
             compiled = [f"{self.obj_dir}/{arch}/{self.module.install_name}" for arch in self.meta.archs]
-            getoutput(
-                f"{self.meta.lipo} -create -output {out_name} {' '.join(compiled)}"
-            )
+            getoutput(f"{self.meta.lipo} -create -output {out_name} {' '.join(compiled)}")
         except:
             return f'An error occured when trying to lipo files for module "{self.module.name}".'
 
@@ -202,12 +206,10 @@ class ModuleBuilder():
 
         try:
             # run ldid
-            getoutput(
-                f"{self.meta.ldid} {' '.join(self.module.codesign_flags)} {out_name}"
-            )
+            getoutput(f"{self.meta.ldid} {' '.join(self.module.codesign_flags)} {out_name}")
         except:
             return f'An error occured when trying codesign "{out_name}" for module "{self.module.name}".'
-        
+
     def handle_logos(self):
         """Handle files that have had Logos ran on them."""
         self.files_paths = []
@@ -227,21 +229,19 @@ class ModuleBuilder():
             # handle normal files
             else:
                 new_path = file.get("path")
-            
+
             # add to files paths
             self.files_paths.append(new_path)
-    
+
     def compile_file(self, file):
         # log
         if file.get("old_path") is not None:
-            file_formatted = str(file.get("old_path")).replace(
-                str(self.luz.path.absolute()), '')
+            file_formatted = str(file.get("old_path")).replace(str(self.luz.path.absolute()), "")
             if file_formatted != str(file.get("old_path")):
                 file_formatted = "/".join(file_formatted.split("/")[1:])
             msg = f'Compiling "{file_formatted}"...'
         else:
-            file_formatted = str(file.get("path")).replace(
-                str(self.luz.path.absolute()), '')
+            file_formatted = str(file.get("path")).replace(str(self.luz.path.absolute()), "")
             if file_formatted != str(file.get("path")):
                 file_formatted = "/".join(file_formatted.split("/")[1:])
             msg = f'Compiling "{file_formatted}"...'
@@ -254,13 +254,17 @@ class ModuleBuilder():
                 self.files_paths,
             )
         )[0]
-        
+
         # compile file
         try:
             if str(file).endswith(".swift"):
                 files_minus_to_compile = list(
-                    filter(lambda x: x != file and str(x).endswith(".swift"), self.files_paths))
-                futures=[self.pool.submit(self.compile_swift_arch, file, files_minus_to_compile, x) for x in self.meta.archs]
+                    filter(
+                        lambda x: x != file and str(x).endswith(".swift"),
+                        self.files_paths,
+                    )
+                )
+                futures = [self.pool.submit(self.compile_swift_arch, file, files_minus_to_compile, x) for x in self.meta.archs]
             else:
                 futures = [self.pool.submit(self.compile_c_arch, file, x) for x in self.meta.archs]
             self.wait(futures)
@@ -281,13 +285,12 @@ class ModuleBuilder():
             "-c",
             f"-module-name {self.module.name}",
             f'-sdk "{self.meta.sdk}"',
-            ("-I" + " -I".join(self.module.include_dirs)
-             ) if self.module.include_dirs != [] else "",
+            ("-I" + " -I".join(self.module.include_dirs)) if self.module.include_dirs != [] else "",
             ("-import-objc-header" + " -import-objc-header".join(self.module.bridging_headers)) if self.module.bridging_headers != [] else "",
             arch_formatted,
             f"-emit-module-path {out_name}.swiftmodule",
             "-g" if self.meta.debug else "",
-            "-primary-file"
+            "-primary-file",
         ]
         build_flags.extend(self.module.swift_flags)
         rmtree(
@@ -295,11 +298,7 @@ class ModuleBuilder():
             ignore_errors=True,
         )
         # compile with swift using build flags
-        self.luz.swift_compiler.compile(
-            [file] + fmtc,
-            outfile=out_name + ".o",
-            args=build_flags
-        )
+        self.luz.swift_compiler.compile([file] + fmtc, outfile=out_name + ".o", args=build_flags)
 
     def compile_c_arch(self, file, arch: str):
         # outname
@@ -309,8 +308,7 @@ class ModuleBuilder():
             f"-isysroot {self.meta.sdk}",
             f"-O{self.module.optimization}",
             f"-arch {arch}",
-            ("-I" + " -I".join(self.module.include_dirs)
-             ) if self.module.include_dirs != [] else "",
+            ("-I" + " -I".join(self.module.include_dirs)) if self.module.include_dirs != [] else "",
             f"-m{self.meta.platform}-version-min={self.meta.min_vers}",
             "-g" if self.meta.debug else "",
             "-c",
@@ -322,7 +320,7 @@ class ModuleBuilder():
             ignore_errors=True,
         )
         # compile with clang using build flags
-        self.luz.c_compiler.compile(
-            file, out_name, build_flags)
+        self.luz.c_compiler.compile(file, out_name, build_flags)
 
-    def wait(self, thread): wait(thread)
+    def wait(self, thread):
+        wait(thread)

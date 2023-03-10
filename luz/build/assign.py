@@ -3,6 +3,7 @@ from .components.tool import Tool
 from .components.tweak import Tweak
 from .components.prefs import Preferences
 
+
 def assign(module, luz):
     # get type
     m_type = module.type

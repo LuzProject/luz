@@ -1,5 +1,4 @@
 # module imports
-from multiprocessing.pool import ThreadPool
 from os import makedirs
 from shutil import copytree
 from subprocess import check_output
@@ -8,6 +7,7 @@ from subprocess import check_output
 from ..module import ModuleBuilder
 from ...common.logger import log
 from ...common.utils import resolve_path
+
 
 class Preferences(ModuleBuilder):
     def __init__(self, **kwargs):
@@ -23,7 +23,8 @@ class Preferences(ModuleBuilder):
         # log
         log(f"Staging...", "📦", self.module.abbreviated_name, self.luz.lock)
         # before stage
-        if self.module.before_stage: self.module.before_stage()
+        if self.module.before_stage:
+            self.module.before_stage()
         # dirs to make
         dirtomake = resolve_path(f"{self.luz.build_dir}/_/Library/PreferenceBundles/") if not self.meta.rootless else resolve_path(f"{self.luz.build_dir}/_/var/jb/Library/PreferenceBundles/")
         dirtocopy = (
@@ -42,7 +43,8 @@ class Preferences(ModuleBuilder):
         # copy resources
         copytree(resources_path, dirtocopy, dirs_exist_ok=True)
         # after stage
-        if self.module.after_stage: self.module.after_stage()
+        if self.module.after_stage:
+            self.module.after_stage()
 
     def compile(self):
         """Compile module."""

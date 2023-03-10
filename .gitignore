@@ -6,3 +6,4 @@ poetry.lock
 ./tweak.zip
 docs/build
 tweak/
+venv/

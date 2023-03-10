@@ -4,7 +4,6 @@ from os import environ, getcwd, mkdir
 from pathlib import Path
 from pkg_resources import get_distribution
 from shutil import which
-from subprocess import getoutput
 from typing import Union
 
 

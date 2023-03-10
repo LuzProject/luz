@@ -1,7 +1,7 @@
 # module imports
 from os import makedirs
 from pathlib import Path
-from subprocess import getoutput, check_call
+from subprocess import getoutput
 
 # local imports
 from .logger import error, log_stdout, remove_log_stdout

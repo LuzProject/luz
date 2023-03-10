@@ -3,7 +3,6 @@ from platform import platform as plat
 from subprocess import getoutput
 
 # local imports
-from ...common.logger import warn
 from ...common.utils import cmd_in_path, get_luz_storage, resolve_path, setup_luz_dir
 
 

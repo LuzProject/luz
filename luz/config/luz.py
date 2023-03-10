@@ -91,7 +91,6 @@ class Luz:
 
         # rootless
         if self.meta.rootless and self.meta.platform != "iphoneos":
-            warn("Rootless is only supported on iOS. Overriding...")
             self.meta.rootless = False
 
         # pool
