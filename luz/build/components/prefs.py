@@ -25,8 +25,8 @@ class Preferences(ModuleBuilder):
         if self.module.before_stage:
             self.module.before_stage()
         # dirs to make
-        dirtomake = self.meta.root_dir / "Library/PreferenceBundles"
-        dirtocopy = self.meta.root_dir / "Library/PreferenceBundles" / f"{self.module.name}.bundle"
+        dirtomake = self.meta.root_dir / "Library" / "PreferenceBundles"
+        dirtocopy = self.meta.root_dir / "Library" / "PreferenceBundles" / f"{self.module.name}.bundle"
         # make proper dirs
         if not dirtomake.exists():
             makedirs(dirtomake, exist_ok=True)

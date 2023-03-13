@@ -26,8 +26,8 @@ class Tweak(ModuleBuilder):
             self.module.before_stage()
         # dirs to make
         if self.module.install_dir is None:
-            dirtomake = self.meta.root_dir / "Library/MobileSubstrate"
-            dirtocopy = self.meta.root_dir / "Library/MobileSubstrate/DynamicLibraries"
+            dirtomake = self.meta.root_dir / "Library" / "MobileSubstrate"
+            dirtocopy = self.meta.root_dir / "Library" / "MobileSubstrate" / "DynamicLibraries"
         else:
             if self.meta.rootless:
                 warn("Rootless is enabled, but a custom install_dir is set. Proceed with caution.", lock=self.luz.lock)

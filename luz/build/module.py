@@ -349,7 +349,9 @@ class ModuleBuilder:
             if result.result() is not None:
                 return result.result()
         # link files
-        linker_results = self.linker("dylib")
+        # get compile type
+        compile_type = "executable" if self.module.type == "tool" else "dylib"
+        linker_results = self.linker(compile_type=compile_type)
         if linker_results is not None:
             return linker_results
         # stage deb

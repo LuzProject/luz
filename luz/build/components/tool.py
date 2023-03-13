@@ -27,7 +27,7 @@ class Tool(ModuleBuilder):
         # dirs to make
         if self.module.install_dir is None:
             dirtomake = self.meta.root_dir / "usr"
-            dirtocopy = self.meta.root_dir / "usr/bin"
+            dirtocopy = self.meta.root_dir / "usr" / "bin"
         else:
             if self.meta.rootless:
                 warn("Rootless is enabled, but a custom install_dir is set. Proceed with caution.", lock=self.luz.lock)
