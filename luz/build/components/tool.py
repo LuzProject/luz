@@ -31,12 +31,10 @@ class Tool(ModuleBuilder):
             dirtocopy = resolve_path(f"{self.luz.build_dir}/_/usr/bin") if not self.meta.rootless else resolve_path(f"{self.luz.build_dir}/_/var/jb/usr/bin")
         else:
             if self.meta.rootless:
-                warn(f"Custom install directory was specified, and rootless is enabled. Prefixing path with /var/jb.", msg=self.module.abbreviated_name)
+                warn("Rootless is enabled, but a custom install_dir is set. Proceed with caution.", lock=self.luz.lock)
             self.install_dir = resolve_path(self.module.install_dir)
-            dirtomake = (
-                resolve_path(f"{self.luz.build_dir}/_/{self.module.install_dir.parent}") if not self.meta.rootless else resolve_path(f"{self.luz.build_dir}/_/var/jb/{self.module.install_dir.parent}")
-            )
-            dirtocopy = resolve_path(f"{self.luz.build_dir}/_/{self.module.install_dir}") if not self.meta.rootless else resolve_path(f"{self.luz.build_dir}/_/var/jb/{self.module.install_dir}")
+            dirtomake = resolve_path(f"{self.luz.build_dir}/_/{self.module.install_dir.parent}")
+            dirtocopy = resolve_path(f"{self.luz.build_dir}/_/{self.module.install_dir}")
         # make proper dirs
         if not dirtomake.exists():
             makedirs(dirtomake, exist_ok=True)
