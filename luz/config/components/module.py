@@ -39,6 +39,7 @@ class Module:
         libraries: list = [],
         before_stage: Callable = None,
         after_stage: Callable = None,
+        resources_dir: str = "./Resources",
     ):
         """Initialize Module
 
@@ -141,6 +142,9 @@ class Module:
 
         # resolve bridging headers
         self.bridging_headers = [resolve_path(f) for f in self.bridging_headers]
+
+        # resources dir
+        self.resources_dir = resolve_path(resources_dir)
 
         # see if bridging headers exist
         for f in self.bridging_headers:

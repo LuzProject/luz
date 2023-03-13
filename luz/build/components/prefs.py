@@ -36,9 +36,9 @@ class Preferences(ModuleBuilder):
             makedirs(dirtomake, exist_ok=True)
         copytree(self.dylib_dir, dirtocopy, dirs_exist_ok=True)
         # copy resources
-        resources_path = resolve_path(f"{self.luz.path}/Resources")
+        resources_path = resolve_path(self.module.resources_dir)
         if not resources_path.exists():
-            return f'Resources/ folder for "{self.module.name}" does not exist'
+            return f'Resources/ folder for "{self.module.name}" does not exist. (path: {resources_path}))'
         # copy resources
         copytree(resources_path, dirtocopy, dirs_exist_ok=True)
         # after stage
