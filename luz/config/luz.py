@@ -146,6 +146,9 @@ class Luz:
                 )
             else:
                 raise ValueError("No control file found. Please create a control file or use the Control class to create a control file.")
+            
+        # scripts
+        self.scripts = getattr(self.raw, "scripts", [])
 
         # modules
         self.modules = getattr(self.raw, "modules", [])
@@ -239,7 +242,11 @@ class Luz:
         makedirs(f"{self.build_dir}/_/DEBIAN", exist_ok=True)
         # add control
         with open(f"{self.build_dir}/_/DEBIAN/control", "w") as file:
-            file.write(self.control.raw)
+            file.write(self.control.__str__())
+        # scripts
+        for script in self.scripts:
+            with open(f"{self.build_dir}/_/DEBIAN/{script.type}", "w") as file:
+                file.write(script.content)
         # pack
         Pack(
             resolve_path(f"{self.build_dir}/_"),

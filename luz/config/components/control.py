@@ -78,9 +78,6 @@ class Control:
         if not self.id or not self.version or not self.maintainer or not self.architecture:
             raise Exception("Missing necessary variables for control.")
 
-        # get raw control
-        self.raw = self.__str__()
-
     def __str__(self):
         """Returns the control's string representation.
 

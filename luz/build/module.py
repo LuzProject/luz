@@ -318,7 +318,7 @@ class ModuleBuilder:
             ("-I" + " -I".join(self.module.include_dirs)) if self.module.include_dirs != [] else "",
             f"-m{self.meta.platform}-version-min={self.meta.min_vers}",
             "-g" if self.meta.debug else "",
-            f'-DLUZ_PACKAGE_VERSION=\\"{self.control.version}\\"' if self.control and self.control.raw != "" else "",
+            f'-DLUZ_PACKAGE_VERSION=\\"{self.control.version}\\"' if self.control else "",
             "-c",
         ]
         build_flags.extend(self.module.c_flags)

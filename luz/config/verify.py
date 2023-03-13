@@ -30,6 +30,12 @@ class Verify(Luz):
             error(f"Error: {err}")
             errors += 1
 
+        if self.scripts != []:
+            for script in self.scripts:
+                if not script.type in ["preinst", "postinst", "prerm", "postrm"]:
+                    warnings += 1
+                    warn(f"Script type '{script.type}' is unknown. Valid scripts are 'preinst', 'postinst', 'prerm', and 'postrm'.")
+
         if "raw" in self.__dict__:
             # default meta
             default_meta = get_default_args(Meta.__init__)
@@ -51,7 +57,7 @@ class Verify(Luz):
                 else:
                     for attr in default_meta:
                         if getattr(self.meta, attr) == default_meta[attr]:
-                            if f"{attr}=" in file_contents:
+                            if f"{attr}={getattr(self.meta, attr)}" in file_contents:
                                 warnings += 1
                                 warn(f"Meta attribute '{attr}' is set to default value. You can remove it from the file.")
 
