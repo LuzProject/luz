@@ -109,7 +109,10 @@ def main():
             error(f'Unknown command "{args.command}".')
             sys.exit(1)
     except Exception as err:
-        error(err)
+        if luz is not None:
+            error(err, lock=luz.lock)
+        else:
+            error(err)
         sys.exit(1)
 
 
