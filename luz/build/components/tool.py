@@ -14,9 +14,6 @@ class Tool(ModuleBuilder):
         # kwargs parsing
         super().__init__(kwargs.get("module"), kwargs.get("luz"))
 
-        # files
-        self.files = self.hash_files(self.module.files, "executable")
-
     def stage(self):
         """Stage a deb to be packaged."""
         # log

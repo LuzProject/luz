@@ -54,7 +54,10 @@ class ModuleBuilder:
         self.dylib_dir = resolve_path(f"{self.luz.build_dir}/dylib/{self.module.name}")
         self.bin_dir = resolve_path(f"{self.luz.build_dir}/bin/{self.module.name}")
 
-    def hash_files(self, files, compile_type: str = "dylib"):
+        # files
+        self.files = self.__hash_files(self.module.files, "executable" if self.module.type == "tool" else "dylib")
+
+    def __hash_files(self, files, compile_type: str = "dylib"):
         """Hash source files, and check if their objects exist.
 
         :param list files: The list of files to hash.
@@ -137,7 +140,7 @@ class ModuleBuilder:
         # return files
         return files
 
-    def linker(self, compile_type: str = "dylib"):
+    def __linker(self, compile_type: str = "dylib"):
         """Use a linker on the compiled files.
 
         :param str type: The type of files to link.
@@ -209,7 +212,7 @@ class ModuleBuilder:
         except:
             return f'An error occured when trying codesign "{out_name}" for module "{self.module.name}".'
 
-    def handle_logos(self):
+    def __handle_logos(self):
         """Handle files that have had Logos ran on them."""
         self.files_paths = []
         for file in self.files:
@@ -232,7 +235,7 @@ class ModuleBuilder:
             # add to files paths
             self.files_paths.append(new_path)
 
-    def compile_file(self, file):
+    def __compile_file(self, file):
         # log
         if file.get("old_path") is not None:
             file_formatted = str(file.get("old_path")).replace(str(self.luz.path.absolute()), "")
@@ -263,9 +266,9 @@ class ModuleBuilder:
                         self.files_paths,
                     )
                 )
-                futures = [self.pool.submit(self.compile_swift_arch, file, files_minus_to_compile, x) for x in self.meta.archs]
+                futures = [self.pool.submit(self.__compile_swift_arch, file, files_minus_to_compile, x) for x in self.meta.archs]
             else:
-                futures = [self.pool.submit(self.compile_c_arch, file, x) for x in self.meta.archs]
+                futures = [self.pool.submit(self.__compile_c_arch, file, x) for x in self.meta.archs]
             self.wait(futures)
 
             # check results
@@ -276,7 +279,7 @@ class ModuleBuilder:
         except:
             return f'An error occured when attempting to compile for module "{self.module.name}".'
 
-    def compile_swift_arch(self, file, fmtc: list, arch: str):
+    def __compile_swift_arch(self, file, fmtc: list, arch: str):
         # format platform
         platform = "ios" if self.meta.platform == "iphoneos" else self.meta.platform
         # arch
@@ -307,7 +310,7 @@ class ModuleBuilder:
         except:
             return f'An error occured when trying to compile "{file}" for module "{self.module.name}".'
 
-    def compile_c_arch(self, file, arch: str):
+    def __compile_c_arch(self, file, arch: str):
         # outname
         out_name = f"{self.obj_dir}/{arch}/{file.name}-{self.luz.now}.o"
         build_flags = [
@@ -336,14 +339,14 @@ class ModuleBuilder:
     def compile(self):
         """Compile module."""
         # handle logos
-        self.handle_logos()
+        self.__handle_logos()
         # clean arch dirs
         for arch in self.meta.archs:
             for x in self.files_paths:
                 check_output(f"rm -rf {self.obj_dir}/{arch}/{x.name}-*", shell=True)
             makedirs(f"{self.obj_dir}/{arch}", exist_ok=True)
         # compile files
-        futures = [self.luz.pool.submit(self.compile_file, file) for file in self.files]
+        futures = [self.luz.pool.submit(self.__compile_file, file) for file in self.files]
         self.wait(futures)
         for result in futures:
             if result.result() is not None:
@@ -351,7 +354,7 @@ class ModuleBuilder:
         # link files
         # get compile type
         compile_type = "executable" if self.module.type == "tool" else "dylib"
-        linker_results = self.linker(compile_type=compile_type)
+        linker_results = self.__linker(compile_type=compile_type)
         if linker_results is not None:
             return linker_results
         # stage deb

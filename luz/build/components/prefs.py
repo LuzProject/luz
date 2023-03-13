@@ -14,9 +14,6 @@ class Preferences(ModuleBuilder):
         # kwargs parsing
         super().__init__(kwargs.get("module"), kwargs.get("luz"))
 
-        # files
-        self.files = self.hash_files(self.module.files, "dylib")
-
     def stage(self):
         """Stage a deb to be packaged."""
         # log
