@@ -1,10 +1,11 @@
 # local imports
 from ...common.utils import resolve_path
 
+
 class Script:
     def __init__(self, script_type: str, path: str = None, content: str = None):
         """Add a maintainer script to the package.
-        
+
         :param str script_type: Type of script.
         :param str path: Path to script.
         :param str content: Content of script.

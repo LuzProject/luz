@@ -142,7 +142,7 @@ class Luz:
                 )
             else:
                 raise ValueError("No control file found. Please create a control file or use the Control class to create a control file.")
-            
+
         # scripts
         self.scripts = getattr(self.raw, "scripts", [])
 
