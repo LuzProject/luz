@@ -98,6 +98,31 @@ Control variables are defined in a class called ``Control`` that can be imported
 
 Additional control options can be found `here <https://github.com/LuzProject/luz/tree/main/luz/config/components/control.py#L26/>`_.
 
+Scripts
+*********************
+
+This is where maintainer scripts are defined.
+
+Scripts are defined in a class called ``Scripts`` that can be imported from ``luz``.
+
+.. list-table::
+   :widths: 5 1 10
+
+   * - Variable
+     - Type
+     - Description
+   * - ``type``
+     - String
+     - Type of script to run. Can be ``preinst``, ``postinst``, ``prerm``, ``postrm``.
+   * - ``path``
+     - String (Optional)
+     - Path to the script to copy. (``None`` if not specified)
+   * - ``content``
+     - String (Optional)
+     - Content of the script to copy. (``None`` if not specified)
+
+Please note that either ``path`` or ``content`` must be specified. If both are specified, ``path`` will be used.
+
 Modules
 *********************
 
