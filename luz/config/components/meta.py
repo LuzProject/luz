@@ -45,11 +45,11 @@ class Meta:
         self.prefix = prefix
         self.cc = cc
         self.swift = swift
-        self.rootless = rootless
         self.compression = compression
         self.pack = pack
         self.archs = archs
         self.platform = platform
+        self.rootless = rootless if platform == "iphoneos" else False
         self.min_vers = min_vers
 
         # handle debug
