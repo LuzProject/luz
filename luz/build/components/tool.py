@@ -1,7 +1,6 @@
 # module imports
 from os import makedirs
 from shutil import copytree
-from subprocess import check_output
 
 # local imports
 from ..module import ModuleBuilder
@@ -18,7 +17,7 @@ class Tool(ModuleBuilder):
         # files
         self.files = self.hash_files(self.module.files, "executable")
 
-    def __stage(self):
+    def stage(self):
         """Stage a deb to be packaged."""
         # log
         log(f"Staging...", "📦", self.module.abbreviated_name, self.luz.lock)
@@ -42,26 +41,4 @@ class Tool(ModuleBuilder):
         # after stage
         if self.module.after_stage:
             self.module.after_stage()
-
-    def compile(self):
-        """Compile module."""
-        # handle logos
-        self.handle_logos()
-        # clean arch dirs
-        for arch in self.meta.archs:
-            for x in self.files_paths:
-                check_output(f"rm -rf {self.obj_dir}/{arch}/{x.name}-*", shell=True)
-            makedirs(f"{self.obj_dir}/{arch}", exist_ok=True)
-        # compile files
-        futures = [self.luz.pool.submit(self.compile_file, file) for file in self.files]
-        self.wait(futures)
-        for result in futures:
-            if result.result() is not None:
-                return result.result()
-        # link files
-        linker_results = self.linker("executable")
-        if linker_results is not None:
-            return linker_results
-        # stage deb
-        if self.meta.pack:
-            self.__stage()
+            

@@ -2,7 +2,7 @@
 from concurrent.futures import ThreadPoolExecutor, wait
 from os import makedirs
 from shutil import rmtree
-from subprocess import getoutput
+from subprocess import check_output, getoutput
 
 # local imports
 from ..common.deps import clone_headers, clone_libraries, logos
@@ -332,6 +332,31 @@ class ModuleBuilder:
             self.luz.c_compiler.compile(file, out_name, build_flags)
         except:
             return f'An error occured when attempting to compile "{file}" for module "{self.module.name}".'
+        
+    def compile(self):
+        """Compile module."""
+        # handle logos
+        self.handle_logos()
+        # clean arch dirs
+        for arch in self.meta.archs:
+            for x in self.files_paths:
+                check_output(f"rm -rf {self.obj_dir}/{arch}/{x.name}-*", shell=True)
+            makedirs(f"{self.obj_dir}/{arch}", exist_ok=True)
+        # compile files
+        futures = [self.luz.pool.submit(self.compile_file, file) for file in self.files]
+        self.wait(futures)
+        for result in futures:
+            if result.result() is not None:
+                return result.result()
+        # link files
+        linker_results = self.linker("dylib")
+        if linker_results is not None:
+            return linker_results
+        # stage deb
+        if self.meta.pack:
+            stage_result = self.stage()
+            if stage_result is not None:
+                return stage_result
 
     def wait(self, thread):
         wait(thread)
