@@ -1,5 +1,6 @@
 # module imports
 from inspect import stack
+from pathlib import Path
 from typing import Callable, Union
 
 # local imports
@@ -39,7 +40,7 @@ class Module:
         libraries: list = [],
         before_stage: Callable = None,
         after_stage: Callable = None,
-        resources_dir: str = "./Resources",
+        resources_dir: Path = Path("./Resources"),
     ):
         """Initialize Module
 

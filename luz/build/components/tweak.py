@@ -26,20 +26,13 @@ class Tweak(ModuleBuilder):
             self.module.before_stage()
         # dirs to make
         if self.module.install_dir is None:
-            dirtomake = (
-                resolve_path(f"{self.luz.build_dir}/_/Library/MobileSubstrate/DynamicLibraries") if not self.meta.rootless else resolve_path(f"{self.luz.build_dir}/_/var/jb/Library/MobileSubstrate")
-            )
-            dirtocopy = (
-                resolve_path(f"{self.luz.build_dir}/_/Library/MobileSubstrate/DynamicLibraries")
-                if not self.meta.rootless
-                else resolve_path(f"{self.luz.build_dir}/_/var/jb/Library/MobileSubstrate/DynamicLibraries")
-            )
+            dirtomake = self.meta.root_dir / "Library/MobileSubstrate"
+            dirtocopy = self.meta.root_dir / "Library/MobileSubstrate/DynamicLibraries"
         else:
             if self.meta.rootless:
                 warn("Rootless is enabled, but a custom install_dir is set. Proceed with caution.", lock=self.luz.lock)
-            self.install_dir = resolve_path(self.module.install_dir)
-            dirtomake = resolve_path(f"{self.luz.build_dir}/_/{self.module.install_dir.parent}")
-            dirtocopy = resolve_path(f"{self.luz.build_dir}/_/{self.module.install_dir}")
+            dirtomake = self.meta.staging_dir / self.module.install_dir.parent
+            dirtocopy = self.meta.staging_dir / self.module.install_dir
         # make proper dirs
         if not dirtomake.exists():
             makedirs(dirtomake, exist_ok=True)

@@ -62,6 +62,12 @@ class Meta:
         # luz dir
         self.luz_dir = setup_luz_dir()
 
+        # staging dir
+        self.staging_dir = self.luz_dir / "_"
+
+        # root dir
+        self.root_dir = self.staging_dir / ("var/jb" if self.rootless else "")
+
         # attempt to fetch prefix
         if self.prefix == "" and plat().startswith("Linux"):
             luz_prefix = resolve_path(f"{self.storage}/toolchain/linux/iphone/bin")

@@ -25,12 +25,8 @@ class Preferences(ModuleBuilder):
         if self.module.before_stage:
             self.module.before_stage()
         # dirs to make
-        dirtomake = resolve_path(f"{self.luz.build_dir}/_/Library/PreferenceBundles/") if not self.meta.rootless else resolve_path(f"{self.luz.build_dir}/_/var/jb/Library/PreferenceBundles/")
-        dirtocopy = (
-            resolve_path(f"{self.luz.build_dir}/_/Library/PreferenceBundles/{self.module.name}.bundle")
-            if not self.meta.rootless
-            else resolve_path(f"{self.luz.build_dir}/_/var/jb/Library/PreferenceBundles/{self.module.name}.bundle")
-        )
+        dirtomake = self.meta.root_dir / "Library/PreferenceBundles"
+        dirtocopy = self.meta.root_dir / "Library/PreferenceBundles" / f"{self.module.name}.bundle"
         # make proper dirs
         if not dirtomake.exists():
             makedirs(dirtomake, exist_ok=True)

@@ -26,14 +26,13 @@ class Tool(ModuleBuilder):
             self.module.before_stage()
         # dirs to make
         if self.module.install_dir is None:
-            dirtomake = resolve_path(f"{self.luz.build_dir}/_/usr") if not self.meta.rootless else resolve_path(f"{self.luz.build_dir}/_/var/jb/usr")
-            dirtocopy = resolve_path(f"{self.luz.build_dir}/_/usr/bin") if not self.meta.rootless else resolve_path(f"{self.luz.build_dir}/_/var/jb/usr/bin")
+            dirtomake = self.meta.root_dir / "usr"
+            dirtocopy = self.meta.root_dir / "usr/bin"
         else:
             if self.meta.rootless:
                 warn("Rootless is enabled, but a custom install_dir is set. Proceed with caution.", lock=self.luz.lock)
-            self.install_dir = resolve_path(self.module.install_dir)
-            dirtomake = resolve_path(f"{self.luz.build_dir}/_/{self.module.install_dir.parent}")
-            dirtocopy = resolve_path(f"{self.luz.build_dir}/_/{self.module.install_dir}")
+            dirtomake = self.meta.staging_dir / self.module.install_dir.parent
+            dirtocopy = self.meta.staging_dir / self.module.install_dir
         # make proper dirs
         if not dirtomake.exists():
             makedirs(dirtomake, exist_ok=True)
@@ -41,4 +40,3 @@ class Tool(ModuleBuilder):
         # after stage
         if self.module.after_stage:
             self.module.after_stage()
-            
