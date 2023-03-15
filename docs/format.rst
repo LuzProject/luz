@@ -103,7 +103,7 @@ Scripts
 
 This is where maintainer scripts are defined.
 
-Scripts are defined in a class called ``Scripts`` that can be imported from ``luz``.
+Scripts are defined in a class called ``Script`` that can be imported from ``luz``.
 
 .. list-table::
    :widths: 5 1 10
@@ -210,7 +210,7 @@ Example ``luzconf.py``
 
 .. code:: Python
 
-    from luz import Control, Meta, Modules, Submodule
+    from luz import Control, Meta, Modules, Script, Submodule
 
     # define meta options
     meta = Meta(
@@ -235,6 +235,12 @@ Example ``luzconf.py``
         version='1.0.0',
         dependencies='firmware (>= 15.0), mobilesubstrate'
     )
+
+    # define scripts
+    scripts = [
+        Script(type='postinst', path='./scripts/postinst'),
+        Script(type='prerm', path='./scripts/prerm')
+    ]
 
     # define modules
     modules = [
