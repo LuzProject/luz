@@ -74,9 +74,13 @@ def debug(message, dbg):
         print(colors["bold"] + colors["darkgrey"] + "[" + colors["reset"] + colors["bold"] + colors["yellow"] + "#" + colors["bold"] + colors["darkgrey"] + "] " + colors["reset"] + f"{message}")
 
 
-def warn(message, emoji: str = "⚠️", msg: str = "LUZ"):
+def warn(message, emoji: str = "⚠️", msg: str = "LUZ", lock=None):
     char = emoji + " " + msg
-    print(colors["bold"] + colors["yellow"] + char + colors["bold"] + colors["darkgrey"] + ": " + colors["reset"] + f"{message}")
+    if lock is not None:
+        with lock:
+            print(colors["bold"] + colors["yellow"] + char + colors["bold"] + colors["darkgrey"] + ": " + colors["reset"] + f"{message}")
+    else:
+        print(colors["bold"] + colors["yellow"] + char + colors["bold"] + colors["darkgrey"] + ": " + colors["reset"] + f"{message}")
 
 
 def error(message, emoji: str = "❌", msg: str = "LUZ", lock=None):
