@@ -1,13 +1,5 @@
 # module imports
-from os import name
 from sys import stdout
-
-# fix logging if we are running on Windows
-if name == "nt":
-    from ctypes import windll
-
-    k = windll.kernel32
-    k.SetConsoleMode(k.GetStdHandle(-11), 7)
 
 
 colors = {
