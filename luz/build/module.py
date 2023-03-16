@@ -183,12 +183,16 @@ class ModuleBuilder:
         if compile_type == "dylib":
             build_flags.append("-dynamiclib")
         # compile for each arch
+        # format platform
+        platform = "ios" if self.meta.platform == "iphoneos" else self.meta.platform
         for arch in self.meta.archs:
             try:
+                # arch
+                arch_formatted = f"-target {arch}-apple-{platform}{self.meta.min_vers}"
                 self.luz.c_compiler.compile(
                     resolve_path(f"{self.obj_dir}/{arch}/*.o"),
                     outfile=f"{self.obj_dir}/{arch}/{self.module.install_name}",
-                    args=build_flags + [f"-arch {arch}"],
+                    args=build_flags + [arch_formatted],
                 )
             except:
                 return f'An error occured when trying to link files for module "{self.module.name}" for architecture "{arch}".'
@@ -311,13 +315,17 @@ class ModuleBuilder:
             return f'An error occured when trying to compile "{file}" for module "{self.module.name}".'
 
     def __compile_c_arch(self, file, arch: str):
+        # format platform
+        platform = "ios" if self.meta.platform == "iphoneos" else self.meta.platform
+        # arch
+        arch_formatted = f"-target {arch}-apple-{platform}{self.meta.min_vers}"
         # outname
         out_name = f"{self.obj_dir}/{arch}/{file.name}-{self.luz.now}.o"
         build_flags = [
             "-fobjc-arc" if self.module.use_arc else "",
             f"-isysroot {self.meta.sdk}",
             f"-O{self.module.optimization}",
-            f"-arch {arch}",
+            arch_formatted,
             ("-I" + " -I".join(self.module.include_dirs)) if self.module.include_dirs != [] else "",
             f"-m{self.meta.platform}-version-min={self.meta.min_vers}",
             "-g" if self.meta.debug else "",
