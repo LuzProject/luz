@@ -29,6 +29,8 @@ class ModuleBuilder:
         # add necessary include files
         self.module.include_dirs.append(str(clone_headers(self.meta)))
         self.module.library_dirs.append(str(clone_libraries(self.meta)))
+        self.module.include_dirs.append(f"{self.meta.sdk}/usr/include")
+        self.module.library_dirs.append(f"{self.meta.sdk}/usr/lib")
 
         # add custom files
         self.module.include_dirs.append(f"{self.meta.storage}/headers")

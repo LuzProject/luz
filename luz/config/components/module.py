@@ -8,9 +8,9 @@ from ...common.utils import resolve_path
 
 # map of default values
 default_values = {
-    "tweak": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["substrate", "system"]},
-    "tool": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["system"]},
-    "preferences": {"frameworks": ["Foundation", "CoreFoundation"], "private_frameworks": ["preferences"], "libraries": ["system"]},
+    "tweak": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["substrate", "System"]},
+    "tool": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["System"]},
+    "preferences": {"frameworks": ["Foundation", "CoreFoundation"], "private_frameworks": ["preferences"], "libraries": ["System"]},
 }
 
 
