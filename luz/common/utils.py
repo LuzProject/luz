@@ -13,7 +13,7 @@ def resolve_path(path: str) -> Union[Path, list]:
     if "$" in str(path):
         path = format_path(path)
     # get path
-    p = Path(path)
+    p = Path(path).expanduser()
     # handle globbing
     if "*" in str(path):
         p = Path(path)
