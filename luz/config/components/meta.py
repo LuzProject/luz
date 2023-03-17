@@ -138,7 +138,7 @@ class Meta:
                     self.sdk = resolve_path(f"{self.storage}/sdks/{self.sdk}")
                 else:
                     raise Exception("Specified SDK does not exist.")
-        
+
         # handle passed config
         if cfg.passed != {}:
             for key, value in cfg.passed.items():

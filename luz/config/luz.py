@@ -189,7 +189,7 @@ class Luz:
         # assign submodules
         submodules = self.pool.map(self.__assign_submodule, self.submodules)
         self.submodules = submodules
-    
+
     def __assign_passed_value(self, value):
         """Assign a key from the passed config."""
         if value.lower() == "true" or value.lower() == "false":
