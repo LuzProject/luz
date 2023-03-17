@@ -1,9 +1,11 @@
 # module imports
 from platform import platform as plat
 from subprocess import getoutput
+from sys import argv
 
 # local imports
 from ...common.utils import cmd_in_path, get_luz_storage, resolve_path, setup_luz_dir
+from ...common import cfg
 
 
 class Meta:
@@ -38,6 +40,7 @@ class Meta:
             platform (str, optional): Platform (default: iphoneos)
             min_vers (str, optional): Minimum version (default: 15.0)
         """
+
         # assign variables
         self.debug = debug
         self.release = release
@@ -135,6 +138,19 @@ class Meta:
                     self.sdk = resolve_path(f"{self.storage}/sdks/{self.sdk}")
                 else:
                     raise Exception("Specified SDK does not exist.")
+        
+        # handle passed config
+        if cfg.passed != {}:
+            for key, value in cfg.passed.items():
+                self.__setattr__(key, value)
+
+        if cfg.inherit is not None:
+            luz = cfg.inherit
+
+            # inherit
+            for key, value in luz.meta.__dict__.items():
+                if value != "" and value is not None and value != []:
+                    setattr(self, key, getattr(luz.meta, key))
 
     def __xcrun(self):
         xcrun = cmd_in_path("xcrun")

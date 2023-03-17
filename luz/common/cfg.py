@@ -1,0 +1,2 @@
+inherit = None
+passed = {}

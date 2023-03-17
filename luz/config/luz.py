@@ -19,6 +19,7 @@ from ..build.assign import assign
 from ..common.logger import log, warn
 from ..common.time import Ctime
 from ..common.utils import resolve_path, setup_luz_dir
+from ..common import cfg
 
 # import components
 from .components.control import Control
@@ -31,6 +32,17 @@ class Luz:
 
         :param str file_path: Path to luz.py
         """
+        cfg.inherit = inherit
+
+        if inherit is None:
+            # handle passed meta config
+            if args is not None and args.meta is not None:
+                passed = {}
+                for key in args.meta:
+                    spl = key[0].split("=")
+                    passed[spl[0]] = self.__assign_passed_value(spl[1])
+                cfg.passed = passed
+
         if inherit is None:
             self.now = time()
         else:
@@ -67,27 +79,12 @@ class Luz:
         # meta
         self.meta = getattr(self.raw, "meta", Meta() if inherit is None else inherit.meta)
 
-        if inherit is not None:
-            self.passed_config = getattr(inherit, "passed_config")
-        else:
-            self.passed_config = {}
-            if args is not None and args.meta is not None:
-                passed_cfg = list(map(lambda x: x[0].lower(), args.meta))
-                for n in passed_cfg:
-                    spl = n.split("=")
-                    self.passed_config[spl[0]] = self.__assign_passed_value(spl[1])
-
         # inherit values
         if inherit is not None:
             # inherit meta
             for key, value in self.meta.__dict__.items():
                 if value == "" or value is None or value == []:
                     setattr(self.meta, key, getattr(inherit.meta, key))
-
-        # handle passed config
-        if self.passed_config != {}:
-            for key, value in self.passed_config.items():
-                setattr(self.meta, key, value)
 
         # pool
         self.pool = ThreadPoolExecutor(max_workers=20) if inherit is None else inherit.pool
@@ -192,7 +189,7 @@ class Luz:
         # assign submodules
         submodules = self.pool.map(self.__assign_submodule, self.submodules)
         self.submodules = submodules
-
+    
     def __assign_passed_value(self, value):
         """Assign a key from the passed config."""
         if value.lower() == "true" or value.lower() == "false":
