@@ -1,7 +1,6 @@
 # module imports
 from platform import platform as plat
 from subprocess import getoutput
-from sys import argv
 
 # local imports
 from ...common.utils import cmd_in_path, get_luz_storage, resolve_path, setup_luz_dir
