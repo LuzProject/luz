@@ -220,8 +220,10 @@ class Luz:
 
     def __pack(self):
         """Package the project."""
+        # deb file name
+        deb_file_name = f"{self.control.id}_{self.control.version}_{self.control.architecture}.deb"
         # log
-        log("Packaging...", "📦")
+        log(f"Packing to 'packages/{deb_file_name}'...", "📦")
         # layout
         layout_path = resolve_path("layout")
         if layout_path.exists():
