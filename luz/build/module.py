@@ -31,6 +31,7 @@ class ModuleBuilder:
         self.module.library_dirs.append(str(clone_libraries(self.meta)))
         self.module.include_dirs.append(f"{self.meta.sdk}/usr/include")
         self.module.library_dirs.append(f"{self.meta.sdk}/usr/lib")
+        self.module.framework_dirs.append(f"{self.meta.sdk}/System/Library/Frameworks")
 
         # add custom files
         self.module.include_dirs.append(f"{self.meta.storage}/headers")
