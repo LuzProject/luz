@@ -1,4 +1,5 @@
 # local imports
+from .components.framework import Framework
 from .components.library import Library
 from .components.prefs import Preferences
 from .components.tool import Tool
@@ -18,5 +19,7 @@ def assign(module, luz):
         return Preferences(module=module, luz=luz)
     elif m_type == "library":
         return Library(module=module, luz=luz)
+    elif m_type == "framework":
+        return Framework(module=module, luz=luz)
     else:
         raise Exception("Invalid module type.")

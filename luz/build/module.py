@@ -393,8 +393,10 @@ class ModuleBuilder:
             return linker_results
         # stage deb
         if self.meta.pack:
-            if "stage" in self.__dict__: stage = self.stage
-            else: stage = self.__stage
+            try:
+                stage = self.__getattribute__("stage")
+            except:
+                stage = self.__stage
             stage_result = stage()
             if stage_result is not None:
                 return stage_result

@@ -126,16 +126,17 @@ class Luz:
             if control is not None:
                 # add values to control
                 warn("Using manual control file. Please use the Control class to create a control file.")
+                control_dict = control.__dict__
                 self.control = Control(
                     id=control.package,
                     version=control.version,
                     maintainer=control.maintainer,
                     architecture=control.architecture,
-                    name=control.name,
-                    description=control.description,
+                    name=control.name if "name" in control_dict else None,
+                    description=control.description if "description" in control_dict else None,
                     author=control.author,
-                    depends=control.depends,
-                    section=control.section,
+                    depends=control.depends if "depends" in control_dict else None,
+                    section=control.section if "section" in control_dict else None,
                 )
             else:
                 raise ValueError("No control file found. Please create a control file or use the Control class to create a control file.")

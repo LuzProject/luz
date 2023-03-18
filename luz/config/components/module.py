@@ -12,6 +12,7 @@ default_values = {
     "tool": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["System"]},
     "preferences": {"frameworks": ["Foundation", "CoreFoundation"], "private_frameworks": ["preferences"], "libraries": ["System"]},
     "library": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["System"]},
+    "framework": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["System"]},
 }
 
 
@@ -30,6 +31,7 @@ class Module:
         warnings: list = ["-Wall"],
         codesign_flags: list = ["-S"],
         filter: dict = {"bundles": ["com.apple.SpringBoard"]},
+        public_headers: list = [],
         use_arc: bool = True,
         only_compile_changed: bool = True,
         bridging_headers: list = [],
@@ -82,6 +84,7 @@ class Module:
         self.warnings = warnings
         self.codesign_flags = codesign_flags
         self.filter = filter
+        self.public_headers = public_headers
         self.use_arc = use_arc
         self.only_compile_changed = only_compile_changed
         self.bridging_headers = bridging_headers
@@ -141,7 +144,7 @@ class Module:
 
         # fix install name
         if self.install_name == "":
-            if self.type == "tool":
+            if self.type == "tool" or self.type == "framework":
                 self.install_name = self.name
             else:
                 self.install_name = f"{self.name}.dylib"
@@ -156,6 +159,8 @@ class Module:
                 self.install_dir = resolve_path(f"/Library/MobileSubstrate/DynamicLibraries/{self.name}.dylib")
             elif self.type == "library":
                 self.install_dir = resolve_path(f"/usr/lib")
+            elif self.type == "framework":
+                self.install_dir = resolve_path(f"/Library/Frameworks/{self.name}.framework")
 
         # resolve bridging headers
         self.bridging_headers = [resolve_path(f) for f in self.bridging_headers]
