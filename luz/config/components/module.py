@@ -11,6 +11,7 @@ default_values = {
     "tweak": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["substrate", "System"]},
     "tool": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["System"]},
     "preferences": {"frameworks": ["Foundation", "CoreFoundation"], "private_frameworks": ["preferences"], "libraries": ["System"]},
+    "library": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["System"]},
 }
 
 
@@ -97,6 +98,10 @@ class Module:
         if self.type == "prefs":
             self.type = "preferences"
 
+        # lib -> library
+        if self.type == "lib":
+            self.type = "library"
+
         # convert files to list
         if isinstance(self.files, str):
             self.files = [self.files]
@@ -140,6 +145,17 @@ class Module:
                 self.install_name = self.name
             else:
                 self.install_name = f"{self.name}.dylib"
+
+        # install dir
+        if self.install_dir is None:
+            if self.type == "tool":
+                self.install_dir = resolve_path("/usr/local/bin")
+            elif self.type == "preferences":
+                self.install_dir = resolve_path(f"/Library/PreferenceBundles/{self.name}.bundle")
+            elif self.type == "tweak":
+                self.install_dir = resolve_path(f"/Library/MobileSubstrate/DynamicLibraries/{self.name}.dylib")
+            elif self.type == "library":
+                self.install_dir = resolve_path(f"/usr/lib")
 
         # resolve bridging headers
         self.bridging_headers = [resolve_path(f) for f in self.bridging_headers]

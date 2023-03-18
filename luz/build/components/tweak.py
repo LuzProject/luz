@@ -4,8 +4,7 @@ from shutil import copytree
 
 # local imports
 from ..module import ModuleBuilder
-from ...common.logger import log, warn
-from ...common.utils import resolve_path
+from ...common.logger import log
 
 
 class Tweak(ModuleBuilder):
@@ -22,17 +21,10 @@ class Tweak(ModuleBuilder):
         if self.module.before_stage is not None:
             self.module.before_stage()
         # dirs to make
-        if self.module.install_dir is None:
-            dirtomake = self.meta.root_dir / "Library" / "MobileSubstrate"
-            dirtocopy = self.meta.root_dir / "Library" / "MobileSubstrate" / "DynamicLibraries"
-        else:
-            if self.meta.rootless:
-                warn("Rootless is enabled, but a custom install_dir is set. Proceed with caution.", lock=self.luz.lock)
-            dirtomake = self.meta.staging_dir / self.module.install_dir.parent
-            dirtocopy = self.meta.staging_dir / self.module.install_dir
+        dirtocopy = self.meta.root_dir / self.module.install_dir
         # make proper dirs
-        if not dirtomake.exists():
-            makedirs(dirtomake, exist_ok=True)
+        if not dirtocopy.parent.exists():
+            makedirs(dirtocopy.parent, exist_ok=True)
         copytree(self.dylib_dir, dirtocopy, dirs_exist_ok=True)
 
         # plist

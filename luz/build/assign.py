@@ -1,7 +1,8 @@
 # local imports
+from .components.library import Library
+from .components.prefs import Preferences
 from .components.tool import Tool
 from .components.tweak import Tweak
-from .components.prefs import Preferences
 
 
 def assign(module, luz):
@@ -13,7 +14,9 @@ def assign(module, luz):
         return Tool(module=module, luz=luz)
     elif m_type == "tweak":
         return Tweak(module=module, luz=luz)
-    elif m_type == "preferences" or m_type == "prefs":
+    elif m_type == "preferences":
         return Preferences(module=module, luz=luz)
+    elif m_type == "library":
+        return Library(module=module, luz=luz)
     else:
         raise Exception("Invalid module type.")

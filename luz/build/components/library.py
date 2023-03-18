@@ -2,7 +2,7 @@
 from ..module import ModuleBuilder
 
 
-class Tool(ModuleBuilder):
+class Library(ModuleBuilder):
     def __init__(self, **kwargs):
         """Build a tool module."""
         # kwargs parsing

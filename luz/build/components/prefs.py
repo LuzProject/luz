@@ -22,11 +22,10 @@ class Preferences(ModuleBuilder):
         if self.module.before_stage:
             self.module.before_stage()
         # dirs to make
-        dirtomake = self.meta.root_dir / "Library" / "PreferenceBundles"
-        dirtocopy = self.meta.root_dir / "Library" / "PreferenceBundles" / f"{self.module.name}.bundle"
+        dirtocopy = self.meta.root_dir / self.module.install_dir
         # make proper dirs
-        if not dirtomake.exists():
-            makedirs(dirtomake, exist_ok=True)
+        if not dirtocopy.parent.exists():
+            makedirs(dirtocopy.parent, exist_ok=True)
         copytree(self.dylib_dir, dirtocopy, dirs_exist_ok=True)
         # copy resources
         resources_path = resolve_path(self.module.resources_dir)

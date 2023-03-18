@@ -1,7 +1,7 @@
 # module imports
 from concurrent.futures import ThreadPoolExecutor, wait
 from os import makedirs
-from shutil import rmtree
+from shutil import copytree, rmtree
 from subprocess import check_output, getoutput
 
 # local imports
@@ -56,6 +56,9 @@ class ModuleBuilder:
         self.obj_dir = resolve_path(f"{self.luz.build_dir}/obj/{self.module.name}")
         self.dylib_dir = resolve_path(f"{self.luz.build_dir}/dylib/{self.module.name}")
         self.bin_dir = resolve_path(f"{self.luz.build_dir}/bin/{self.module.name}")
+
+        # fix install dir
+        self.module.install_dir = self.module.install_dir.relative_to(self.module.install_dir.anchor)
 
         # files
         self.files = self.__hash_files(self.module.files, "executable" if self.module.type == "tool" else "dylib")
@@ -347,6 +350,26 @@ class ModuleBuilder:
         except:
             return f'An error occured when attempting to compile "{file}" for module "{self.module.name}".'
         
+    def __stage(self):
+        """Stage a generic deb to be packaged."""
+        # log
+        log(f"Staging...", "📦", self.module.abbreviated_name, self.luz.lock)
+        # before stage
+        if self.module.before_stage:
+            self.module.before_stage()
+        # dirs to make
+        dirtocopy = self.meta.root_dir / self.module.install_dir
+        # make proper dirs
+        if not dirtocopy.parent.exists():
+            makedirs(dirtocopy.parent, exist_ok=True)
+        # dir of linked file
+        if self.module.type == "tool": linked = self.bin_dir
+        else: linked = self.dylib_dir
+        copytree(linked, dirtocopy, dirs_exist_ok=True)
+        # after stage
+        if self.module.after_stage:
+            self.module.after_stage()
+        
     def compile(self):
         """Compile module."""
         # handle logos
@@ -370,7 +393,9 @@ class ModuleBuilder:
             return linker_results
         # stage deb
         if self.meta.pack:
-            stage_result = self.stage()
+            if "stage" in self.__dict__: stage = self.stage
+            else: stage = self.__stage
+            stage_result = stage()
             if stage_result is not None:
                 return stage_result
 
