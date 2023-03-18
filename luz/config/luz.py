@@ -225,24 +225,24 @@ class Luz:
         # layout
         layout_path = resolve_path("layout")
         if layout_path.exists():
-            copytree(layout_path, f"{self.build_dir}/_", dirs_exist_ok=True)
+            copytree(layout_path, self.meta.root_dir, dirs_exist_ok=True)
         # submodule layout paths
         for submodule in self.submodules:
             layout_path = resolve_path(f"{submodule.path}/layout")
             if layout_path.exists():
-                copytree(layout_path, f"{self.build_dir}/_", dirs_exist_ok=True)
+                copytree(layout_path, self.meta.root_dir, dirs_exist_ok=True)
         # makedirs
-        makedirs(f"{self.build_dir}/_/DEBIAN", exist_ok=True)
+        makedirs(f"{self.meta.staging_dir}/DEBIAN", exist_ok=True)
         # add control
-        with open(f"{self.build_dir}/_/DEBIAN/control", "w") as file:
+        with open(f"{self.meta.staging_dir}/DEBIAN/control", "w") as file:
             file.write(self.control.__str__())
         # scripts
         for script in self.scripts:
-            with open(f"{self.build_dir}/_/DEBIAN/{script.type}", "w") as file:
+            with open(f"{self.meta.staging_dir}/DEBIAN/{script.type}", "w") as file:
                 file.write(script.content)
         # pack
         Pack(
-            resolve_path(f"{self.build_dir}/_"),
+            self.meta.staging_dir,
             algorithm=self.meta.compression,
             outdir="packages/",
         )
