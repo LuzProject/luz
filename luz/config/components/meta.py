@@ -55,6 +55,19 @@ class Meta:
         self.rootless = rootless if platform == "iphoneos" else False
         self.min_vers = min_vers
 
+        # handle passed config
+        if cfg.passed != {}:
+            for key, value in cfg.passed.items():
+                self.__setattr__(key, value)
+
+        if cfg.inherit is not None:
+            luz = cfg.inherit
+
+            # inherit
+            for key, value in luz.meta.__dict__.items():
+                if value != "" and value is not None and value != []:
+                    setattr(self, key, getattr(luz.meta, key))
+
         # handle debug
         if self.debug and self.release:
             self.debug = False
@@ -138,19 +151,6 @@ class Meta:
                     self.sdk = resolve_path(f"{self.storage}/sdks/{self.sdk}")
                 else:
                     raise Exception("Specified SDK does not exist.")
-        
-        # handle passed config
-        if cfg.passed != {}:
-            for key, value in cfg.passed.items():
-                self.__setattr__(key, value)
-
-        if cfg.inherit is not None:
-            luz = cfg.inherit
-
-            # inherit
-            for key, value in luz.meta.__dict__.items():
-                if value != "" and value is not None and value != []:
-                    setattr(self, key, getattr(luz.meta, key))
 
     def __xcrun(self):
         xcrun = cmd_in_path("xcrun")
