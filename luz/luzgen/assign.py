@@ -1,8 +1,8 @@
 # local imports
-from ...common.logger import error
-from .prefs import Preferences
-from .tool import Tool
-from .tweak import Tweak
+from ..common.logger import error
+from .components.prefs import Preferences
+from .components.tool import Tool
+from .components.tweak import Tweak
 
 
 def assign_module(type: str):

@@ -4,7 +4,7 @@ from os import rename
 # local imports
 from ...common.logger import ask, error, log
 from ...common.utils import resolve_path
-from .module import Module
+from ..module import Module
 
 
 class Preferences(Module):

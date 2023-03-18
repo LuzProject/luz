@@ -1,18 +1,18 @@
 # local imports
 from ...common.logger import ask, error, log
 from ...common.utils import resolve_path
-from .module import Module
+from ..module import Module
 
 
-class Tweak(Module):
+class Tool(Module):
     def __init__(self):
         # type
-        self.type = "tweak"
+        self.type = "tool"
         # valid source types
-        self.VALID = ["logos", "objc", "c", "asm", "objcpp", "swift"]
+        self.VALID = ["objc", "c", "asm", "objcpp", "swift"]
         # srctype
         log(f"Valid source types: {', '.join(self.VALID)}")
-        self.srctype = self.__ask_for("source type", "logos").lower()
+        self.srctype = self.__ask_for("source type", "objc").lower()
         if self.srctype not in self.VALID:
             error(f'Invalid source type: {self.srctype}. Valid types: {", ".join(self.VALID)}')
             exit(1)
@@ -21,9 +21,7 @@ class Tweak(Module):
         super().__init__(self.type, self.srctype)
 
         # calculate ending
-        if self.srctype == "logos":
-            self.ending = ".x"
-        elif self.srctype == "objc":
+        if self.srctype == "objc":
             self.ending = ".m"
         elif self.srctype == "c":
             self.ending = ".c"
@@ -36,21 +34,15 @@ class Tweak(Module):
 
         # get keys
         self.name = self.__ask_for("name")
-
-        # filter process
-        self.filter = self.__ask_for("executable filter", "com.apple.springboard")
-
         # add values to dict
-        self.dict.update({"modules": {"type": "tweak", "name": self.name, "files": [f"Sources/Tweak{self.ending}"], "filter": {"bundles": [self.filter]}}})
-
+        self.dict.update({"modules": {"name": self.name, "type": "tool", "files": [f"Sources/Tool{self.ending}" if self.srctype != "swift" else f"Sources/main.swift"]}})
         # folder
         folder = resolve_path(
             self.__ask_for(
-                "project folder",
+                "folder for project",
                 self.control["name"] if self.control is not None else self.name,
             )
         )
-
         # write to yaml
         self.write_to_file(folder)
 
