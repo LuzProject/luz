@@ -174,13 +174,13 @@ class Module:
                 raise FileNotFoundError(f'Bridging header "{f}" not found')
 
         # resolve include dirs
-        self.include_dirs = [resolve_path(f) for f in self.include_dirs]
+        self.include_dirs = [str(resolve_path(f)) for f in self.include_dirs]
 
         # resolve framework dirs
-        self.framework_dirs = [resolve_path(f) for f in self.framework_dirs]
+        self.framework_dirs = [str(resolve_path(f)) for f in self.framework_dirs]
 
         # resolve library dirs
-        self.library_dirs = [resolve_path(f) for f in self.library_dirs]
+        self.library_dirs = [str(resolve_path(f)) for f in self.library_dirs]
 
         # add default values
         if self.type in default_values:

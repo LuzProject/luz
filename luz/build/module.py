@@ -27,8 +27,10 @@ class ModuleBuilder:
         self.control = luz.control
 
         # add necessary include files
+        cloned_libs = str(clone_libraries(self.meta))
         self.module.include_dirs.append(str(clone_headers(self.meta)))
-        self.module.library_dirs.append(str(clone_libraries(self.meta)))
+        self.module.library_dirs.append(cloned_libs)
+        self.module.framework_dirs.append(cloned_libs)
         self.module.include_dirs.append(f"{self.meta.sdk}/usr/include")
         self.module.library_dirs.append(f"{self.meta.sdk}/usr/lib")
         self.module.framework_dirs.append(f"{self.meta.sdk}/System/Library/Frameworks")
@@ -36,6 +38,7 @@ class ModuleBuilder:
         # add custom files
         self.module.include_dirs.append(f"{self.meta.storage}/headers")
         self.module.library_dirs.append(f"{self.meta.storage}/lib")
+        self.module.framework_dirs.append(f"{self.meta.storage}/lib")
 
         # swift
         for file in self.module.files:
