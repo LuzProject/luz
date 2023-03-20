@@ -9,7 +9,7 @@ from .config.luz import Luz
 from .config.verify import Verify
 from .common.logger import ask, error
 from .common.utils import get_version, resolve_path
-from .luzgen.modules.modules import assign_module
+from .luzgen.assign import assign_module
 
 
 def main():

@@ -21,7 +21,7 @@ class Module:
         self.tar = TAR(algorithm="gzip")
 
         # templates_dir
-        self.template_path = str(resolve_path(resolve_path(__file__).absolute()).parent.parent) + f"/templates/{self.type}/{self.src}.tar.gz"
+        self.template_path = str(resolve_path(resolve_path(__file__).absolute()).parent) + f"/templates/{self.type}/{self.src}.tar.gz"
 
         # dict to make YAML
         self.dict = {}
