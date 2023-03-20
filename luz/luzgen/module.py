@@ -30,8 +30,8 @@ class Module:
         self.submodule = False
 
         # check if luzbuild currently exists
-        if resolve_path("LuzBuild").exists():
-            val = ask(f"A LuzBuild was found in the current working directory. Would you like to add this module as a submodule? (y/n)")
+        if resolve_path("luzconf.py").exists():
+            val = ask(f"A luzconf was found in the current working directory. Would you like to add this module as a submodule? (y/n)")
             if val == "":
                 val = "n"
             if val.startswith("y"):
