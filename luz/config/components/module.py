@@ -156,7 +156,7 @@ class Module:
             elif self.type == "preferences":
                 self.install_dir = resolve_path(f"/Library/PreferenceBundles/{self.name}.bundle")
             elif self.type == "tweak":
-                self.install_dir = resolve_path(f"/Library/MobileSubstrate/DynamicLibraries/{self.name}.dylib")
+                self.install_dir = resolve_path(f"/Library/MobileSubstrate/DynamicLibraries")
             elif self.type == "library":
                 self.install_dir = resolve_path(f"/usr/lib")
             elif self.type == "framework":

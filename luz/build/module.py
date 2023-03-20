@@ -181,7 +181,7 @@ class ModuleBuilder:
             ("-framework " + " -framework ".join(self.module.private_frameworks)) if self.module.private_frameworks != [] else "",
             f"-m{self.meta.platform}-version-min={self.meta.min_vers}",
             "-g" if self.meta.debug else "",
-            f"-Wl,-install_name,{'/var/jb' if self.meta.rootless else ''}{self.module.install_dir}{self.module.install_name},-rpath,{'/var/jb' if self.meta.rootless else ''}/usr/lib/,-rpath,{'/var/jb' if self.meta.rootless else ''}/Library/Frameworks/",
+            f"-Wl,-install_name,{'/var/jb' if self.meta.rootless else ''}/{self.module.install_dir}/{self.module.install_name},-rpath,{'/var/jb' if self.meta.rootless else ''}/usr/lib/,-rpath,{'/var/jb' if self.meta.rootless else ''}/Library/Frameworks/",
         ]
         build_flags.extend(self.module.warnings)
         build_flags.extend(self.module.linker_flags)
