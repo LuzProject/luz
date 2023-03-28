@@ -29,7 +29,7 @@ class CMD:
             else:
                 print(cmd)
         return getoutput(cmd)
-    
+
     def exec_output(self, cmd: str, cwd: str = None):
         """Execute a command.
 

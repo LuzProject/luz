@@ -22,7 +22,7 @@ class Meta:
         archs: list = ["arm64", "arm64e"],
         platform: str = "iphoneos",
         min_vers: str = "15.0",
-        messages: bool = False
+        messages: bool = False,
     ):
         """Initialize Meta
 
