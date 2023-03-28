@@ -7,7 +7,7 @@ from shutil import which
 from typing import Union
 
 
-def resolve_path(path: str) -> Union[Path, list]:
+def resolve_path(path: str) -> Union[Path, list[Path]]:
     """Resolve a Path from a String."""
     # format env vars in path
     if "$" in str(path):
