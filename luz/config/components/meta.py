@@ -22,6 +22,7 @@ class Meta:
         archs: list = ["arm64", "arm64e"],
         platform: str = "iphoneos",
         min_vers: str = "15.0",
+        messages: bool = False
     ):
         """Initialize Meta
 
@@ -38,6 +39,7 @@ class Meta:
             archs (list, optional): Architectures to compile for (default: ['arm64', 'arm64e'])
             platform (str, optional): Platform (default: iphoneos)
             min_vers (str, optional): Minimum version (default: 15.0)
+            messages (bool, optional): Show command messages (default: False)
         """
 
         # assign variables
@@ -53,6 +55,7 @@ class Meta:
         self.platform = platform
         self.rootless = rootless if platform == "iphoneos" else False
         self.min_vers = min_vers
+        self.messages = messages
 
         # handle passed config
         if cfg.passed != {}:

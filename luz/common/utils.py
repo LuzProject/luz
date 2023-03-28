@@ -4,7 +4,52 @@ from os import environ, getcwd, mkdir
 from pathlib import Path
 from pkg_resources import get_distribution
 from shutil import which
+from subprocess import check_output, getoutput
 from typing import Union
+
+
+class CMD:
+    def __init__(self, lock, show_messages: bool = False):
+        """Initialize the CMD class."""
+        self.lock = lock
+        self.show_messages = show_messages
+
+    def exec_no_output(self, cmd: str) -> str:
+        """Execute a command.
+
+        :param str cmd: The command to execute.
+        :param str cwd: The directory to execute the command in.
+        :param bool show_messages: Whether to show the command output.
+        :return: The output of the command.
+        """
+        if self.show_messages:
+            if self.lock is not None:
+                with self.lock:
+                    print(cmd)
+            else:
+                print(cmd)
+        return getoutput(cmd)
+    
+    def exec_output(self, cmd: str, cwd: str = None):
+        """Execute a command.
+
+        :param str cmd: The command to execute.
+        :param str cwd: The directory to execute the command in.
+        :param bool show_messages: Whether to show the command output.
+        """
+        if cwd is None:
+            cwd = getcwd()
+        if self.show_messages:
+            if self.lock is not None:
+                with self.lock:
+                    print(cmd)
+            else:
+                print(cmd)
+        if self.lock is not None:
+            with self.lock:
+                check_output(cmd, cwd=cwd, env=environ.copy(), shell=True)
+        else:
+            check_output(cmd, cwd=cwd, env=environ.copy(), shell=True)
 
 
 def resolve_path(path: str) -> Union[Path, list[Path]]:

@@ -8,7 +8,6 @@ from importlib.util import module_from_spec, spec_from_file_location
 from json import dump, loads
 from multiprocessing import Lock
 from os import makedirs
-from pyclang import CCompiler, SwiftCompiler
 from pydeb import Control as pControl, Pack
 from shutil import copytree, rmtree
 from sys import modules
@@ -18,7 +17,7 @@ from time import time
 from ..build.assign import assign
 from ..common.logger import log, warn
 from ..common.time import Ctime
-from ..common.utils import resolve_path, setup_luz_dir
+from ..common.utils import CMD, resolve_path, setup_luz_dir
 from ..common import cfg
 
 # import components
@@ -94,18 +93,9 @@ class Luz:
 
         # compilers
         if inherit is not None:
-            if inherit.meta.cc != self.meta.cc:
-                self.c_compiler = CCompiler(lock=self.lock).set_compiler(self.meta.cc)
-            else:
-                self.c_compiler = inherit.c_compiler
-
-            if inherit.meta.swift != self.meta.swift:
-                self.swift_compiler = SwiftCompiler(lock=self.lock).set_compiler(self.meta.swift)
-            else:
-                self.swift_compiler = inherit.swift_compiler
+            self.cmd = inherit.cmd
         else:
-            self.c_compiler = CCompiler(lock=self.lock).set_compiler(self.meta.cc)
-            self.swift_compiler = SwiftCompiler(lock=self.lock).set_compiler(self.meta.swift)
+            self.cmd = CMD(lock=self.lock, show_messages=self.meta.messages)
 
         # control
         self.control = getattr(self.raw, "control", None if inherit is None else inherit.control)

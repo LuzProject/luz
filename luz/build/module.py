@@ -27,8 +27,8 @@ class ModuleBuilder:
         self.control = luz.control
 
         # add necessary include files
-        cloned_libs = str(clone_libraries(self.meta))
-        self.module.include_dirs.append(str(clone_headers(self.meta)))
+        cloned_libs = str(clone_libraries(self.luz))
+        self.module.include_dirs.append(str(clone_headers(self.luz)))
         self.module.library_dirs.append(cloned_libs)
         self.module.framework_dirs.append(cloned_libs)
         self.module.include_dirs.append(f"{self.meta.sdk}/usr/include")
@@ -141,7 +141,7 @@ class ModuleBuilder:
         # use logos on files
         if not self.logos_dir.exists() and list(filter(lambda x: ".x" in x, [str(f) for f in files])) != []:
             makedirs(self.logos_dir, exist_ok=True)
-        files = logos(self.meta, self.module, files)
+        files = logos(self.luz, self.module, files)
 
         # pool
         self.pool = ThreadPoolExecutor(max_workers=(len(files) * arch_count))
@@ -196,32 +196,33 @@ class ModuleBuilder:
         platform = "ios" if self.meta.platform == "iphoneos" else self.meta.platform
         for arch in self.meta.archs:
             try:
+                # strings
+                strings = []
+                for file in resolve_path(f"{self.obj_dir}/{arch}/*.o"):
+                    strings.append(str(file))
                 # arch
                 arch_formatted = f"-target {arch}-apple-{platform}{self.meta.min_vers}"
-                self.luz.c_compiler.compile(
-                    resolve_path(f"{self.obj_dir}/{arch}/*.o"),
-                    outfile=f"{self.obj_dir}/{arch}/{self.module.install_name}",
-                    args=build_flags + [arch_formatted],
-                )
-            except:
+                self.luz.cmd.exec_output(f"{self.meta.cc} {' '.join(strings)} -o {self.obj_dir}/{arch}/{self.module.install_name} {' '.join(build_flags)} {arch_formatted}")
+            except Exception as e:
+                print(e)
                 return f'An error occured when trying to link files for module "{self.module.name}" for architecture "{arch}".'
 
         # link
         try:
             compiled = [f"{self.obj_dir}/{arch}/{self.module.install_name}" for arch in self.meta.archs]
-            getoutput(f"{self.meta.lipo} -create -output {out_name} {' '.join(compiled)}")
+            self.luz.cmd.exec_no_output(f"{self.meta.lipo} -create -output {out_name} {' '.join(compiled)}")
         except:
             return f'An error occured when trying to lipo files for module "{self.module.name}".'
 
         if compile_type == "executable" and self.meta.release:
             try:
-                getoutput(f"{self.meta.strip} {out_name}")
+                self.luz.cmd.exec_no_output(f"{self.meta.strip} {out_name}")
             except:
                 return f'An error occured when trying to strip "{out_name}" for module "{self.module.name}".'
 
         try:
             # run ldid
-            getoutput(f"{self.meta.ldid} {' '.join(self.module.codesign_flags)} {out_name}")
+            self.luz.cmd.exec_no_output(f"{self.meta.ldid} {' '.join(self.module.codesign_flags)} {out_name}")
         except:
             return f'An error occured when trying codesign "{out_name}" for module "{self.module.name}".'
 
@@ -309,6 +310,7 @@ class ModuleBuilder:
             ("-import-objc-header" + " -import-objc-header".join(self.module.bridging_headers)) if self.module.bridging_headers != [] else "",
             arch_formatted,
             f"-emit-module-path {out_name}.swiftmodule",
+            f"-o {out_name}.o",
             "-g" if self.meta.debug else "",
             "-primary-file",
         ]
@@ -319,7 +321,7 @@ class ModuleBuilder:
         )
         # compile with swift using build flags
         try:
-            self.luz.swift_compiler.compile([file] + fmtc, outfile=out_name + ".o", args=build_flags)
+            self.luz.cmd.exec_output(f"{self.meta.swift} {' '.join(build_flags)} {file} {' '.join(fmtc)}")
         except:
             return f'An error occured when trying to compile "{file}" for module "{self.module.name}".'
 
@@ -338,6 +340,7 @@ class ModuleBuilder:
             ("-I" + " -I".join(self.module.include_dirs)) if self.module.include_dirs != [] else "",
             f"-m{self.meta.platform}-version-min={self.meta.min_vers}",
             "-g" if self.meta.debug else "",
+            f"-o {out_name}",
             f'-DLUZ_PACKAGE_VERSION=\\"{self.control.version}\\"' if self.control else "",
             "-c",
         ]
@@ -349,7 +352,7 @@ class ModuleBuilder:
         )
         # compile with clang using build flags
         try:
-            self.luz.c_compiler.compile(file, out_name, build_flags)
+            self.luz.cmd.exec_output(f"{self.meta.cc} {' '.join(build_flags)} {file}")
         except:
             return f'An error occured when attempting to compile "{file}" for module "{self.module.name}".'
 
