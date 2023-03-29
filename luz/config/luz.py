@@ -237,7 +237,7 @@ class Luz:
         Pack(
             self.meta.staging_dir,
             algorithm=self.meta.compression,
-            outdir=f"{self.path}/packages",
+            outdir=f"{self.path}/packages/",
         )
 
     def __build(self):
