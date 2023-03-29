@@ -32,6 +32,8 @@ class Luz:
         :param str file_path: Path to luz.py
         """
         cfg.inherit = inherit
+        if inherit is None:
+            cfg.luzconf_path = file_path
 
         if inherit is None:
             # handle passed meta config
@@ -214,7 +216,11 @@ class Luz:
         # deb file name
         deb_file_name = f"{self.control.id}_{self.control.version}_{self.control.architecture}.deb"
         # log
-        log(f"Packing to 'packages/{deb_file_name}'...", "📦")
+        if self.path.absolute() == self.path.cwd().absolute():
+            dir_to_log = "."
+        else:
+            dir_to_log = str(self.path.absolute()).replace(str(self.path.cwd().absolute()), ".")
+        log(f"Packing to '{dir_to_log}/packages/{deb_file_name}'...", "📦")
         # layout
         layout_path = resolve_path("layout")
         if layout_path.exists():

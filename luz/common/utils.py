@@ -7,6 +7,9 @@ from shutil import which
 from subprocess import check_output, getoutput
 from typing import Union
 
+# local imports
+from . import cfg
+
 
 class CMD:
     def __init__(self, lock, show_messages: bool = False):
@@ -153,7 +156,7 @@ def get_hash(filepath: str):
 
 def setup_luz_dir() -> Path:
     """Setup the tmp directory."""
-    luz_dir = resolve_path(f"{getcwd()}/.luz")
+    luz_dir = resolve_path(f"{resolve_path(cfg.luzconf_path).parent}/.luz")
     if not luz_dir.exists():
         mkdir(luz_dir)
 
