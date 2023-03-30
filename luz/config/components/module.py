@@ -127,7 +127,7 @@ class Module:
             if not str(f).startswith("/"):
                 f = f"{path}/{f}"
             new_files.append(f)
-        
+
         # b_files
         b_files = [resolve_path(f) for f in new_files]
         self.files = []
