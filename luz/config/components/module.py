@@ -118,26 +118,29 @@ class Module:
             raise Exception("Files cannot be empty")
 
         # resolve files
-        b_files = [resolve_path(f) for f in self.files]
-        self.files = []
+        new_files = []
 
         # stack
         ins_stack = stack()[1]
         path = resolve_path(ins_stack.filename).parent
+        for f in self.files:
+            if not str(f).startswith("/"):
+                f = f"{path}/{f}"
+            new_files.append(f)
+        
+        # b_files
+        b_files = [resolve_path(f) for f in new_files]
+        self.files = []
 
         # see if files exist
         for f in b_files:
             # check if is list
             if isinstance(f, list):
                 for ff in f:
-                    if not str(ff).startswith("/"):
-                        ff = path / ff
                     if not ff.exists():
                         raise FileNotFoundError(f'File "{ff}" not found')
                     self.files.append(ff)
             else:
-                if not str(f).startswith("/"):
-                    f = path / f
                 if not f.exists():
                     raise FileNotFoundError(f'File "{f}" not found')
                 self.files.append(f)

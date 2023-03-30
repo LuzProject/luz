@@ -7,5 +7,4 @@ if [[ -z "$MY_PATH" ]] ; then
 fi
 
 bash $MY_PATH/install.sh
-cd $MY_PATH/../tweak
-luz build -c
+luz build -c -p $MY_PATH/../tweak

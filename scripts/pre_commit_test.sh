@@ -6,18 +6,15 @@ if [[ -z "$MY_PATH" ]] ; then
   exit 1  # fail
 fi
 
-cd $MY_PATH
-bash ./install.sh
-cd $MY_PATH/../../TestTweaks
+bash $MY_PATH/install.sh
+TWEAKPATH="$MY_PATH/../../TestTweaks"
 
 echo -e '\nCOMPILING LOCKSIXTEEN\n-------------'
 # build locksixteen
-cd locksixteen
-luz build -c
+luz build -c -p $TWEAKPATH/locksixteen
 echo '-------------'
 
 echo -e 'COMPILING BATTERYASSEMBLY\n-------------'
 # build batteryassembly
-cd ../BatteryAssembly
-luz build -c
+luz build -c -p $TWEAKPATH/batteryassembly
 echo -e '-------------\n\nDone!'

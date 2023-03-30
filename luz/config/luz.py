@@ -57,7 +57,7 @@ class Luz:
 
         # nuke build dir if clean
         if args is not None and args.clean:
-            rmtree(resolve_path(f"{self.path}/.luz").absolute(), ignore_errors=True)
+            rmtree(resolve_path(file_path).absolute().parent / ".luz", ignore_errors=True)
 
         # funnytime
         self.funny_time = args.funny_time if args is not None else False
