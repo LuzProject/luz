@@ -20,7 +20,7 @@ class Script:
         # stack
         ins_stack = stack()[1]
         cwd = resolve_path(ins_stack.filename).parent
-        
+
         # path
         if path is not None:
             if not path.startswith("/"):
