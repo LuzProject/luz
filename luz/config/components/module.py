@@ -1,5 +1,6 @@
 # module imports
 from inspect import stack
+from os import chdir
 from pathlib import Path
 from typing import Callable, Union
 
@@ -123,6 +124,7 @@ class Module:
         # stack
         ins_stack = stack()[1]
         path = resolve_path(ins_stack.filename).parent
+        chdir(path)
         for f in self.files:
             if not str(f).startswith("/"):
                 f = f"{path}/{f}"
@@ -147,7 +149,7 @@ class Module:
 
         # fix install name
         if self.install_name == "":
-            if self.type == "tool" or self.type == "framework":
+            if self.type == "tool" or self.type == "framework" or self.type == "preferences":
                 self.install_name = self.name
             else:
                 self.install_name = f"{self.name}.dylib"
@@ -177,13 +179,13 @@ class Module:
                 raise FileNotFoundError(f'Bridging header "{f}" not found')
 
         # resolve include dirs
-        self.include_dirs = [str(resolve_path(f)) for f in self.include_dirs]
+        self.include_dirs = [str(resolve_path(f).absolute()) for f in self.include_dirs]
 
         # resolve framework dirs
-        self.framework_dirs = [str(resolve_path(f)) for f in self.framework_dirs]
+        self.framework_dirs = [str(resolve_path(f).absolute()) for f in self.framework_dirs]
 
         # resolve library dirs
-        self.library_dirs = [str(resolve_path(f)) for f in self.library_dirs]
+        self.library_dirs = [str(resolve_path(f).absolute()) for f in self.library_dirs]
 
         # add default values
         if self.type in default_values:

@@ -280,7 +280,8 @@ class ModuleBuilder:
                         self.files_paths,
                     )
                 )
-                futures = [self.pool.submit(self.__compile_swift_arch, file, files_minus_to_compile, x) for x in self.meta.archs]
+                fmtc = [str(x) for x in files_minus_to_compile]
+                futures = [self.pool.submit(self.__compile_swift_arch, file, fmtc, x) for x in self.meta.archs]
             else:
                 futures = [self.pool.submit(self.__compile_c_arch, file, x) for x in self.meta.archs]
             self.wait(futures)
