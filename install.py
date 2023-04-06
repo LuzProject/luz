@@ -24,7 +24,7 @@ try:
     from argparse import ArgumentParser
     from os import environ, getuid, makedirs
     from pathlib import Path
-    from platform import platform
+    from platform import platform, python_version_tuple
     from pkg_resources import working_set
     from shutil import which
     from subprocess import check_call, DEVNULL, getoutput
@@ -36,7 +36,11 @@ except:
     sys_exit(1)
 
 # check that python is 3.7 or higher
-if float(getoutput(f"{executable} --version | cut -d ' ' -f 2 | cut -d '.' -f 1,2")) >= 3.7:
+version_tuple = python_version_tuple()
+if int(version_tuple[0]) < 3:
+    error("Python 3.7 or higher is required to run this script.")
+    sys_exit(1)
+elif int(version_tuple[1]) < 7:
     error("Python 3.7 or higher is required to run this script.")
     sys_exit(1)
 
@@ -44,7 +48,7 @@ if float(getoutput(f"{executable} --version | cut -d ' ' -f 2 | cut -d '.' -f 1,
 try:
     import pip
 except:
-    error("pip is not installed. Please install pip before running this script.")
+    error("pip is not installed. Please install a version of python with pip before running this script.")
     sys_exit(1)
 
 
