@@ -55,7 +55,7 @@ class CMD:
             check_output(cmd, cwd=cwd, env=environ.copy(), shell=True)
 
 
-def resolve_path(path: str) -> Union[Path, list[Path]]:
+def resolve_path(path: str):
     """Resolve a Path from a String."""
     # format env vars in path
     if "$" in str(path):
