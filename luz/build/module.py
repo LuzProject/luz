@@ -2,7 +2,7 @@
 from concurrent.futures import ThreadPoolExecutor, wait
 from os import makedirs
 from shutil import copytree, rmtree
-from subprocess import check_output, getoutput
+from subprocess import check_output
 
 # local imports
 from ..common.deps import clone_headers, clone_libraries, logos
@@ -343,6 +343,7 @@ class ModuleBuilder:
             "-g" if self.meta.debug else "",
             f"-o {out_name}",
             f'-DLUZ_PACKAGE_VERSION=\\"{self.control.version}\\"' if self.control else "",
+            f'-DLUZ_INSTALL_PREFIX=\\"/var/jb\\"' if self.meta.rootless else f'-DLUZ_INSTALL_PREFIX=\\"\\"',
             "-c",
         ]
         build_flags.extend(self.module.c_flags)
