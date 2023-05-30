@@ -54,7 +54,7 @@ Meta variables are defined in a class called ``Meta`` that can be imported from 
    * - ``min_vers``
      - String
      - Minimum version to build for. (``15.0`` if not specified)
-    
+
 Control
 *********************
 
@@ -86,8 +86,8 @@ Control variables are defined in a class called ``Control`` that can be imported
    * - ``section``
      - String
      - Section of the package.
-   * - ``dependencies``
-     - String
+   * - ``depends``
+     - List
      - Dependencies of the package.
    * - ``architecture``
      - String
@@ -230,10 +230,12 @@ Example ``luzconf.py``
         id='com.jaidan.demo',
         name='LuzBuildDemo',
         author='Jaidan',
+        maintainer='Jaidan',
         description='LuzBuild demo',
         section='Tweaks',
         version='1.0.0',
-        dependencies='firmware (>= 15.0), mobilesubstrate'
+        depends=['firmware (>= 15.0)', 'mobilesubstrate'],
+        architecture='iphoneos-arm64'
     )
 
     # define scripts
@@ -245,6 +247,7 @@ Example ``luzconf.py``
     # define modules
     modules = [
         Module(
+            name='TestTweak',
             filter={
               'bundles': ['com.apple.SpringBoard']
             },
