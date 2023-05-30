@@ -37,6 +37,7 @@ def main():
 
     parser_build.add_argument("-m", "--meta", action="append", nargs="+", help="meta configuration (-m {key}={value})")
     parser_build.add_argument("-p", "--path", action="store", help="path to the project to build")
+    parser_build.add_argument("-i", "--install", action="store_true", help="install the project after building it")
     parser_build.add_argument("-f", "--funny-time", action="store_true", help=SUPPRESS)
 
     # verify
