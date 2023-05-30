@@ -24,7 +24,7 @@ class Meta:
         min_vers: str = "15.0",
         messages: bool = False,
         install_ip: str = "localhost",
-        install_port: int = 22
+        install_port: int = 22,
     ):
         """Initialize Meta
 
