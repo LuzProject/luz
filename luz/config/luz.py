@@ -293,8 +293,8 @@ class Luz:
             # full path to package
             package_path = self.path.absolute() / "packages" / deb_file_name
             # copy package
-            self.cmd.exec_no_output(f"scp -P {self.meta.install_port} {package_path} root@{self.meta.install_ip}:/tmp/luz.deb")
+            self.cmd.exec_no_output(f"scp -P {self.meta.install_port} {package_path} {self.meta.install_user}@{self.meta.install_ip}:/tmp/luz.deb")
             # ssh in and install package
-            self.cmd.exec_output(f"ssh root@{self.meta.install_ip}:{self.meta.install_port} 'dpkg -I /tmp/luz.deb && rm -rf /tmp/luz.deb'")
+            self.cmd.exec_output(f"ssh {self.meta.install_user}@{self.meta.install_ip}:{self.meta.install_port} 'dpkg -I /tmp/luz.deb && rm -rf /tmp/luz.deb'")
             # log
             log(f"Installed!")
