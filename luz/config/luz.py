@@ -53,7 +53,7 @@ class Luz:
             raise FileNotFoundError(f"File {file_path} not found")
 
         # path
-        self.path = resolve_path(file_path).parent
+        self.path = resolve_path(file_path).parent if inherit is None else inherit.path
 
         # nuke build dir if clean
         if args is not None and args.clean:
