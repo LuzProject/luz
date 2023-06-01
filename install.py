@@ -254,7 +254,9 @@ def main():
 
         log("Updating luz and its dependencies...")
         try:
-            command_wrapper(f"{executable} -m pip uninstall -y --break-system-packages luz pydeb pyclang && {executable} -m pip install --break-system-packages https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip")
+            command_wrapper(
+                f"{executable} -m pip uninstall -y --break-system-packages luz pydeb pyclang && {executable} -m pip install --break-system-packages https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip"
+            )
         except Exception as err:
             error(f"Failed to update luz: {err}")
             sys_exit(1)
