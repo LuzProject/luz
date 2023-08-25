@@ -339,6 +339,7 @@ class ModuleBuilder:
             f"-O{self.module.optimization}",
             arch_formatted,
             ("-I" + " -I".join(self.module.include_dirs)) if self.module.include_dirs != [] else "",
+            ("-F" + " -F".join(self.module.framework_dirs)) if self.module.framework_dirs != [] else "",
             f"-m{self.meta.platform}-version-min={self.meta.min_vers}",
             "-g" if self.meta.debug else "",
             f"-o {out_name}",
