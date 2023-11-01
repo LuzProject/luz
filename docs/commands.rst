@@ -23,6 +23,9 @@ Builds a project using the LuzBuild in the working directory.
    * - ``-m`` / ``--meta``
      - Flag
      - Add meta information to the build. (i.e. ``luz build -m release=true``)
+   * - ``-i`` / ``---install``
+     - Flag
+     - Whether or not to install the built project.
 
 ``verify``
 *********************

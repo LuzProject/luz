@@ -54,6 +54,15 @@ Meta variables are defined in a class called ``Meta`` that can be imported from 
    * - ``min_vers``
      - String
      - Minimum version to build for. (``15.0`` if not specified)
+   * - ``install_user``
+     - String
+     - User to install the built project to. (``root`` if not specified)
+   * - ``install_ip``
+     - String
+     - IP to install the built project to. (``localhost`` if not specified)
+   * - ``install_port``
+     - Number
+     - Port to install the built project to. (``22`` if not specified)
 
 Control
 *********************

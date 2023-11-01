@@ -23,6 +23,9 @@ class Meta:
         platform: str = "iphoneos",
         min_vers: str = "15.0",
         messages: bool = False,
+        install_user: str = "root",
+        install_ip: str = "localhost",
+        install_port: int = 22,
     ):
         """Initialize Meta
 
@@ -40,6 +43,9 @@ class Meta:
             platform (str, optional): Platform (default: iphoneos)
             min_vers (str, optional): Minimum version (default: 15.0)
             messages (bool, optional): Show command messages (default: False)
+            install_user (str, optional): User to install built packages to (default: 'root'),
+            install_ip (str, optional): IP to install built packages to (default: 'localhost'),
+            install_port (int, optional): Port to install built packages to (default: 22)
         """
 
         # assign variables
@@ -56,6 +62,9 @@ class Meta:
         self.rootless = rootless if platform == "iphoneos" else False
         self.min_vers = min_vers
         self.messages = messages
+        self.install_user = install_user
+        self.install_ip = install_ip
+        self.install_port = install_port
 
         # handle passed config
         if cfg.passed != {}:

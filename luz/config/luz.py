@@ -15,7 +15,7 @@ from time import time
 
 # local imports
 from ..build.assign import assign
-from ..common.logger import log, warn
+from ..common.logger import error, log, warn
 from ..common.time import Ctime
 from ..common.utils import CMD, resolve_path, setup_luz_dir
 from ..common import cfg
@@ -64,6 +64,9 @@ class Luz:
 
         # clean
         self.clean = args.clean if args is not None else False
+
+        # install
+        self.install = args.install if args is not None else False
 
         # convert absolute file path to python import path
         spec = spec_from_file_location("build", resolve_path(file_path).absolute())
@@ -279,3 +282,19 @@ class Luz:
 
         t = time() - self.now
         log(f"Build completed in {round(t, 2)} seconds.{f' ({Ctime(t).get_random()})' if self.funny_time else ''}")
+        if self.install:
+            if self.meta.platform is not "iphoneos":
+                error("Installation is currently not supported for platforms other than iOS.")
+                exit(1)
+            # deb file name
+            deb_file_name = f"{self.control.id}_{self.control.version}_{self.control.architecture}.deb"
+            # log
+            log(f"Installing...")
+            # full path to package
+            package_path = self.path.absolute() / "packages" / deb_file_name
+            # copy package
+            self.cmd.exec_no_output(f"scp -P {self.meta.install_port} {package_path} {self.meta.install_user}@{self.meta.install_ip}:/tmp/luz.deb")
+            # ssh in and install package
+            self.cmd.exec_output(f"ssh {self.meta.install_user}@{self.meta.install_ip} -p {self.meta.install_port} 'dpkg -I /tmp/luz.deb && rm -rf /tmp/luz.deb'")
+            # log
+            log(f"Installed!")
