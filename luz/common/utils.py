@@ -1,8 +1,8 @@
 # module imports
 from hashlib import md5
-from os import environ, getcwd, mkdir
+from os import environ, getcwd
 from pathlib import Path
-from pkg_resources import get_distribution
+from importlib.metadata import version
 from shutil import which
 from subprocess import check_output, getoutput
 from typing import Union
@@ -50,9 +50,11 @@ class CMD:
                 print(cmd)
         if self.lock is not None:
             with self.lock:
-                check_output(cmd, cwd=cwd, env=environ.copy(), shell=True)
+                # Return stdout so preprocessors such as pyLogos can consume
+                # generated source instead of only checking the exit status.
+                return check_output(cmd, cwd=cwd, env=environ.copy(), shell=True)
         else:
-            check_output(cmd, cwd=cwd, env=environ.copy(), shell=True)
+            return check_output(cmd, cwd=cwd, env=environ.copy(), shell=True)
 
 
 def resolve_path(path: str):
@@ -155,10 +157,9 @@ def get_hash(filepath: str):
 
 
 def setup_luz_dir() -> Path:
-    """Setup the tmp directory."""
+    """Create and return the per-project directory for incremental artifacts."""
     luz_dir = resolve_path(f"{resolve_path(cfg.luzconf_path).parent}/.luz")
-    if not luz_dir.exists():
-        mkdir(luz_dir)
+    luz_dir.mkdir(parents=True, exist_ok=True)
 
     return luz_dir
 
@@ -177,12 +178,11 @@ def cmd_in_path(cmd: str) -> Union[None, Path]:
 
 
 def get_luz_storage() -> str:
-    """Gets the Luz storage directory."""
+    """Create and return the shared vendor/toolchain storage directory."""
     storage_dir = resolve_path("$HOME/.luz")
-    if not storage_dir.exists():
-        mkdir(storage_dir)
+    storage_dir.mkdir(parents=True, exist_ok=True)
     return storage_dir
 
 
 def get_version() -> str:
-    return get_distribution(__package__.split(".")[0]).version
+    return version(__package__.split(".")[0])

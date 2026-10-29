@@ -4,12 +4,13 @@
 from argparse import Namespace
 from atexit import register
 from concurrent.futures import ThreadPoolExecutor
+from email.parser import Parser
 from importlib.util import module_from_spec, spec_from_file_location
 from json import dump, loads
 from multiprocessing import Lock
 from os import makedirs
-from pydeb import Control as pControl, Pack
 from shutil import copytree, rmtree
+from stat import S_IXGRP, S_IXOTH, S_IXUSR
 from sys import modules
 from time import time
 
@@ -17,12 +18,22 @@ from time import time
 from ..build.assign import assign
 from ..common.logger import error, log, warn
 from ..common.time import Ctime
+from ..common.deb import build_deb
 from ..common.utils import CMD, resolve_path, setup_luz_dir
 from ..common import cfg
 
 # import components
 from .components.control import Control
 from .components.meta import Meta
+
+
+def _control_list(value):
+    """Convert a Debian relationship field into values accepted by Control.
+
+    Manual control files store relationship entries as comma-separated text;
+    Luz's ``Control`` API stores them as lists before serializing them again.
+    """
+    return [item.strip() for item in value.split(",") if item.strip()] if value else []
 
 
 class Luz:
@@ -33,7 +44,10 @@ class Luz:
         """
         cfg.inherit = inherit
         if inherit is None:
-            cfg.luzconf_path = file_path
+            # Module construction changes into the project directory. Keep
+            # this path absolute so clean builds always recreate the same
+            # project's .luz directory.
+            cfg.luzconf_path = resolve_path(file_path).absolute()
 
         if inherit is None:
             # handle passed meta config
@@ -52,8 +66,9 @@ class Luz:
         if not resolve_path(file_path).exists():
             raise FileNotFoundError(f"File {file_path} not found")
 
-        # path
-        self.path = resolve_path(file_path).parent if inherit is None else inherit.path
+        # Keep the project root absolute because Module() changes the working
+        # directory while loading a configuration file.
+        self.path = resolve_path(file_path).absolute().parent if inherit is None else inherit.path
 
         # nuke build dir if clean
         if args is not None and args.clean:
@@ -111,27 +126,37 @@ class Luz:
             layout_path = resolve_path(f"{self.path}/layout/DEBIAN/control")
             if dot_path.exists():
                 with open(dot_path, "r") as file:
-                    control = pControl(file.read())
+                    control = Parser().parsestr(file.read())
             elif layout_path.exists():
                 with open(layout_path, "r") as file:
-                    control = pControl(file.read())
+                    control = Parser().parsestr(file.read())
             else:
                 control = None
             # assign values
             if control is not None:
                 # add values to control
                 warn("Using manual control file. Please use the Control class to create a control file.")
-                control_dict = control.__dict__
                 self.control = Control(
-                    id=control.package,
-                    version=control.version,
-                    maintainer=control.maintainer,
-                    architecture=control.architecture,
-                    name=control.name if "name" in control_dict else None,
-                    description=control.description if "description" in control_dict else None,
-                    author=control.author,
-                    depends=control.depends if "depends" in control_dict else None,
-                    section=control.section if "section" in control_dict else None,
+                    id=control["Package"],
+                    version=control["Version"],
+                    maintainer=control["Maintainer"],
+                    architecture=control["Architecture"],
+                    description=control.get("Description"),
+                    depends=_control_list(control.get("Depends")),
+                    section=control.get("Section"),
+                    priority=control.get("Priority"),
+                    homepage=control.get("Homepage"),
+                    conflicts=_control_list(control.get("Conflicts")),
+                    replaces=_control_list(control.get("Replaces")),
+                    provides=_control_list(control.get("Provides")),
+                    recommends=_control_list(control.get("Recommends")),
+                    suggests=_control_list(control.get("Suggests")),
+                    breaks=_control_list(control.get("Breaks")),
+                    enhances=_control_list(control.get("Enhances")),
+                    pre_depends=_control_list(control.get("Pre-Depends")),
+                    essential=control.get("Essential", "").lower() == "yes",
+                    original_maintainer=control.get("Original-Maintainer"),
+                    uploaders=_control_list(control.get("Uploaders")),
                 )
             else:
                 raise ValueError("No control file found. Please create a control file or use the Control class to create a control file.")
@@ -145,7 +170,8 @@ class Luz:
         # submodules
         self.submodules = getattr(self.raw, "submodules", [])
 
-        # pack
+        # A project without control metadata cannot produce a Debian package,
+        # but it can still compile a local macOS command-line tool.
         if self.control is None:
             self.meta.pack = False
 
@@ -240,13 +266,15 @@ class Luz:
             file.write(self.control.__str__())
         # scripts
         for script in self.scripts:
-            with open(f"{self.meta.staging_dir}/DEBIAN/{script.type}", "w") as file:
+            script_path = resolve_path(f"{self.meta.staging_dir}/DEBIAN/{script.type}")
+            with open(script_path, "w") as file:
                 file.write(script.content)
+            script_path.chmod(script_path.stat().st_mode | S_IXUSR | S_IXGRP | S_IXOTH)
         # pack
-        Pack(
+        build_deb(
             self.meta.staging_dir,
-            algorithm=self.meta.compression,
-            outdir=f"{self.path}/packages/",
+            self.path / "packages" / deb_file_name,
+            compression=self.meta.compression,
         )
 
     def __build(self):
@@ -283,7 +311,7 @@ class Luz:
         t = time() - self.now
         log(f"Build completed in {round(t, 2)} seconds.{f' ({Ctime(t).get_random()})' if self.funny_time else ''}")
         if self.install:
-            if self.meta.platform is not "iphoneos":
+            if self.meta.platform != "iphoneos":
                 error("Installation is currently not supported for platforms other than iOS.")
                 exit(1)
             # deb file name

@@ -268,3 +268,11 @@ Example ``luzconf.py``
     submodules = [
         Submodule(path="./Preferences")
     ]
+
+Luz writes a Debian binary-package ``DEBIAN/control`` stanza. ``Package``,
+``Version``, ``Maintainer``, ``Architecture``, and ``Description`` are always
+present; ``name`` is used as the short description when ``description`` is not
+provided. For current rootless iOS package managers, use
+``architecture='iphoneos-arm64'`` and keep installed payloads under the
+rootless staging prefix (``/var/jb``), which Luz applies when ``rootless`` is
+enabled.

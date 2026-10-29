@@ -1,6 +1,8 @@
 # module imports
 from os import makedirs
 from pathlib import Path
+from shlex import quote
+from sys import executable
 
 # local imports
 from .logger import error, log_stdout, remove_log_stdout
@@ -8,27 +10,29 @@ from .utils import resolve_path
 
 
 def clone_logos(module, update: bool = False) -> Path:
-    """Clones logos.
+    """Clones pyLogos, the native Python Logos interpreter.
 
     :param Tweak module: The module to use logos on.
     :param bool update: Whether to update logos or not.
     :return: Path to logos dir
     """
-    logos_url = "https://github.com/LuzProject/logos"
+    # Keep the requested SSH remote so private-key GitHub authentication works
+    # in the same way as other Luz vendor dependencies.
+    logos_url = "git@github.com:iCrazeiOS/pyLogos.git"
     storage = module.meta.storage
     # logos path
-    logos_path = resolve_path(f"{storage}/vendor/logos")
+    logos_path = resolve_path(f"{storage}/vendor/pyLogos")
     # if it doesn't exist, clone logos
     if not logos_path.exists():
-        log_stdout("Cloning logos...")
+        log_stdout("Cloning pyLogos...")
         makedirs(logos_path.parent, exist_ok=True)
-        module.cmd.exec_no_output(f"{module.meta.git} clone {logos_url} {logos_path} --recursive")
-        remove_log_stdout("Cloning logos...")
+        module.cmd.exec_output(f"{quote(str(module.meta.git))} clone {quote(logos_url)} {quote(str(logos_path))} --recursive")
+        remove_log_stdout("Cloning pyLogos...")
     # update
     if update:
-        log_stdout("Updating logos...")
-        module.cmd.exec_no_output(f"cd {logos_path} && {module.meta.git} pull")
-        remove_log_stdout("Updating logos...")
+        log_stdout("Updating pyLogos...")
+        module.cmd.exec_output(f"cd {quote(str(logos_path))} && {quote(str(module.meta.git))} pull --ff-only")
+        remove_log_stdout("Updating pyLogos...")
     # return path
     return logos_path
 
@@ -95,8 +99,9 @@ def logos(luz, module, files: list) -> list:
     dir = luz.meta.luz_dir
     # logos dir
     logos = clone_logos(luz)
-    # logos executable
-    logos_exec = f"{logos}/bin/logos.pl"
+    # pyLogos is a Python port of Theos Logos.  Use the same interpreter that
+    # launched Luz so it works with current Python installations.
+    logos_exec = logos / "logos.py"
     # new files
     new_files = []
 
@@ -106,12 +111,20 @@ def logos(luz, module, files: list) -> list:
         # match to case
         file_formatted = str(file).split("/")[-1].split(".")[-1]
         if file_formatted == "x" or file_formatted == "xm":
-            output_value = luz.cmd.exec_no_output(f"{logos_exec} {file}")
+            # pyLogos emits translated Objective-C on stdout. Quoting every
+            # component keeps source paths containing spaces safe for the shell.
+            output_value = luz.cmd.exec_output(
+                f"{quote(executable)} {quote(str(logos_exec))} {quote(str(file))}"
+            ).decode()
             output_file = resolve_path(f"{output}.{'m' if file_formatted == 'x' else 'mm'}")
+            output_file.parent.mkdir(parents=True, exist_ok=True)
             spl = output_value.splitlines()
-            if not spl[0].startswith("#"):
-                error(f"Logos Error: {spl[0]}", f"{module.abbreviated_name}")
-                exit(1)
+            # Valid pyLogos output begins with a source line directive. Reject
+            # empty or diagnostic-only output before handing it to clang.
+            if not spl or not spl[0].startswith("#"):
+                message = spl[0] if spl else "pyLogos did not produce output."
+                error(f"pyLogos Error: {message}", f"{module.abbreviated_name}")
+                raise RuntimeError(message)
             with open(output_file, "w") as f:
                 f.write(output_value)
             new_files.append(

@@ -1,14 +1,13 @@
 [tool.poetry]
 name = "luz"
-version = "0.0.1"
+version = "1.0.0"
 description = "A build system for iOS tweaks."
 authors = ["ja1dan <ajaidan0@gmail.com>"]
 readme = "README.rst"
 packages = [{include = "luz"}]
 
 [tool.poetry.dependencies]
-python = "^3.7"
-pydeb = {git = "https://github.com/LuzProject/pydeb"}
+python = ">=3.11"
 
 [tool.poetry.scripts]
 luz = 'luz.__main__:main'

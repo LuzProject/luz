@@ -24,24 +24,20 @@ try:
     from argparse import ArgumentParser
     from os import environ, getuid, makedirs
     from pathlib import Path
-    from platform import platform, python_version_tuple
-    from pkg_resources import working_set
+    from importlib.metadata import PackageNotFoundError, version
+    from platform import platform
     from shutil import which
     from subprocess import check_call, DEVNULL, getoutput
-    from sys import executable
+    from sys import executable, version_info
     from typing import Union
 except:
     error("Failed to import required modules. Perhaps your Python installation is out of date?")
-    error("Required modules: argparse, os, pathlib, platform, pkg_resources, shutil, subprocess, sys, typing")
+    error("Required modules: argparse, importlib.metadata, os, pathlib, platform, shutil, subprocess, sys, typing")
     sys_exit(1)
 
-# check that python is 3.7 or higher
-version_tuple = python_version_tuple()
-if int(version_tuple[0]) < 3:
-    error("Python 3.7 or higher is required to run this script.")
-    sys_exit(1)
-elif int(version_tuple[1]) < 7:
-    error("Python 3.7 or higher is required to run this script.")
+# Luz supports current CPython releases, including Python 3.15 and newer.
+if version_info < (3, 11):
+    error("Python 3.11 or higher is required to run this script.")
     sys_exit(1)
 
 # check that pip is installed
@@ -231,9 +227,11 @@ def main():
 
     args = parser.parse_args()
 
-    required = {"luz"}
-    installed = {pkg.key for pkg in working_set}
-    missing = required - installed
+    try:
+        version("luz")
+        missing = set()
+    except PackageNotFoundError:
+        missing = {"luz"}
 
     if not missing and not args.update:
         log("luz is already installed.")
@@ -245,7 +243,7 @@ def main():
     if args.update:
         log("Updating vendor modules...")
         try:
-            for module in ["headers", "lib", "logos"]:
+            for module in ["headers", "lib", "pyLogos"]:
                 if resolve_path(f"$HOME/.luz/vendor/{module}").exists():
                     command_wrapper(f"cd ~/.luz/vendor/{module} && git pull")
         except Exception as err:
@@ -255,7 +253,7 @@ def main():
         log("Updating luz and its dependencies...")
         try:
             command_wrapper(
-                f"{executable} -m pip uninstall -y --break-system-packages luz pydeb pyclang && {executable} -m pip install --break-system-packages https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip"
+                f"{executable} -m pip uninstall -y --break-system-packages luz pyclang && {executable} -m pip install --break-system-packages https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip"
             )
         except Exception as err:
             error(f"Failed to update luz: {err}")

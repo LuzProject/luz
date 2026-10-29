@@ -41,7 +41,7 @@ class Module:
         library_dirs: list = [],
         frameworks: list = [],
         private_frameworks: list = [],
-        libraries: list = [],
+        libraries: list = None,
         before_stage: Callable = None,
         after_stage: Callable = None,
         resources_dir: Path = Path("./Resources"),
@@ -94,7 +94,10 @@ class Module:
         self.library_dirs = library_dirs
         self.frameworks = frameworks
         self.private_frameworks = private_frameworks
-        self.libraries = libraries
+        # ``None`` selects Luz's compatibility defaults. An explicit empty
+        # list is meaningful for modules that do not use a hooking runtime
+        # (for example a constructor-only diagnostic tweak).
+        self.libraries = None if libraries is None else list(libraries)
         self.before_stage = before_stage
         self.after_stage = after_stage
 
@@ -190,7 +193,12 @@ class Module:
         # add default values
         if self.type in default_values:
             for key in default_values[self.type]:
-                # add keys in array to array
+                # An explicitly supplied library list opts out of the default
+                # substrate runtime. Framework defaults remain additive.
+                if key == "libraries" and self.libraries is not None:
+                    continue
+                if self.__dict__[key] is None:
+                    self.__dict__[key] = []
                 self.__dict__[key].extend(default_values[self.type][key])
 
     @property

@@ -27,6 +27,8 @@ class ModuleBuilder:
         self.control = luz.control
 
         # add necessary include files
+        # Vendor headers/libraries provide the iOS SDK additions Luz needs;
+        # the selected platform SDK supplies the system headers/frameworks.
         cloned_libs = str(clone_libraries(self.luz))
         self.module.include_dirs.append(str(clone_headers(self.luz)))
         self.module.library_dirs.append(cloned_libs)
@@ -35,10 +37,16 @@ class ModuleBuilder:
         self.module.library_dirs.append(f"{self.meta.sdk}/usr/lib")
         self.module.framework_dirs.append(f"{self.meta.sdk}/System/Library/Frameworks")
 
-        # add custom files
-        self.module.include_dirs.append(f"{self.meta.storage}/headers")
-        self.module.library_dirs.append(f"{self.meta.storage}/lib")
-        self.module.framework_dirs.append(f"{self.meta.storage}/lib")
+        # Add optional user-provided headers and libraries only when they
+        # exist. Passing absent -L/-F paths produces noisy linker warnings on
+        # current Xcode toolchains.
+        custom_headers = resolve_path(f"{self.meta.storage}/headers")
+        custom_libraries = resolve_path(f"{self.meta.storage}/lib")
+        if custom_headers.exists():
+            self.module.include_dirs.append(str(custom_headers))
+        if custom_libraries.exists():
+            self.module.library_dirs.append(str(custom_libraries))
+            self.module.framework_dirs.append(str(custom_libraries))
 
         # swift
         for file in self.module.files:
