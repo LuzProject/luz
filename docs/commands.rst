@@ -55,4 +55,12 @@ Generate a project.
      - Description
    * - ``-t`` / ``--type``
      - String
-     - The type of project to generate. (``tweak`` if not specified)
+     - The type of project to generate: ``tool``, ``tweak``, or ``preferences``. (``tweak`` if not specified)
+
+Simulator builds
+*********************
+
+Set ``platform='iphonesimulator'`` in ``Meta`` to compile for an iOS Simulator.
+Luz produces an arm64 Simulator Mach-O for tool modules; launching it still
+requires packaging the tool into an iOS app bundle and installing that app with
+Xcode or ``simctl``.

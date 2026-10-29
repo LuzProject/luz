@@ -34,7 +34,7 @@ class Preferences(Module):
         )
         # add swift bridging header
         if self.srctype == "swift":
-            self.dict["modules"][self.name]["bridgingHeaders"] = [f"Sources/{self.name}-Bridging-Header.h"]
+            self.dict["modules"]["bridging_headers"] = [f"Sources/{self.name}-Bridging-Header.h"]
         # folder
         self.folder = resolve_path(
             self.__ask_for(

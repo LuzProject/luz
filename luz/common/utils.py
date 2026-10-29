@@ -31,7 +31,9 @@ class CMD:
                     print(cmd)
             else:
                 print(cmd)
-        return getoutput(cmd)
+        # ``getoutput`` hides the exit status, causing failed link/sign/vendor
+        # commands to look successful. Capture stdout but still raise on error.
+        return check_output(cmd, env=environ.copy(), shell=True).decode()
 
     def exec_output(self, cmd: str, cwd: str = None):
         """Execute a command.

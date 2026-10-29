@@ -50,7 +50,7 @@ Meta variables are defined in a class called ``Meta`` that can be imported from 
      - List of architectures to build for. (``['arm64', 'arm64e']`` if not specified)
    * - ``platform``
      - String
-     - Platform to build for. Can be ``macosx``, ``iphoneos`` or ``watchos``. (``iphoneos`` if not specified)
+     - Platform to build for. Can be ``macosx``, ``iphoneos``, ``iphonesimulator``, ``watchos`` or ``watchsimulator``. (``iphoneos`` if not specified)
    * - ``min_vers``
      - String
      - Minimum version to build for. (``15.0`` if not specified)

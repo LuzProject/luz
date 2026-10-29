@@ -10,6 +10,7 @@ from json import dump, loads
 from multiprocessing import Lock
 from os import makedirs
 from shutil import copytree, rmtree
+from subprocess import run
 from stat import S_IXGRP, S_IXOTH, S_IXUSR
 from sys import modules
 from time import time
@@ -250,6 +251,10 @@ class Luz:
         else:
             dir_to_log = str(self.path.absolute()).replace(str(self.path.cwd().absolute()), ".")
         log(f"Packing to '{dir_to_log}/packages/{deb_file_name}'...", "📦")
+        # Reset the staging area so a non-clean build cannot accidentally ship
+        # files that were removed from the project after an earlier build.
+        rmtree(self.meta.staging_dir, ignore_errors=True)
+        makedirs(self.meta.staging_dir, exist_ok=True)
         # layout
         layout_path = resolve_path("layout")
         if layout_path.exists():
@@ -323,6 +328,6 @@ class Luz:
             # copy package
             self.cmd.exec_no_output(f"scp -P {self.meta.install_port} {package_path} {self.meta.install_user}@{self.meta.install_ip}:/tmp/luz.deb")
             # ssh in and install package
-            self.cmd.exec_output(f"ssh {self.meta.install_user}@{self.meta.install_ip} -p {self.meta.install_port} 'dpkg -I /tmp/luz.deb && rm -rf /tmp/luz.deb'")
+            self.cmd.exec_output(f"ssh {self.meta.install_user}@{self.meta.install_ip} -p {self.meta.install_port} 'dpkg -i /tmp/luz.deb && rm -f /tmp/luz.deb'")
             # log
             log(f"Installed!")

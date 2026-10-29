@@ -7,6 +7,15 @@ from ...common.utils import cmd_in_path, get_luz_storage, resolve_path, setup_lu
 from ...common import cfg
 
 
+PLATFORMS = {
+    "iphoneos": "iphoneos",
+    "iphonesimulator": "iphonesimulator",
+    "macosx": "macosx",
+    "watchos": "watchos",
+    "watchsimulator": "watchsimulator",
+}
+
+
 class Meta:
     def __init__(
         self,
@@ -19,7 +28,7 @@ class Meta:
         rootless: bool = True,
         compression: str = "xz",
         pack: bool = True,
-        archs: list = ["arm64", "arm64e"],
+        archs: list = None,
         platform: str = "iphoneos",
         min_vers: str = "15.0",
         messages: bool = False,
@@ -57,8 +66,10 @@ class Meta:
         self.swift = swift
         self.compression = compression
         self.pack = pack
-        self.archs = archs
+        self.archs = list(archs or ["arm64", "arm64e"])
         self.platform = platform
+        if self.platform not in PLATFORMS:
+            raise ValueError(f"Unsupported platform '{platform}'. Valid platforms: {', '.join(PLATFORMS)}.")
         self.rootless = rootless if platform == "iphoneos" else False
         self.min_vers = min_vers
         self.messages = messages
@@ -127,13 +138,15 @@ class Meta:
                 raise Exception(f'Swift compiler "{self.swift}" not in prefix path.')
             self.swift = prefix_path
 
-        # format ldid with prefix
-        self.ldid = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ldid')
-        if self.ldid is None:
-            # fall back to path
-            self.ldid = cmd_in_path("ldid")
+        # ldid is only required for binaries installed on a physical iOS
+        # device. Native macOS and Simulator builds do not depend on it.
+        self.ldid = None
+        if self.platform == "iphoneos":
+            self.ldid = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ldid')
             if self.ldid is None:
-                raise Exception("Could not find ldid.")
+                self.ldid = cmd_in_path("ldid")
+                if self.ldid is None:
+                    raise Exception("Could not find ldid.")
 
         # format ldid with prefix
         self.strip = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}strip')
@@ -162,6 +175,25 @@ class Meta:
                     self.sdk = resolve_path(f"{self.storage}/sdks/{self.sdk}")
                 else:
                     raise Exception("Specified SDK does not exist.")
+
+    def target_triple(self, architecture: str) -> str:
+        """Return the correctly ordered Apple target triple for this SDK."""
+        if self.platform == "iphoneos":
+            suffix = f"ios{self.min_vers}"
+        elif self.platform == "iphonesimulator":
+            suffix = f"ios{self.min_vers}-simulator"
+        elif self.platform == "watchos":
+            suffix = f"watchos{self.min_vers}"
+        elif self.platform == "watchsimulator":
+            suffix = f"watchos{self.min_vers}-simulator"
+        else:
+            suffix = f"macosx{self.min_vers}"
+        return f"{architecture}-apple-{suffix}"
+
+    @property
+    def deployment_flag_platform(self) -> str:
+        """Return the platform spelling used by Clang's -m*-version-min flag."""
+        return PLATFORMS[self.platform]
 
     def __xcrun(self):
         xcrun = cmd_in_path("xcrun")

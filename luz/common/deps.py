@@ -63,6 +63,37 @@ def clone_libraries(module, update: bool = False) -> Path:
     return libraries_path
 
 
+def substrate_compatibility_library(module, libraries_path: Path) -> Path:
+    """Create a current-TAPI substrate stub when a vendor checkout is legacy.
+
+    Older jailbreak library bundles describe CydiaSubstrate with a pre-v4 TBD
+    file using ``platform: iphoneos``. New Xcode TAPI rejects that spelling.
+    The generated v4 stub preserves its exported symbols while declaring the
+    current ``arm64-ios``/``arm64e-ios`` targets.
+    """
+    source = libraries_path / "libsubstrate.tbd"
+    if not source.is_file() or "platform:        iphoneos" not in source.read_text():
+        return libraries_path
+
+    compatibility_dir = resolve_path(f"{module.meta.storage}/vendor/luz-compat")
+    compatibility_dir.mkdir(parents=True, exist_ok=True)
+    output = compatibility_dir / "libsubstrate.tbd"
+
+    # Rebuild only when the vendor source changes; this avoids stale stubs
+    # while keeping normal incremental builds fast.
+    if not output.is_file() or output.stat().st_mtime < source.stat().st_mtime:
+        converted = ["--- !tapi-tbd", "tbd-version: 4", "targets: [ arm64-ios, arm64e-ios ]"]
+        for line in source.read_text().splitlines()[1:]:
+            if line.startswith("archs:") or line.startswith("platform:"):
+                continue
+            if line.startswith("  - archs:"):
+                converted.append("  - targets:         [ arm64-ios, arm64e-ios ]")
+            else:
+                converted.append(line)
+        output.write_text("\n".join(converted) + "\n")
+    return compatibility_dir
+
+
 def clone_headers(module, update: bool = False) -> Path:
     """Clones the default Theos headers.
 

@@ -14,7 +14,12 @@ class Script:
         :param str content: Content of script.
         """
 
-        # type
+        # Debian recognizes only these maintainer-script lifecycle hooks.
+        # Validate at configuration time instead of silently placing a file
+        # dpkg will never execute into DEBIAN/.
+        valid_types = {"preinst", "postinst", "prerm", "postrm"}
+        if script_type not in valid_types:
+            raise ValueError(f"Unsupported maintainer script type '{script_type}'.")
         self.type = script_type
 
         # stack

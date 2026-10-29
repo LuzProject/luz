@@ -1,13 +1,14 @@
 # module imports
 from concurrent.futures import ThreadPoolExecutor, wait
 from os import makedirs
+from pathlib import Path
 from shutil import copytree, rmtree
 from subprocess import check_output
 
 # local imports
-from ..common.deps import clone_headers, clone_libraries, logos
+from ..common.deps import clone_headers, clone_libraries, logos, substrate_compatibility_library
 from ..common.logger import log
-from ..common.utils import get_hash, resolve_path
+from ..common.utils import cmd_in_path, get_hash, resolve_path
 
 
 class ModuleBuilder:
@@ -27,12 +28,19 @@ class ModuleBuilder:
         self.control = luz.control
 
         # add necessary include files
-        # Vendor headers/libraries provide the iOS SDK additions Luz needs;
-        # the selected platform SDK supplies the system headers/frameworks.
-        cloned_libs = str(clone_libraries(self.luz))
-        self.module.include_dirs.append(str(clone_headers(self.luz)))
-        self.module.library_dirs.append(cloned_libs)
-        self.module.framework_dirs.append(cloned_libs)
+        # Vendor headers/libraries provide iOS device hooking support. Native
+        # macOS and Simulator builds rely entirely on their selected SDK, so
+        # they do not clone or link an unnecessary jailbreak runtime.
+        if self.meta.platform == "iphoneos":
+            cloned_libs = str(clone_libraries(self.luz))
+            # Put the compatibility directory first so -lsubstrate resolves
+            # to the TAPI v4 stub on current Xcode releases.
+            substrate_compat = substrate_compatibility_library(self.luz, resolve_path(cloned_libs))
+            self.module.include_dirs.append(str(clone_headers(self.luz)))
+            if substrate_compat != resolve_path(cloned_libs):
+                self.module.library_dirs.append(str(substrate_compat))
+            self.module.library_dirs.append(cloned_libs)
+            self.module.framework_dirs.append(cloned_libs)
         self.module.include_dirs.append(f"{self.meta.sdk}/usr/include")
         self.module.library_dirs.append(f"{self.meta.sdk}/usr/lib")
         self.module.framework_dirs.append(f"{self.meta.sdk}/System/Library/Frameworks")
@@ -53,6 +61,20 @@ class ModuleBuilder:
             if str(file).endswith(".swift"):
                 self.module.library_dirs.append("/usr/lib/swift")
                 self.module.library_dirs.append(f"{self.meta.sdk}/usr/lib/swift")
+                # Swift's auto-linked compatibility archives live in the
+                # selected Xcode toolchain, not in the platform SDK. Without
+                # this path Simulator and device Swift links miss libraries
+                # such as swiftCompatibility56.
+                # /usr/bin/swift is a developer-directory shim on macOS;
+                # xcrun resolves it to the active Xcode toolchain.
+                xcrun = cmd_in_path("xcrun")
+                swift_binary = (
+                    resolve_path(check_output([str(xcrun), "--find", "swift"], text=True).strip())
+                    if xcrun else cmd_in_path(str(self.meta.swift))
+                )
+                swift_toolchain_libraries = swift_binary.resolve().parent.parent / "lib" / "swift" / self.meta.platform if swift_binary else None
+                if swift_toolchain_libraries and swift_toolchain_libraries.exists():
+                    self.module.library_dirs.append(str(swift_toolchain_libraries))
                 break
 
         # private frameworks
@@ -190,18 +212,20 @@ class ModuleBuilder:
             ("-l" + " -l".join(self.module.libraries)) if self.module.libraries != [] else "",
             ("-framework " + " -framework ".join(self.module.frameworks)) if self.module.frameworks != [] else "",
             ("-framework " + " -framework ".join(self.module.private_frameworks)) if self.module.private_frameworks != [] else "",
-            f"-m{self.meta.platform}-version-min={self.meta.min_vers}",
+            f"-m{self.meta.deployment_flag_platform}-version-min={self.meta.min_vers}",
             "-g" if self.meta.debug else "",
-            f"-Wl,-install_name,{'/var/jb' if self.meta.rootless else ''}/{self.module.install_dir}/{self.module.install_name},-rpath,{'/var/jb' if self.meta.rootless else ''}/usr/lib/,-rpath,{'/var/jb' if self.meta.rootless else ''}/Library/Frameworks/",
         ]
         build_flags.extend(self.module.warnings)
         build_flags.extend(self.module.linker_flags)
         # add dynamic lib to args
         if compile_type == "dylib":
             build_flags.append("-dynamiclib")
-        # compile for each arch
-        # format platform
-        platform = "ios" if self.meta.platform == "iphoneos" else self.meta.platform
+            build_flags.append(
+                f"-Wl,-install_name,{'/var/jb' if self.meta.rootless else ''}/{self.module.install_dir}/{self.module.install_name},"
+                f"-rpath,{'/var/jb' if self.meta.rootless else ''}/usr/lib/,"
+                f"-rpath,{'/var/jb' if self.meta.rootless else ''}/Library/Frameworks/"
+            )
+        # Compile and link one thin binary per requested architecture.
         for arch in self.meta.archs:
             try:
                 # strings
@@ -209,7 +233,7 @@ class ModuleBuilder:
                 for file in resolve_path(f"{self.obj_dir}/{arch}/*.o"):
                     strings.append(str(file))
                 # arch
-                arch_formatted = f"-target {arch}-apple-{platform}{self.meta.min_vers}"
+                arch_formatted = f"-target {self.meta.target_triple(arch)}"
                 self.luz.cmd.exec_output(f"{self.meta.cc} {' '.join(strings)} -o {self.obj_dir}/{arch}/{self.module.install_name} {' '.join(build_flags)} {arch_formatted}")
             except Exception as e:
                 print(e)
@@ -228,11 +252,13 @@ class ModuleBuilder:
             except:
                 return f'An error occured when trying to strip "{out_name}" for module "{self.module.name}".'
 
-        try:
-            # run ldid
-            self.luz.cmd.exec_no_output(f"{self.meta.ldid} {' '.join(self.module.codesign_flags)} {out_name}")
-        except:
-            return f'An error occured when trying codesign "{out_name}" for module "{self.module.name}".'
+        # Device binaries need ldid; macOS and simulator outputs use the host
+        # toolchain's signing model and can be executed without it.
+        if self.meta.platform == "iphoneos":
+            try:
+                self.luz.cmd.exec_no_output(f"{self.meta.ldid} {' '.join(self.module.codesign_flags)} {out_name}")
+            except:
+                return f'An error occured when trying codesign "{out_name}" for module "{self.module.name}".'
 
     def __handle_logos(self):
         """Handle files that have had Logos ran on them."""
@@ -303,10 +329,7 @@ class ModuleBuilder:
             return f'An error occured when attempting to compile for module "{self.module.name}".'
 
     def __compile_swift_arch(self, file, fmtc: list, arch: str):
-        # format platform
-        platform = "ios" if self.meta.platform == "iphoneos" else self.meta.platform
-        # arch
-        arch_formatted = f"-target {arch}-apple-{platform}{self.meta.min_vers}"
+        arch_formatted = f"-target {self.meta.target_triple(arch)}"
         # outname
         out_name = f"{self.obj_dir}/{arch}/{file.name}-{self.luz.now}"
         # define build flags
@@ -335,10 +358,7 @@ class ModuleBuilder:
             return f'An error occured when trying to compile "{file}" for module "{self.module.name}".'
 
     def __compile_c_arch(self, file, arch: str):
-        # format platform
-        platform = "ios" if self.meta.platform == "iphoneos" else self.meta.platform
-        # arch
-        arch_formatted = f"-target {arch}-apple-{platform}{self.meta.min_vers}"
+        arch_formatted = f"-target {self.meta.target_triple(arch)}"
         # outname
         out_name = f"{self.obj_dir}/{arch}/{file.name}-{self.luz.now}.o"
         build_flags = [
@@ -348,7 +368,7 @@ class ModuleBuilder:
             arch_formatted,
             ("-I" + " -I".join(self.module.include_dirs)) if self.module.include_dirs != [] else "",
             ("-F" + " -F".join(self.module.framework_dirs)) if self.module.framework_dirs != [] else "",
-            f"-m{self.meta.platform}-version-min={self.meta.min_vers}",
+            f"-m{self.meta.deployment_flag_platform}-version-min={self.meta.min_vers}",
             "-g" if self.meta.debug else "",
             f"-o {out_name}",
             f'-DLUZ_PACKAGE_VERSION=\\"{self.control.version}\\"' if self.control else "",

@@ -11,7 +11,7 @@ from ...common.utils import resolve_path
 default_values = {
     "tweak": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["substrate", "System"]},
     "tool": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["System"]},
-    "preferences": {"frameworks": ["Foundation", "CoreFoundation"], "private_frameworks": ["preferences"], "libraries": ["System"]},
+    "preferences": {"frameworks": ["Foundation", "CoreFoundation"], "private_frameworks": ["Preferences"], "libraries": ["System"]},
     "library": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["System"]},
     "framework": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["System"]},
 }
@@ -25,22 +25,22 @@ class Module:
         type: str = "tweak",
         install_name: str = "",
         install_dir: str = "",
-        c_flags: list = [],
-        swift_flags: list = [],
-        linker_flags: list = [],
+        c_flags: list = None,
+        swift_flags: list = None,
+        linker_flags: list = None,
         optimization: int = 0,
-        warnings: list = ["-Wall"],
-        codesign_flags: list = ["-S"],
-        filter: dict = {"bundles": ["com.apple.SpringBoard"]},
-        public_headers: list = [],
+        warnings: list = None,
+        codesign_flags: list = None,
+        filter: dict = None,
+        public_headers: list = None,
         use_arc: bool = True,
         only_compile_changed: bool = True,
-        bridging_headers: list = [],
-        include_dirs: list = [],
-        framework_dirs: list = [],
-        library_dirs: list = [],
-        frameworks: list = [],
-        private_frameworks: list = [],
+        bridging_headers: list = None,
+        include_dirs: list = None,
+        framework_dirs: list = None,
+        library_dirs: list = None,
+        frameworks: list = None,
+        private_frameworks: list = None,
         libraries: list = None,
         before_stage: Callable = None,
         after_stage: Callable = None,
@@ -78,22 +78,22 @@ class Module:
         self.files = files
         self.install_name = install_name
         self.install_dir = resolve_path(install_dir) if install_dir != "" else None
-        self.c_flags = c_flags
-        self.swift_flags = swift_flags
-        self.linker_flags = linker_flags
+        self.c_flags = list(c_flags or [])
+        self.swift_flags = list(swift_flags or [])
+        self.linker_flags = list(linker_flags or [])
         self.optimization = optimization
-        self.warnings = warnings
-        self.codesign_flags = codesign_flags
-        self.filter = filter
-        self.public_headers = public_headers
+        self.warnings = list(warnings or ["-Wall"])
+        self.codesign_flags = list(codesign_flags or ["-S"])
+        self.filter = dict(filter or {"bundles": ["com.apple.SpringBoard"]})
+        self.public_headers = list(public_headers or [])
         self.use_arc = use_arc
         self.only_compile_changed = only_compile_changed
-        self.bridging_headers = bridging_headers
-        self.include_dirs = include_dirs
-        self.framework_dirs = framework_dirs
-        self.library_dirs = library_dirs
-        self.frameworks = frameworks
-        self.private_frameworks = private_frameworks
+        self.bridging_headers = list(bridging_headers or [])
+        self.include_dirs = list(include_dirs or [])
+        self.framework_dirs = list(framework_dirs or [])
+        self.library_dirs = list(library_dirs or [])
+        self.frameworks = list(frameworks or [])
+        self.private_frameworks = list(private_frameworks or [])
         # ``None`` selects Luz's compatibility defaults. An explicit empty
         # list is meaningful for modules that do not use a hooking runtime
         # (for example a constructor-only diagnostic tweak).
@@ -126,8 +126,7 @@ class Module:
 
         # stack
         ins_stack = stack()[1]
-        path = resolve_path(ins_stack.filename).parent
-        chdir(path)
+        path = resolve_path(ins_stack.filename).absolute().parent
         for f in self.files:
             if not str(f).startswith("/"):
                 f = f"{path}/{f}"
@@ -171,10 +170,10 @@ class Module:
                 self.install_dir = resolve_path(f"/Library/Frameworks/{self.name}.framework")
 
         # resolve bridging headers
-        self.bridging_headers = [resolve_path(f) for f in self.bridging_headers]
+        self.bridging_headers = [resolve_path(f if str(f).startswith("/") else path / f) for f in self.bridging_headers]
 
         # resources dir
-        self.resources_dir = resolve_path(resources_dir)
+        self.resources_dir = resolve_path(resources_dir if str(resources_dir).startswith("/") else path / resources_dir)
 
         # see if bridging headers exist
         for f in self.bridging_headers:
@@ -182,13 +181,13 @@ class Module:
                 raise FileNotFoundError(f'Bridging header "{f}" not found')
 
         # resolve include dirs
-        self.include_dirs = [str(resolve_path(f).absolute()) for f in self.include_dirs]
+        self.include_dirs = [str(resolve_path(f if str(f).startswith("/") else path / f).absolute()) for f in self.include_dirs]
 
         # resolve framework dirs
-        self.framework_dirs = [str(resolve_path(f).absolute()) for f in self.framework_dirs]
+        self.framework_dirs = [str(resolve_path(f if str(f).startswith("/") else path / f).absolute()) for f in self.framework_dirs]
 
         # resolve library dirs
-        self.library_dirs = [str(resolve_path(f).absolute()) for f in self.library_dirs]
+        self.library_dirs = [str(resolve_path(f if str(f).startswith("/") else path / f).absolute()) for f in self.library_dirs]
 
         # add default values
         if self.type in default_values:

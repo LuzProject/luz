@@ -52,7 +52,7 @@ def main():
         "--type",
         action="store",
         help="the type of project to generate",
-        choices=["tool", "tweak"],
+        choices=["tool", "tweak", "preferences", "prefs"],
         required=False,
     )
 
@@ -72,15 +72,8 @@ def main():
                 args.path = resolve_path("./")
             luzbuild_path = f"{args.path}/luzconf.py"
             if not resolve_path(luzbuild_path).exists():
-                if resolve_path(f"{args.path}/LuzBuild").exists():
-                    error("LuzBuild has been removed. Luz now uses a Python file to build projects. See the docs for more information. (https://luz.jaidan.dev/en/latest/format.html)")
-                    sys.exit(1)
-                elif resolve_path(f"{args.path}/luz.py").exists():
-                    error("Luz.py has been renamed to luzconf.py due to a conflict with the Python package.")
-                    sys.exit(1)
-                else:
-                    error("Could not find build file.")
-                    sys.exit(1)
+                error("Could not find build file.")
+                sys.exit(1)
             luz = Luz(luzbuild_path, args=args)
             luz.build_project()
         elif args.command == "verify":
@@ -90,15 +83,8 @@ def main():
                 args.path = resolve_path("./")
             luzbuild_path = f"{args.path}/luzconf.py"
             if not resolve_path(luzbuild_path).exists():
-                if resolve_path(f"{args.path}/LuzBuild").exists():
-                    error("LuzBuild has been removed. Luz now uses a Python file to build projects. See the docs for more information. (https://luz.jaidan.dev/en/latest/format.html)")
-                    sys.exit(1)
-                elif resolve_path(f"{args.path}/luz.py").exists():
-                    error("Luz.py has been renamed to luzconf.py due to a conflict with the Python package.")
-                    sys.exit(1)
-                else:
-                    error("Could not find build file.")
-                    sys.exit(1)
+                error("Could not find build file.")
+                sys.exit(1)
             luz = Verify(luzbuild_path)
         elif args.command == "gen":
             if args.type is None:
