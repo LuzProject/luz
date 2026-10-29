@@ -13,7 +13,6 @@ from shutil import which
 from subprocess import run
 from tarfile import open as tar_open
 
-
 # Every modern .deb is a System V ar archive. This eight-byte signature must
 # be written before its three members: debian-binary, control, and data.
 AR_MAGIC = b"!<arch>\n"
@@ -25,9 +24,7 @@ def _ar_member(name: str, payload: bytes) -> bytes:
         raise ValueError(f"Debian archive member name is too long: {name}")
     # An ar member header is exactly 60 ASCII bytes. Debian expects the
     # member-name slash convention used by System V ar implementations.
-    header = (
-        f"{name + '/':<16}{0:<12}{0:<6}{0:<6}{0o100644:<8o}{len(payload):<10}`\n"
-    ).encode("ascii")
+    header = (f"{name + '/':<16}{0:<12}{0:<6}{0:<6}{0o100644:<8o}{len(payload):<10}`\n").encode("ascii")
     member = header + payload
     # ar members are aligned to even byte boundaries.
     return member + (b"\n" if len(member) % 2 else b"")

@@ -1,6 +1,5 @@
 import re
 
-
 _PACKAGE_NAME = re.compile(r"^[a-z0-9][a-z0-9+.-]*$")
 _ARCHITECTURE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]*$")
 
@@ -166,9 +165,7 @@ class Control:
                 # represents a blank line in a long description.
                 if key == "Description" and "\n" in value:
                     short, *long = value.splitlines()
-                    value = short + "\n" + "\n".join(
-                        f" {line}" if line else " ." for line in long
-                    )
+                    value = short + "\n" + "\n".join(f" {line}" if line else " ." for line in long)
                 string += f"{key}: {value}\n"
         # return string
         return string

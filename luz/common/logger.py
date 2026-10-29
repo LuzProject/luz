@@ -1,7 +1,6 @@
 # module imports
 from sys import stdout
 
-
 colors = {
     "red": "\033[31m",
     "green": "\033[32m",

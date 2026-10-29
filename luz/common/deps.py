@@ -10,7 +10,6 @@ from threading import Lock
 from .logger import error, log_stdout, remove_log_stdout
 from .utils import resolve_path
 
-
 _pylogos_module = None
 _pylogos_lock = Lock()
 
@@ -76,10 +75,7 @@ def load_pylogos(module):
         modules[spec.name] = loaded
         spec.loader.exec_module(loaded)
         if not hasattr(loaded, "preprocess_file"):
-            raise RuntimeError(
-                "Vendored pyLogos is missing preprocess_file(). Update "
-                "~/.luz/vendor/pyLogos to a version with the callable API."
-            )
+            raise RuntimeError("Vendored pyLogos is missing preprocess_file(). Update " "~/.luz/vendor/pyLogos to a version with the callable API.")
         _pylogos_module = loaded
         return _pylogos_module
 

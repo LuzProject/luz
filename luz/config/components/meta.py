@@ -6,7 +6,6 @@ from subprocess import getoutput
 from ...common.utils import cmd_in_path, get_luz_storage, resolve_path, setup_luz_dir
 from ...common import cfg
 
-
 PLATFORMS = {
     "iphoneos": "iphoneos",
     "iphonesimulator": "iphonesimulator",

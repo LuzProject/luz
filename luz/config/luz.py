@@ -40,16 +40,16 @@ def _control_list(value):
 class Luz:
     """Load a ``luzconf.py`` and coordinate its build, package, and install.
 
-Most projects never instantiate this class inside their configuration: the
-``luz`` command loads the file and creates it.  It remains public for editor
-integration, embedding Luz in another Python tool, and test projects.  The
-configuration module may expose ``meta``, ``control``, ``modules``,
-``scripts``, and ``submodules`` variables using the public configuration
-classes.
+    Most projects never instantiate this class inside their configuration: the
+    ``luz`` command loads the file and creates it.  It remains public for editor
+    integration, embedding Luz in another Python tool, and test projects.  The
+    configuration module may expose ``meta``, ``control``, ``modules``,
+    ``scripts``, and ``submodules`` variables using the public configuration
+    classes.
 
-``build_project()`` compiles each module, stages package content, creates a
-``.deb`` when :attr:`Meta.pack` is true, and performs remote installation only
-when the CLI requested it for a physical iOS target.
+    ``build_project()`` compiles each module, stages package content, creates a
+    ``.deb`` when :attr:`Meta.pack` is true, and performs remote installation only
+    when the CLI requested it for a physical iOS target.
     """
 
     def __init__(self, file_path: str = "luzconf.py", args: Namespace = None, inherit=None):
