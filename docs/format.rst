@@ -20,10 +20,10 @@ Meta variables are defined in a class called ``Meta`` that can be imported from 
      - Description
    * - ``debug``
      - Boolean
-     - Whether or not to build a debug version of the package. (``true`` if not specified)
+     - Add debug information and use ``-O0``. (``true`` if not specified)
    * - ``release``
      - Boolean
-     - Whether or not to build a release version of the package. (``false`` if not specified)
+     - Disable debug mode when both options are set. (``false`` if not specified)
    * - ``sdk``
      - String
      - SDK path to use for building. (uses ``xcrun`` to find an SDK if not specified)
@@ -37,23 +37,31 @@ Meta variables are defined in a class called ``Meta`` that can be imported from 
      - String
      - Path to ``swift`` to use for compilation. (Finds ``swift`` in PATH if not specified)
    * - ``rootless``
-     - String
-     - Whether or not to make a rootless DEB archive. (``true`` if not specified)
+     - Boolean
+     - Stage physical iOS-device payloads under ``/var/jb``. It is disabled
+       automatically for Simulator, macOS, and watch targets. (``true`` if not specified)
    * - ``compression``
      - String
-     - Command to use to compress the DEB archive. (``xz`` if not specified)
+     - Debian archive compression: ``xz`` (default), ``gzip``, ``bzip2``, or
+       ``zstd`` when available.
    * - ``pack``
-     - String
-     - Whether or not to pack the DEB archive. (``true`` if not specified)
+     - Boolean
+     - Whether to write a ``.deb`` after compiling. Set false for compile-only
+       local tools. (``true`` if not specified)
    * - ``archs``
      - List
      - List of architectures to build for. (``['arm64', 'arm64e']`` if not specified)
    * - ``platform``
      - String
-     - Platform to build for. Can be ``macosx``, ``iphoneos``, ``iphonesimulator``, ``watchos`` or ``watchsimulator``. (``iphoneos`` if not specified)
+     - Platform to build for. Canonical values are ``macosx``, ``iphoneos``,
+       ``iphonesimulator``, ``watchos``, and ``watchsimulator``. ``ios``,
+       ``macos``/``mac``, and ``watch`` are accepted aliases. (``iphoneos`` if not specified)
    * - ``min_vers``
      - String
      - Minimum version to build for. (``15.0`` if not specified)
+   * - ``messages``
+     - Boolean
+     - Print compiler, linker, and packaging commands. (``false`` if not specified)
    * - ``install_user``
      - String
      - User to install the built project to. (``root`` if not specified)
@@ -137,7 +145,9 @@ Modules
 
 Modules are where you define the files to compile and the settings for the build.
 
-Modules are defined in a class called ``Modules`` that can be imported from ``luz``.
+Modules are defined with the ``Module`` class, imported from ``luz``. Relative
+source, header, resource, and search-directory paths are resolved from the
+``luzconf.py`` containing the declaration.
 
 .. list-table::
    :widths: 5 1 10
@@ -147,7 +157,8 @@ Modules are defined in a class called ``Modules`` that can be imported from ``lu
      - Description
    * - ``type``
      - String
-     - Type of module to build. (``tweak`` if not specified)
+     - Type of module: ``tweak``, ``tool``, ``preferences`` (or ``prefs``),
+       ``library`` (or ``lib``), or ``framework``. (``tweak`` if not specified)
    * - ``c_flags``
      - List
      - Flags to pass to ``clang`` when compiling C files.
@@ -163,7 +174,7 @@ Modules are defined in a class called ``Modules`` that can be imported from ``lu
    * - ``warnings``
      - List
      - Warnings flags to pass to ``clang``. (``["-Wall"]`` if not specified)
-   * - ``ent_flags``
+   * - ``codesign_flags``
      - List
      - Entitlement flags to pass to ``ldid``. (``["-S"]`` if not specified)
    * - ``use_arc``
@@ -183,7 +194,9 @@ Modules are defined in a class called ``Modules`` that can be imported from ``lu
      - List of private frameworks to link against.
    * - ``libraries``
      - List
-     - List of libraries to link against.
+     - List of libraries to link against without the ``lib`` prefix. Leave as
+       ``None`` for type defaults; use ``[]`` to intentionally opt out of
+       default libraries such as Substrate.
    * - ``before_stage``
      - Callable
      - Function to run before staging.
@@ -219,7 +232,7 @@ Example ``luzconf.py``
 
 .. code:: Python
 
-    from luz import Control, Meta, Modules, Script, Submodule
+    from luz import Control, Meta, Module, Script, Submodule
 
     # define meta options
     meta = Meta(
@@ -228,7 +241,7 @@ Example ``luzconf.py``
         cc='/usr/bin/gcc',
         swift='/usr/bin/swift',
         compression='zstd',
-        platform='iphoneos',
+        platform='ios',
         sdk='~/.luz/sdks/iPhoneOS14.5.sdk',
         rootless=True,
         min_vers='15.0'

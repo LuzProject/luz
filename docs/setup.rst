@@ -12,9 +12,10 @@ To install Luz, run the following command in your terminal:
 
 This will install Luz and all of its dependencies.
 
-Luz requires Python 3.11 or newer and supports the current Python 3.15
-release line. Logos source files are interpreted with the native Python
-implementation, `pyLogos <https://github.com/iCrazeiOS/pyLogos>`_.
+Luz requires Python 3.11 or newer. Logos source files are interpreted by the
+native Python implementation, `pyLogos <https://github.com/iCrazeiOS/pyLogos>`_,
+which Luz vendors under ``~/.luz/vendor/pyLogos`` and calls directly in the
+Luz process. A separate Python subprocess is not launched for each Logos file.
 
 Options
 *********************

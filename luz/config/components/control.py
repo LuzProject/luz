@@ -6,6 +6,14 @@ _ARCHITECTURE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]*$")
 
 
 class Control:
+    """Define Debian binary-package metadata written to ``DEBIAN/control``.
+
+    Required fields are validated during configuration so package errors are
+    reported before compiling.  List-valued relationship fields are emitted
+    as comma-separated Debian control fields.  ``name`` and ``author`` are
+    Luz conveniences; they are not serialized as non-standard control fields.
+    """
+
     def __init__(
         self,
         id: str,
@@ -31,31 +39,41 @@ class Control:
         section: str = None,
         homepage: str = None,
     ):
-        """The project's control metadata.
+        """Create validated metadata for the package being built.
 
         Args:
-            id (str): ID of the package.
-            version (str): Version of the package.
-            maintainer (str): Maintainer of the package.
-            architecture (str): Architecture of the package.
-            name (str, optional): Name of the package. Defaults to None.
-            description (str, optional): Description of the package. Defaults to None.
-            author (str, optional): Author of the package. Defaults to the maintainer.
-            depends (list, optional): Dependencies of the project. Defaults to [].
-            conflicts (list, optional): Conflicts of the project. Defaults to [].
-            replaces (list, optional): Replaces of the project. Defaults to [].
-            provides (list, optional): Provides of the project. Defaults to [].
-            recommends (list, optional): Recommends of the project. Defaults to [].
-            suggests (list, optional): Suggests of the project. Defaults to [].
-            breaks (list, optional): Breaks of the project. Defaults to [].
-            enhances (list, optional): Enhances of the project. Defaults to [].
-            pre_depends (list, optional): Pre-dependencies of the project. Defaults to [].
-            essential (bool, optional): Whether the project is essential. Defaults to False.
-            original_maintainer (str, optional): Original maintainer of the project. Defaults to None.
-            uploaders (list, optional): Uploaders of the project. Defaults to [].
-            priority (str, optional): Priority of the project. Defaults to None.
-            section (str, optional): Section of the project. Defaults to None.
-            homepage (str, optional): Homepage of the project. Defaults to None.
+            id: Lowercase Debian package identifier, for example
+                ``"com.example.my-tweak"``.
+            version: Debian package version, for example ``"1.2.0-1"``.
+            maintainer: Debian maintainer value, commonly ``"Name <email>"``.
+            architecture: Debian architecture such as ``"iphoneos-arm64"``
+                or ``"all"``; it must be one whitespace-free value.
+            name: Human-readable Luz project name.  If ``description`` is
+                omitted, this becomes the one-line Debian description.
+            description: Debian package synopsis, optionally followed by
+                long-description lines separated with newlines.  Blank lines
+                are encoded using Debian's required `` .`` continuation.
+            author: Luz-only author value; defaults to ``maintainer``.
+            depends: Required package relationships, optionally including
+                Debian version expressions such as ``"firmware (>= 15.0)"``.
+            conflicts: Packages that cannot be installed alongside this one.
+            replaces: Packages whose files this package may replace.
+            provides: Virtual package names supplied by this package.
+            recommends: Strong but non-mandatory dependencies.
+            suggests: Optional related packages.
+            breaks: Packages known to be incompatible with this version.
+            enhances: Packages this package enhances.
+            pre_depends: Dependencies that must be configured before unpack.
+            essential: Mark the package as Debian ``Essential: yes``.
+            original_maintainer: Upstream/original maintainer control field.
+            uploaders: Additional Debian uploader identities.
+            priority: Debian archive priority, such as ``"optional"``.
+            section: Debian archive section, such as ``"Tweaks"``.
+            homepage: Project homepage URL.
+
+        Raises:
+            ValueError: If a required field cannot be serialized safely as a
+                Debian control field.
         """
         # assign variables
         self.id = id

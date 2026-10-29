@@ -1,4 +1,4 @@
-"""Luz runner module."""
+"""Project loader and build entrypoint behind the public :class:`Luz` API."""
 
 # module imports
 from argparse import Namespace
@@ -38,10 +38,39 @@ def _control_list(value):
 
 
 class Luz:
-    def __init__(self, file_path: str = "luzconf.py", args: Namespace = None, inherit=None):
-        """Initialize Luz
+    """Load a ``luzconf.py`` and coordinate its build, package, and install.
 
-        :param str file_path: Path to luz.py
+Most projects never instantiate this class inside their configuration: the
+``luz`` command loads the file and creates it.  It remains public for editor
+integration, embedding Luz in another Python tool, and test projects.  The
+configuration module may expose ``meta``, ``control``, ``modules``,
+``scripts``, and ``submodules`` variables using the public configuration
+classes.
+
+``build_project()`` compiles each module, stages package content, creates a
+``.deb`` when :attr:`Meta.pack` is true, and performs remote installation only
+when the CLI requested it for a physical iOS target.
+    """
+
+    def __init__(self, file_path: str = "luzconf.py", args: Namespace = None, inherit=None):
+        """Load a project configuration without starting its build.
+
+        Args:
+            file_path: Configuration file to load.  Relative paths are
+                resolved from the current working directory; project-relative
+                paths inside ``Module`` and ``Script`` are then resolved from
+                the configuration file's directory.
+            args: Optional CLI argument namespace.  Luz reads ``clean``,
+                ``install``, ``funny_time``, and ``meta`` overrides from it.
+                Pass ``None`` when embedding Luz programmatically.
+            inherit: Parent :class:`Luz` instance used while loading a
+                ``Submodule``.  It shares build timing, locks, command
+                execution, and unspecified meta values with the parent.
+
+        Raises:
+            FileNotFoundError: If ``file_path`` does not exist.
+            ValueError: If package metadata is required but neither a
+                ``Control`` declaration nor a manual control file is present.
         """
         cfg.inherit = inherit
         if inherit is None:
@@ -238,7 +267,13 @@ class Luz:
         return Luz(f"{submodule.path}/luzconf.py", inherit=self if submodule.inherit else None)
 
     def update_hashlist(self, keys):
-        """Update the hashlist with a list of keys."""
+        """Merge source-state hashes into the incremental-build cache.
+
+        Args:
+            keys: Mapping of cache keys to content/build hashes.  This is an
+                extension point for custom builders; normal ``Module`` builds
+                update the cache automatically.
+        """
         self.build_info["hashlist"].update(keys)
 
     def __pack(self):
@@ -300,7 +335,18 @@ class Luz:
                 return result
 
     def build_project(self):
-        """Build the project."""
+        """Compile, optionally package, and optionally install the project.
+
+        Compilation errors are raised after module workers finish.  When
+        :attr:`Meta.pack` is true, the resulting Debian archive is written to
+        ``<project>/packages`` using the control package id, version, and
+        architecture.  CLI-triggered installation copies that archive over
+        SSH and executes ``dpkg -i`` on a physical iOS device; simulator and
+        macOS builds deliberately do not support package installation.
+
+        Raises:
+            Exception: If a module or submodule build fails.
+        """
         # assign modules
         build_results = self.__build()
 
@@ -316,7 +362,7 @@ class Luz:
         t = time() - self.now
         log(f"Build completed in {round(t, 2)} seconds.{f' ({Ctime(t).get_random()})' if self.funny_time else ''}")
         if self.install:
-            if self.meta.platform != "iphoneos":
+            if not self.meta.is_device:
                 error("Installation is currently not supported for platforms other than iOS.")
                 exit(1)
             # deb file name

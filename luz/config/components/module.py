@@ -1,6 +1,5 @@
 # module imports
 from inspect import stack
-from os import chdir
 from pathlib import Path
 from typing import Callable, Union
 
@@ -9,15 +8,28 @@ from ...common.utils import resolve_path
 
 # map of default values
 default_values = {
-    "tweak": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["substrate", "System"]},
-    "tool": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["System"]},
-    "preferences": {"frameworks": ["Foundation", "CoreFoundation"], "private_frameworks": ["Preferences"], "libraries": ["System"]},
-    "library": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["System"]},
-    "framework": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["System"]},
+    "tweak": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["substrate", "root"]},
+    "tool": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["root"]},
+    "preferences": {"frameworks": ["Foundation", "CoreFoundation", "UIKit", "Preferences"], "private_frameworks": ["Preferences"], "libraries": ["root"]},
+    "library": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["root"]},
+    "framework": {"frameworks": ["Foundation", "CoreFoundation"], "libraries": ["root"]},
 }
 
 
 class Module:
+    """Declare one binary, framework, tweak, or preference bundle.
+
+    Paths in a ``Module`` declaration are resolved relative to the
+    ``luzconf.py`` that constructed it, not to the shell's current directory.
+    A module's type supplies sensible framework and library defaults; use an
+    explicit empty ``libraries=[]`` only when intentionally opting out of
+    Luz's default libraries (including Substrate for tweaks).
+
+    ``type`` accepts ``"tweak"``, ``"tool"``, ``"preferences"``,
+    ``"library"``, and ``"framework"``.  ``"prefs"`` and ``"lib"`` are
+    retained as aliases for the corresponding long forms.
+    """
+
     def __init__(
         self,
         files: Union[list, str],
@@ -46,30 +58,59 @@ class Module:
         after_stage: Callable = None,
         resources_dir: Path = Path("./Resources"),
     ):
-        """Initialize Module
+        """Create a module declaration for a ``Luz`` project.
 
         Args:
-            files (Union[list, str]): Files to compile
-            name (str): Name of module
-            type (str, optional): Type of module (default: tweak)
-            install_name (str, optional): Name to install the module as (defaults to the module name)
-            install_dir (str, optional): Directory to install the module to
-            c_flags (list, optional): C flags
-            swift_flags (list, optional): Swift flags
-            linker_flags (list, optional): Linker flags
-            optimization (int, optional): Optimization level (default: 0)
-            warnings (list, optional): Warnings (default: -Wall)
-            codesign_flags (list, optional): Entitlements flag (default: -S)
-            filter (dict, optional): Filter
-            use_arc (bool, optional): Use ARC (default: True)
-            only_compile_changed (bool, optional): Only compile changed files (default: True)
-            bridging_headers (list, optional): Bridging headers
-            include_dirs (list, optional): Include directories
-            framework_dirs (list, optional): Framework directories
-            library_dirs (list, optional): Library directories
-            frameworks (list, optional): Frameworks to link
-            private_frameworks (list, optional): Private frameworks to link
-            libraries (list, optional): Libraries to link
+            files: One source path or a list of source paths.  Supported
+                files may include C, Objective-C, Objective-C++, and Swift;
+                relative paths are relative to this ``luzconf.py``.
+            name: Logical module name.  It also determines default output,
+                bundle, framework, and installation names.
+            type: Module kind.  See the class documentation for values and
+                aliases.  Defaults to ``"tweak"``.
+            install_name: Filename installed in the package.  The default is
+                ``<name>.dylib`` for tweaks/libraries and ``<name>`` for
+                tools, frameworks, and preference bundles.
+            install_dir: Absolute device-relative installation directory.
+                Defaults depend on type: tools use ``/usr/local/bin``, tweaks
+                use MobileSubstrate, libraries use ``/usr/lib``, frameworks
+                use ``/Library/Frameworks``, and preferences use
+                ``/Library/PreferenceBundles``.
+            c_flags: Extra flags supplied while compiling C-family sources.
+            swift_flags: Extra flags supplied while compiling Swift sources.
+            linker_flags: Extra arguments passed to the linker driver.
+            optimization: Optimization level passed as ``-O<level>``.
+            warnings: Compiler warning flags.  Defaults to ``["-Wall"]``.
+            codesign_flags: Flags given to ``ldid`` for device outputs;
+                defaults to ``["-S"]``.
+            filter: Tweak injection filter dictionary.  The default injects
+                into ``com.apple.SpringBoard``; it is used only where a
+                tweak filter plist is meaningful.
+            public_headers: Headers exported by a library/framework package.
+            use_arc: Add ``-fobjc-arc`` for Objective-C-family compilation.
+            only_compile_changed: Reuse cached object files whose inputs and
+                build settings have not changed.
+            bridging_headers: Objective-C headers exposed to Swift sources.
+            include_dirs: Extra header-search directories (``-I``).
+            framework_dirs: Extra framework-search directories (``-F``).
+            library_dirs: Extra library-search directories (``-L``).
+            frameworks: Public frameworks to link.  Type defaults are added
+                to this list.
+            private_frameworks: Private frameworks to link.  Preference
+                modules receive ``Preferences`` by default.
+            libraries: Libraries without the ``lib`` prefix, for example
+                ``["sqlite3"]``.  ``None`` uses type defaults; ``[]`` means
+                no default libraries, useful for standalone tools.
+            before_stage: Optional callable invoked before this module's
+                files are copied into the package staging tree.
+            after_stage: Optional callable invoked after staging, allowing a
+                project to add generated package files.
+            resources_dir: Resource directory copied for bundle-style module
+                types.  Relative paths are relative to ``luzconf.py``.
+
+        Raises:
+            FileNotFoundError: If a source file or bridging header is absent.
+            Exception: If ``files`` is empty or ``None``.
         """
 
         # assign variables
@@ -202,6 +243,7 @@ class Module:
 
     @property
     def abbreviated_name(self):
+        """Return the stable three-character label used in Luz output."""
         if len(self.name) >= 3:
             return self.name[:3].upper()
         else:

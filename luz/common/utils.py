@@ -50,13 +50,11 @@ class CMD:
                     print(cmd)
             else:
                 print(cmd)
-        if self.lock is not None:
-            with self.lock:
-                # Return stdout so preprocessors such as pyLogos can consume
-                # generated source instead of only checking the exit status.
-                return check_output(cmd, cwd=cwd, env=environ.copy(), shell=True)
-        else:
-            return check_output(cmd, cwd=cwd, env=environ.copy(), shell=True)
+        # Commands are launched by per-module worker pools. Holding the shared
+        # logging lock for the lifetime of a compiler process serialized every
+        # source and architecture, defeating parallel builds. Output is
+        # captured, so only the optional command-printing above needs locking.
+        return check_output(cmd, cwd=cwd, env=environ.copy(), shell=True)
 
 
 def resolve_path(path: str):

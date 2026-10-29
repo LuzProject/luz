@@ -6,7 +6,7 @@ from shutil import copytree, rmtree
 from subprocess import check_output
 
 # local imports
-from ..common.deps import clone_headers, clone_libraries, logos, substrate_compatibility_library
+from ..common.deps import clone_headers, clone_libraries, logos
 from ..common.logger import log
 from ..common.utils import cmd_in_path, get_hash, resolve_path
 
@@ -31,14 +31,9 @@ class ModuleBuilder:
         # Vendor headers/libraries provide iOS device hooking support. Native
         # macOS and Simulator builds rely entirely on their selected SDK, so
         # they do not clone or link an unnecessary jailbreak runtime.
-        if self.meta.platform == "iphoneos":
+        if self.meta.is_device:
             cloned_libs = str(clone_libraries(self.luz))
-            # Put the compatibility directory first so -lsubstrate resolves
-            # to the TAPI v4 stub on current Xcode releases.
-            substrate_compat = substrate_compatibility_library(self.luz, resolve_path(cloned_libs))
             self.module.include_dirs.append(str(clone_headers(self.luz)))
-            if substrate_compat != resolve_path(cloned_libs):
-                self.module.library_dirs.append(str(substrate_compat))
             self.module.library_dirs.append(cloned_libs)
             self.module.framework_dirs.append(cloned_libs)
         self.module.include_dirs.append(f"{self.meta.sdk}/usr/include")
@@ -154,6 +149,9 @@ class ModuleBuilder:
         self.luz.update_hashlist(new_hashes)
 
         # files list
+        # Keep incremental builds scoped to changed sources. The old code
+        # calculated this list, then unconditionally replaced it below with
+        # every source, making each ``luz build`` re-run Logos and Clang.
         files = changed if self.module.only_compile_changed else files_to_compile
 
         # handle files not needing compilation
@@ -165,8 +163,6 @@ class ModuleBuilder:
                 self.luz.lock,
             )
             return []
-
-        files = files_to_compile
 
         # use logos on files
         if not self.logos_dir.exists() and list(filter(lambda x: ".x" in x, [str(f) for f in files])) != []:
@@ -254,7 +250,7 @@ class ModuleBuilder:
 
         # Device binaries need ldid; macOS and simulator outputs use the host
         # toolchain's signing model and can be executed without it.
-        if self.meta.platform == "iphoneos":
+        if self.meta.is_device:
             try:
                 self.luz.cmd.exec_no_output(f"{self.meta.ldid} {' '.join(self.module.codesign_flags)} {out_name}")
             except:

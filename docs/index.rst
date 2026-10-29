@@ -21,7 +21,11 @@ Note: Luz is a work-in-progress project. Features will change, and bugs will be 
 Speed
 *****************************
 
-Luz is written in pure Python, and only uses libraries that I've created myself in its code. This means that it's very fast. Luz especially shines when building projects with submodules, as it can build all of the submodules in parallel. This means that building a project only takes as long as the longest build time of any of the submodules.
+Luz is written in Python and uses the native Python pyLogos interpreter for
+Logos sources. It caches unchanged source objects and builds changed source /
+architecture pairs in parallel. Luz also builds independent submodules in
+parallel, so a project is not forced to wait for each unrelated submodule in
+sequence.
 
 Below you can find a benchmark of Luz vs. Theos, using the time comparison tool `hyperfine`. The same tweak was built (clean) with both build systems.
 

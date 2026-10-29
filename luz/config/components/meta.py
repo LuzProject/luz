@@ -15,8 +15,36 @@ PLATFORMS = {
     "watchsimulator": "watchsimulator",
 }
 
+# ``ios`` is convenient in project configuration, while ``iphoneos`` remains
+# the canonical value needed by xcrun's SDK lookup.
+PLATFORM_ALIASES = {"ios": "iphoneos", "macos": "macosx", "mac": "macosx", "watch": "watchos"}
+
 
 class Meta:
+    """Describe the toolchain and destination shared by every module.
+
+    ``Meta`` is normally the first object in a ``luzconf.py``.  It selects
+    the Apple SDK, compiler executables, deployment target, architectures,
+    package layout, and connection details used by :meth:`Luz.install`.
+    Command-line ``-m`` overrides and inherited configurations are applied
+    before platform validation, so values supplied there have the same
+    semantics as values written in the configuration file.
+
+    Platform names follow Xcode's SDK names.  ``"iphoneos"`` is the
+    canonical physical-device platform; ``"ios"`` is accepted as a friendly
+    alias and is normalized to ``"iphoneos"``.  Simulator projects must use
+    ``"iphonesimulator"``.  Rootless layout and ``ldid`` signing apply only
+    to physical-device builds; they are automatically disabled for macOS and
+    Simulator targets.
+
+    Attributes created after initialization:
+        sdk: Resolved SDK directory selected from ``~/.luz/sdks`` or Xcode.
+        platform: Normalized Xcode SDK name, never the ``"ios"`` alias.
+        root_dir: Destination root inside Luz's package staging directory.
+        staging_dir: Temporary package tree used by the current build.
+        ldid: Path to ``ldid`` for device builds, otherwise ``None``.
+    """
+
     def __init__(
         self,
         debug: bool = True,
@@ -36,25 +64,45 @@ class Meta:
         install_ip: str = "localhost",
         install_port: int = 22,
     ):
-        """Initialize Meta
+        """Create the project-wide build configuration.
 
         Args:
-            debug (bool, optional): Debug (default: True)
-            release (bool, optional): Release (default: False)
-            sdk (str, optional): SDK to build with
-            prefix (str, optional): Prefix to run commands with
-            cc (str, optional): C compiler (default: clang)
-            swift (str, optional): Swift compiler (default: swift)
-            rootless (bool, optional): Rootless (default: True)
-            compression (str, optional): Compression (default: xz)
-            pack (bool, optional): Pack (default: True)
-            archs (list, optional): Architectures to compile for (default: ['arm64', 'arm64e'])
-            platform (str, optional): Platform (default: iphoneos)
-            min_vers (str, optional): Minimum version (default: 15.0)
-            messages (bool, optional): Show command messages (default: False)
-            install_user (str, optional): User to install built packages to (default: 'root'),
-            install_ip (str, optional): IP to install built packages to (default: 'localhost'),
-            install_port (int, optional): Port to install built packages to (default: 22)
+            debug: Add debug information and use ``-O0``.  If both ``debug``
+                and ``release`` are true, release takes precedence.
+            release: Build an optimized release artifact.  This disables
+                ``debug`` when both options are selected.
+            sdk: Absolute SDK path or SDK directory name under
+                ``~/.luz/sdks``.  Leave empty to select the closest locally
+                cached SDK or ask Xcode through ``xcrun``.
+            prefix: Directory containing a cross-toolchain.  It is normally
+                empty on macOS, where Xcode tools are discovered from PATH.
+            cc: C, Objective-C, and linker driver name or absolute path.
+            swift: Swift compiler name or absolute path.
+            rootless: Install device package files below ``/var/jb``.  This
+                is ignored for simulator, macOS, and watch targets.
+            compression: Debian control/data archive compression: ``"xz"``
+                (default), ``"gzip"``, ``"bzip2"``, or ``"zstd"`` when a
+                compatible zstd executable is available.
+            pack: Produce a ``.deb`` after building.  Set false when a
+                caller only needs compiled module artifacts.
+            archs: Architectures to compile, such as ``["arm64"]`` or
+                ``["arm64", "arm64e"]``.  The device default is the latter.
+            platform: Xcode SDK platform.  Valid values are ``"iphoneos"``
+                (also ``"ios"``), ``"iphonesimulator"``, ``"macosx"``
+                (also ``"macos"``/``"mac"``), ``"watchos"`` (also
+                ``"watch"``), and ``"watchsimulator"``.
+            min_vers: Minimum OS version used in target triples and Clang
+                deployment flags, for example ``"15.0"``.
+            messages: Print full compiler and packaging commands.
+            install_user: SSH account used by :meth:`Luz.install`.
+            install_ip: Device hostname or IP address used by
+                :meth:`Luz.install`; it does not affect local builds.
+            install_port: SSH port used by :meth:`Luz.install`.
+
+        Raises:
+            ValueError: If ``platform`` is unsupported.
+            Exception: If a requested toolchain, SDK, Git, or required
+                device-signing tool cannot be found.
         """
 
         # assign variables
@@ -68,9 +116,7 @@ class Meta:
         self.pack = pack
         self.archs = list(archs or ["arm64", "arm64e"])
         self.platform = platform
-        if self.platform not in PLATFORMS:
-            raise ValueError(f"Unsupported platform '{platform}'. Valid platforms: {', '.join(PLATFORMS)}.")
-        self.rootless = rootless if platform == "iphoneos" else False
+        self.rootless = rootless
         self.min_vers = min_vers
         self.messages = messages
         self.install_user = install_user
@@ -89,6 +135,15 @@ class Meta:
             for key, value in luz.meta.__dict__.items():
                 if value != "" and value is not None and value != []:
                     setattr(self, key, getattr(luz.meta, key))
+
+        # Normalize aliases after command-line overrides and inheritance so
+        # ``Meta(platform='ios')`` and ``-m platform=ios`` behave alike.
+        raw_platform = str(self.platform).lower()
+        self.platform = PLATFORM_ALIASES.get(raw_platform, raw_platform)
+        if self.platform not in PLATFORMS:
+            valid = ", ".join([*PLATFORMS, *PLATFORM_ALIASES])
+            raise ValueError(f"Unsupported platform '{raw_platform}'. Valid platforms: {valid}.")
+        self.rootless = bool(self.rootless) if self.is_device else False
 
         # handle debug
         if self.debug and self.release:
@@ -141,7 +196,7 @@ class Meta:
         # ldid is only required for binaries installed on a physical iOS
         # device. Native macOS and Simulator builds do not depend on it.
         self.ldid = None
-        if self.platform == "iphoneos":
+        if self.is_device:
             self.ldid = cmd_in_path(f'{(str(self.prefix) + "/") if self.prefix is not None else ""}ldid')
             if self.ldid is None:
                 self.ldid = cmd_in_path("ldid")
@@ -177,8 +232,17 @@ class Meta:
                     raise Exception("Specified SDK does not exist.")
 
     def target_triple(self, architecture: str) -> str:
-        """Return the correctly ordered Apple target triple for this SDK."""
-        if self.platform == "iphoneos":
+        """Return Clang's Apple target triple for one architecture.
+
+        Args:
+            architecture: Apple architecture such as ``"arm64"`` or
+                ``"x86_64"``.
+
+        Returns:
+            A target such as ``"arm64-apple-ios15.0"`` or
+            ``"arm64-apple-ios15.0-simulator"``.
+        """
+        if self.is_device:
             suffix = f"ios{self.min_vers}"
         elif self.platform == "iphonesimulator":
             suffix = f"ios{self.min_vers}-simulator"
@@ -191,8 +255,23 @@ class Meta:
         return f"{architecture}-apple-{suffix}"
 
     @property
+    def is_device(self) -> bool:
+        """Whether this configuration builds for a physical iOS device.
+
+        Use this instead of comparing ``platform`` to a literal.  It keeps
+        code correct when user-facing aliases, SDK naming, and compiler
+        target-triple spelling differ.
+        """
+        return self.platform == "iphoneos"
+
+    @property
     def deployment_flag_platform(self) -> str:
-        """Return the platform spelling used by Clang's -m*-version-min flag."""
+        """Return the canonical spelling for Clang deployment-version flags.
+
+        This is the platform component used to form flags such as
+        ``-miphoneos-version-min=15.0``.  It is intentionally distinct from
+        the lowercase ``ios`` spelling used inside an Apple target triple.
+        """
         return PLATFORMS[self.platform]
 
     def __xcrun(self):

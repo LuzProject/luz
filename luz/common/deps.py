@@ -1,12 +1,18 @@
 # module imports
 from os import makedirs
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from shlex import quote
-from sys import executable
+from sys import modules
+from threading import Lock
 
 # local imports
 from .logger import error, log_stdout, remove_log_stdout
 from .utils import resolve_path
+
+
+_pylogos_module = None
+_pylogos_lock = Lock()
 
 
 def clone_logos(module, update: bool = False) -> Path:
@@ -18,7 +24,7 @@ def clone_logos(module, update: bool = False) -> Path:
     """
     # Keep the requested SSH remote so private-key GitHub authentication works
     # in the same way as other Luz vendor dependencies.
-    logos_url = "git@github.com:iCrazeiOS/pyLogos.git"
+    logos_url = "https://github.com/iCrazeiOS/pyLogos"
     storage = module.meta.storage
     # logos path
     logos_path = resolve_path(f"{storage}/vendor/pyLogos")
@@ -37,6 +43,47 @@ def clone_logos(module, update: bool = False) -> Path:
     return logos_path
 
 
+def load_pylogos(module):
+    """Load Luz's vendored pyLogos module once for in-process preprocessing.
+
+    The vendor checkout is deliberately loaded from its file path rather than
+    added permanently to Luz's import namespace.  That lets ``pyLogos`` keep
+    its own ``Logos`` package while avoiding a dependency on a globally
+    installed package.
+
+    Args:
+        module: Luz project whose metadata locates the vendor directory.
+
+    Returns:
+        The loaded ``logos.py`` module exposing ``preprocess_file``.
+
+    Raises:
+        RuntimeError: If the vendor checkout does not provide the callable
+            API required by this version of Luz.
+    """
+    global _pylogos_module
+    with _pylogos_lock:
+        if _pylogos_module is not None:
+            return _pylogos_module
+
+        logos_path = clone_logos(module)
+        logos_file = logos_path / "logos.py"
+        spec = spec_from_file_location("_luz_vendor_pylogos", logos_file)
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"Could not load vendored pyLogos at {logos_file}.")
+
+        loaded = module_from_spec(spec)
+        modules[spec.name] = loaded
+        spec.loader.exec_module(loaded)
+        if not hasattr(loaded, "preprocess_file"):
+            raise RuntimeError(
+                "Vendored pyLogos is missing preprocess_file(). Update "
+                "~/.luz/vendor/pyLogos to a version with the callable API."
+            )
+        _pylogos_module = loaded
+        return _pylogos_module
+
+
 def clone_libraries(module, update: bool = False) -> Path:
     """Clones the default Theos libraries.
 
@@ -44,7 +91,7 @@ def clone_libraries(module, update: bool = False) -> Path:
     :param bool update: Whether to update libraries or not.
     :return: Path to libraries dir
     """
-    libraries_url = "--branch rootless https://github.com/elihwyma/lib"
+    libraries_url = "--branch https://github.com/theos/lib"
     storage = module.meta.storage
     # libraries path
     libraries_path = resolve_path(f"{storage}/vendor/lib")
@@ -61,37 +108,6 @@ def clone_libraries(module, update: bool = False) -> Path:
         remove_log_stdout("Updating libraries...")
     # return path
     return libraries_path
-
-
-def substrate_compatibility_library(module, libraries_path: Path) -> Path:
-    """Create a current-TAPI substrate stub when a vendor checkout is legacy.
-
-    Older jailbreak library bundles describe CydiaSubstrate with a pre-v4 TBD
-    file using ``platform: iphoneos``. New Xcode TAPI rejects that spelling.
-    The generated v4 stub preserves its exported symbols while declaring the
-    current ``arm64-ios``/``arm64e-ios`` targets.
-    """
-    source = libraries_path / "libsubstrate.tbd"
-    if not source.is_file() or "platform:        iphoneos" not in source.read_text():
-        return libraries_path
-
-    compatibility_dir = resolve_path(f"{module.meta.storage}/vendor/luz-compat")
-    compatibility_dir.mkdir(parents=True, exist_ok=True)
-    output = compatibility_dir / "libsubstrate.tbd"
-
-    # Rebuild only when the vendor source changes; this avoids stale stubs
-    # while keeping normal incremental builds fast.
-    if not output.is_file() or output.stat().st_mtime < source.stat().st_mtime:
-        converted = ["--- !tapi-tbd", "tbd-version: 4", "targets: [ arm64-ios, arm64e-ios ]"]
-        for line in source.read_text().splitlines()[1:]:
-            if line.startswith("archs:") or line.startswith("platform:"):
-                continue
-            if line.startswith("  - archs:"):
-                converted.append("  - targets:         [ arm64-ios, arm64e-ios ]")
-            else:
-                converted.append(line)
-        output.write_text("\n".join(converted) + "\n")
-    return compatibility_dir
 
 
 def clone_headers(module, update: bool = False) -> Path:
@@ -128,11 +144,9 @@ def logos(luz, module, files: list) -> list:
     :return: The list of logos'd files.
     """
     dir = luz.meta.luz_dir
-    # logos dir
-    logos = clone_logos(luz)
-    # pyLogos is a Python port of Theos Logos.  Use the same interpreter that
-    # launched Luz so it works with current Python installations.
-    logos_exec = logos / "logos.py"
+    # Load pyLogos lazily: ordinary C/Objective-C/Swift modules should not
+    # pay even the import cost of a Logos parser.
+    pylogos = None
     # new files
     new_files = []
 
@@ -142,11 +156,15 @@ def logos(luz, module, files: list) -> list:
         # match to case
         file_formatted = str(file).split("/")[-1].split(".")[-1]
         if file_formatted == "x" or file_formatted == "xm":
-            # pyLogos emits translated Objective-C on stdout. Quoting every
-            # component keeps source paths containing spaces safe for the shell.
-            output_value = luz.cmd.exec_output(
-                f"{quote(executable)} {quote(str(logos_exec))} {quote(str(file))}"
-            ).decode()
+            if pylogos is None:
+                # pyLogos is imported from Luz's vendored checkout and called
+                # directly. This removes a Python subprocess per Logos file.
+                pylogos = load_pylogos(luz)
+            try:
+                output_value = pylogos.preprocess_file(file)
+            except pylogos.LogosError as exc:
+                error(f"pyLogos Error: {exc}", f"{module.abbreviated_name}")
+                raise RuntimeError(str(exc)) from exc
             output_file = resolve_path(f"{output}.{'m' if file_formatted == 'x' else 'mm'}")
             output_file.parent.mkdir(parents=True, exist_ok=True)
             spl = output_value.splitlines()
