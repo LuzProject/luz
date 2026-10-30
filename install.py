@@ -113,20 +113,13 @@ PATH = resolve_path(f'{environ.get("HOME")}/.luz')
 
 def get_manager() -> str:
     """Get the package manager for the current system."""
-    if cmd_in_path("apt") is not None:
-        return "apt"
-    elif cmd_in_path("pacman") is not None:
-        return "pacman"
-    elif cmd_in_path("dnf") is not None:
-        return "dnf"
-    elif cmd_in_path("zypper") is not None:
-        return "zypper"
-    elif cmd_in_path("port") is not None:
-        return "port"
-    elif cmd_in_path("brew") is not None:
-        return "brew"
-    else:
-        return ""
+    pkg_managers = ["apt", "pacman", "dnf", "zypper", "port", "brew"]
+    for manager in pkg_managers:
+        if cmd_in_path(manager) is not None:
+            log(f"Found package manager: {manager}")
+            return manager
+    error("Could not find a package manager. Please install one of the following: apt, pacman, dnf, zypper, port, brew")
+    sys_exit(1)
 
 
 def get_sdks():
@@ -253,7 +246,7 @@ def main():
         log("Updating luz and its dependencies...")
         try:
             command_wrapper(
-                f"{executable} -m pip uninstall -y --break-system-packages luz pyclang && {executable} -m pip install --break-system-packages https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip"
+                f"{executable} -m pip uninstall -y --break-system-packages luz && {executable} -m pip install --break-system-packages https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip"
             )
         except Exception as err:
             error(f"Failed to update luz: {err}")
