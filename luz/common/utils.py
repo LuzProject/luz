@@ -6,6 +6,8 @@ from pathlib import Path
 from importlib.metadata import version
 from shutil import which
 from subprocess import check_output, getoutput
+from contextlib import nullcontext
+from threading import BoundedSemaphore
 from typing import Union
 
 # local imports
@@ -13,10 +15,14 @@ from . import cfg
 
 
 class CMD:
-    def __init__(self, lock, show_messages: bool = False):
+    def __init__(self, lock, show_messages: bool = False, jobs: int = None):
         """Initialize the CMD class."""
         self.lock = lock
         self.show_messages = show_messages
+        # An explicit job cap is shared by every module builder through Luz's
+        # single CMD instance. Without one, Luz preserves the high-throughput
+        # default of one compiler worker per changed source/architecture pair.
+        self.execution_limiter = BoundedSemaphore(int(jobs)) if jobs is not None else None
 
     def exec_no_output(self, cmd: str) -> str:
         """Execute a command.
@@ -34,7 +40,8 @@ class CMD:
                 print(cmd)
         # ``getoutput`` hides the exit status, causing failed link/sign/vendor
         # commands to look successful. Capture stdout but still raise on error.
-        return check_output(cmd, env=environ.copy(), shell=True).decode()
+        with self.execution_limiter or nullcontext():
+            return check_output(cmd, env=environ.copy(), shell=True).decode()
 
     def exec_output(self, cmd: str, cwd: str = None):
         """Execute a command.
@@ -55,7 +62,8 @@ class CMD:
         # logging lock for the lifetime of a compiler process serialized every
         # source and architecture, defeating parallel builds. Output is
         # captured, so only the optional command-printing above needs locking.
-        return check_output(cmd, cwd=cwd, env=environ.copy(), shell=True)
+        with self.execution_limiter or nullcontext():
+            return check_output(cmd, cwd=cwd, env=environ.copy(), shell=True)
 
 
 def resolve_path(path: str):

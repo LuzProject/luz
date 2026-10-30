@@ -137,7 +137,11 @@ class Luz:
                     setattr(self.meta, key, getattr(inherit.meta, key))
 
         # pool
-        self.pool = ThreadPoolExecutor(max_workers=20) if inherit is None else inherit.pool
+        # An explicit jobs value limits module scheduling globally. Otherwise
+        # preserve Luz's original high-throughput outer scheduler.
+        self.pool = ThreadPoolExecutor(
+            max_workers=min(20, self.meta.jobs) if self.meta.jobs is not None else 20
+        ) if inherit is None else inherit.pool
 
         # lock
         self.lock = Lock() if inherit is None else inherit.lock
@@ -146,7 +150,7 @@ class Luz:
         if inherit is not None:
             self.cmd = inherit.cmd
         else:
-            self.cmd = CMD(lock=self.lock, show_messages=self.meta.messages)
+            self.cmd = CMD(lock=self.lock, show_messages=self.meta.messages, jobs=self.meta.jobs)
 
         # control
         self.control = getattr(self.raw, "control", None if inherit is None else inherit.control)

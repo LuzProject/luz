@@ -3,7 +3,7 @@
 from concurrent.futures import ThreadPoolExecutor, wait
 from os import makedirs
 from pathlib import Path
-from shutil import copytree, rmtree
+from shutil import copy2, copytree, rmtree
 from subprocess import check_output
 
 # local imports
@@ -171,7 +171,17 @@ class ModuleBuilder:
         files = logos(self.luz, self.module, files)
 
         # pool
-        self.pool = ThreadPoolExecutor(max_workers=(len(files) * arch_count))
+        # By default, maximize throughput with one worker per changed
+        # source/architecture pair. An explicit Meta.jobs cap constrains both
+        # this pool and the shared command executor across all modules.
+        self.pool = ThreadPoolExecutor(
+            max_workers=max(
+                1,
+                min(len(files) * arch_count, self.meta.jobs)
+                if self.meta.jobs is not None
+                else len(files) * arch_count,
+            )
+        )
 
         # return files
         return files
@@ -239,7 +249,13 @@ class ModuleBuilder:
         # link
         try:
             compiled = [f"{self.obj_dir}/{arch}/{self.module.install_name}" for arch in self.meta.archs]
-            self.luz.cmd.exec_no_output(f"{self.meta.lipo} -create -output {out_name} {' '.join(compiled)}")
+            if len(compiled) == 1:
+                # lipo adds process startup and file-copy overhead without
+                # changing a single-architecture binary. copy2 keeps Mach-O
+                # mode bits intact for executable tool modules.
+                copy2(compiled[0], out_name)
+            else:
+                self.luz.cmd.exec_no_output(f"{self.meta.lipo} -create -output {out_name} {' '.join(compiled)}")
         except:
             return f'An error occured when trying to lipo files for module "{self.module.name}".'
 
@@ -344,10 +360,6 @@ class ModuleBuilder:
             "-primary-file",
         ]
         build_flags.extend(self.module.swift_flags)
-        rmtree(
-            f"{self.obj_dir}/{arch}/{file.name}-*",
-            ignore_errors=True,
-        )
         # compile with swift using build flags
         try:
             self.luz.cmd.exec_output(f"{self.meta.swift} {' '.join(build_flags)} {file} {' '.join(fmtc)}")
@@ -374,13 +386,10 @@ class ModuleBuilder:
         ]
         build_flags.extend(self.module.c_flags)
         build_flags.extend(self.module.warnings)
-        rmtree(
-            f"{self.obj_dir}/{arch}/{file.name}-*",
-            ignore_errors=True,
-        )
         # compile with clang using build flags
         try:
-            self.luz.cmd.exec_output(f"{self.meta.cc} {' '.join(build_flags)} {file}")
+            compiler = f"{self.meta.ccache} {self.meta.cc}" if self.meta.ccache else self.meta.cc
+            self.luz.cmd.exec_output(f"{compiler} {' '.join(build_flags)} {file}")
         except:
             return f'An error occured when attempting to compile "{file}" for module "{self.module.name}".'
 
@@ -411,8 +420,14 @@ class ModuleBuilder:
         # clean arch dirs
         for arch in self.meta.archs:
             for x in self.files_paths:
-                check_output(f"rm -rf {self.obj_dir}/{arch}/{x.name}-*", shell=True)
-            makedirs(f"{self.obj_dir}/{arch}", exist_ok=True)
+                object_dir = self.obj_dir / arch
+                if object_dir.exists():
+                    for artifact in object_dir.glob(f"{x.name}-*"):
+                        if artifact.is_dir():
+                            rmtree(artifact)
+                        else:
+                            artifact.unlink()
+            makedirs(self.obj_dir / arch, exist_ok=True)
         # compile files
         futures = [self.luz.pool.submit(self.__compile_file, file) for file in self.files]
         self.wait(futures)

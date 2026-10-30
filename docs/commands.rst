@@ -98,14 +98,18 @@ Build speed
 Luz caches source hashes and reuses unchanged object files by default. Avoid
 ``--clean`` during ordinary iteration: it intentionally removes that cache.
 Compiler processes for changed files and requested architectures run in
-parallel, while linking and packaging remain ordered steps.
+parallel, with one worker per changed source/architecture pair by default.
+Set ``Meta(jobs=...)`` to apply a shared process budget when intentionally
+trading peak throughput for lower machine contention. Linking and packaging
+remain ordered steps. A one-architecture build also skips ``lipo``.
 
 For faster development builds, build only the architectures you need and avoid
 package creation when it is not useful::
 
-    meta = Meta(archs=['arm64'], compression='gzip', pack=False)
+    meta = Meta(archs=['arm64'], compression='gzip', pack=False, jobs=4)
 
 ``arm64e`` is useful only when the target devices need it; including it adds a
 second compile and link slice. ``gzip`` is faster than the default ``xz`` for
 development packages. Set ``pack=True`` again before producing a distributable
-package.
+package. Install ``ccache`` to enable its default compiler-result cache, or
+set ``compiler_cache=False`` when diagnosing compiler behavior.

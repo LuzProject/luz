@@ -62,6 +62,15 @@ Meta variables are defined in a class called ``Meta`` that can be imported from 
    * - ``messages``
      - Boolean
      - Print compiler, linker, and packaging commands. (``false`` if not specified)
+   * - ``jobs``
+     - Number
+     - Optional maximum concurrent external build commands for the whole
+       project. When omitted, Luz uses one worker per changed source and
+       architecture pair.
+   * - ``compiler_cache``
+     - Boolean
+     - Use ``ccache`` for C-family compilation when it is installed; otherwise
+       compile normally. (``true`` if not specified)
    * - ``install_user``
      - String
      - User to install the built project to. (``root`` if not specified)

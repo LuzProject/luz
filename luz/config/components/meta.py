@@ -63,6 +63,8 @@ class Meta:
         install_user: str = "root",
         install_ip: str = "localhost",
         install_port: int = 22,
+        jobs: int = None,
+        compiler_cache: bool = True,
     ):
         """Create the project-wide build configuration.
 
@@ -98,6 +100,13 @@ class Meta:
             install_ip: Device hostname or IP address used by
                 :meth:`Luz.install`; it does not affect local builds.
             install_port: SSH port used by :meth:`Luz.install`.
+            jobs: Optional maximum concurrent external build commands across
+                the whole project. When omitted, Luz uses one worker per
+                changed source/architecture pair. Set ``1`` to debug a build
+                serially or lower it when the machine is busy.
+            compiler_cache: Use ``ccache`` for C-family compilation when it
+                is installed. Missing ccache falls back to the configured
+                compiler without failing the build.
 
         Raises:
             ValueError: If ``platform`` is unsupported.
@@ -122,6 +131,8 @@ class Meta:
         self.install_user = install_user
         self.install_ip = install_ip
         self.install_port = install_port
+        self.jobs = jobs
+        self.compiler_cache = compiler_cache
 
         # handle passed config
         if cfg.passed != {}:
@@ -144,6 +155,14 @@ class Meta:
             valid = ", ".join([*PLATFORMS, *PLATFORM_ALIASES])
             raise ValueError(f"Unsupported platform '{raw_platform}'. Valid platforms: {valid}.")
         self.rootless = bool(self.rootless) if self.is_device else False
+        if self.jobs is not None:
+            try:
+                self.jobs = int(self.jobs)
+            except (TypeError, ValueError) as exc:
+                raise ValueError("jobs must be a positive integer.") from exc
+            if self.jobs < 1:
+                raise ValueError("jobs must be a positive integer.")
+        self.compiler_cache = bool(self.compiler_cache)
 
         # handle debug
         if self.debug and self.release:
@@ -178,6 +197,10 @@ class Meta:
         self.git = cmd_in_path("git")
         if self.git is None:
             raise Exception("Git is needed in order to use Luz.")
+
+        # ccache is an optional optimization. Store its resolved path once so
+        # compiler workers do not perform a PATH lookup for every source file.
+        self.ccache = cmd_in_path("ccache") if self.compiler_cache else None
 
         # format cc with prefix
         if self.prefix != "" and not resolve_path(self.cc).is_relative_to("/"):
