@@ -214,6 +214,14 @@ class Module:
         # resolve bridging headers
         self.bridging_headers = [resolve_path(f if str(f).startswith("/") else path / f) for f in self.bridging_headers]
 
+        # Public framework/library headers follow the same project-relative
+        # path rules as sources. This is especially important for LuzGen
+        # framework projects built with ``luz build --path <project>``.
+        self.public_headers = [
+            resolve_path(f if str(f).startswith("/") else path / f)
+            for f in self.public_headers
+        ]
+
         # resources dir
         self.resources_dir = resolve_path(resources_dir if str(resources_dir).startswith("/") else path / resources_dir)
 

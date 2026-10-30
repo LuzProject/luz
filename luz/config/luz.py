@@ -287,10 +287,6 @@ class Luz:
         else:
             dir_to_log = str(self.path.absolute()).replace(str(self.path.cwd().absolute()), ".")
         log(f"Packing to '{dir_to_log}/packages/{deb_file_name}'...", "📦")
-        # Reset the staging area so a non-clean build cannot accidentally ship
-        # files that were removed from the project after an earlier build.
-        rmtree(self.meta.staging_dir, ignore_errors=True)
-        makedirs(self.meta.staging_dir, exist_ok=True)
         # layout
         layout_path = resolve_path("layout")
         if layout_path.exists():
@@ -348,6 +344,13 @@ class Luz:
         Raises:
             Exception: If a module or submodule build fails.
         """
+        # Start with a clean package staging tree before modules copy their
+        # outputs into it. Clearing it in __pack() would erase every staged
+        # dylib, framework, and resource immediately before archiving.
+        if self.meta.pack:
+            rmtree(self.meta.staging_dir, ignore_errors=True)
+            makedirs(self.meta.staging_dir, exist_ok=True)
+
         # assign modules
         build_results = self.__build()
 
