@@ -56,7 +56,8 @@ Generate a project.
      - Description
    * - ``-t`` / ``--type``
      - String
-     - The type of project to generate: ``tool``, ``tweak``, or ``preferences``. (``tweak`` if not specified)
+     - The type of project to generate: ``tool``, ``tweak``, ``preferences``,
+       ``library`` (or ``lib``), or ``framework`` (or ``fw``). (``tweak`` if not specified)
 
 ``update``
 *********************
