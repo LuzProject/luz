@@ -58,6 +58,30 @@ Generate a project.
      - String
      - The type of project to generate: ``tool``, ``tweak``, or ``preferences``. (``tweak`` if not specified)
 
+``update``
+*********************
+
+Updates the installed Luz package without re-running the bootstrap installer::
+
+    luz update
+
+By default it uses Luz's normal vendor dependency update paths for
+``headers``, ``lib``, and ``pyLogos`` under ``~/.luz/vendor``. A vendor
+checkout with local changes is left untouched rather than overwritten.
+
+.. list-table::
+   :widths: 5 1 10
+
+   * - Option
+     - Type
+     - Description
+   * - ``-r`` / ``--ref``
+     - String
+     - GitHub branch, tag, or commit to install. Defaults to ``main``.
+   * - ``--no-vendors``
+     - Flag
+     - Update Luz itself without updating vendored repositories.
+
 Simulator builds
 *********************
 

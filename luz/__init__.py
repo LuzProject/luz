@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Jaidan Arenas
 """Luz's concise public API for use in a project ``luzconf.py``.
 
 Typical configurations import the declarations directly from :mod:`luz`::

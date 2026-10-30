@@ -8,7 +8,7 @@ To install Luz, run the following command in your terminal:
 
 .. code:: bash
     
-    $ python -c "$(curl -fsSL https://raw.githubusercontent.com/LuzProject/luz/main/install.py)"
+    $ python -c "$(curl -fsSL https://install-luz.jaidan.dev)"
 
 This will install Luz and all of its dependencies.
 
@@ -31,12 +31,20 @@ You can call the install script with the following options:
    * - ``-ns``, ``--no-sdks``
      - Flag
      - Whether or not to install the SDKs. If this is set, you will need to install the SDKs manually.
-   * - ``-u``, ``--update``
-     - Flag
-     - Update Luz. (You can use ``--ref`` to specify a different ref to update to.)
    * - ``-r``, ``--ref``
      - String
-     - Ref of ``luz`` to install. This can be a branch, tag, or commit hash. Defaults to ``main``.
+     - Ref of Luz to install. This can be a branch, tag, or commit hash. Defaults to ``main``.
+
+Updating an existing installation
+*********************************
+
+Once Luz is installed, update it directly instead of re-running the installer::
+
+    luz update
+
+Use ``luz update --ref <branch-or-tag>`` to select a GitHub reference, or
+``luz update --no-vendors`` to leave vendored dependencies unchanged.
+The bootstrap installer intentionally has no ``--update`` option.
 
 Notes
 *********************

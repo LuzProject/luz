@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Jaidan Arenas
 # module imports
 from hashlib import md5
 from os import environ, getcwd

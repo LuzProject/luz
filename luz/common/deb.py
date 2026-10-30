@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Jaidan Arenas
 """Minimal, standards-compliant Debian binary package writer.
 
 This deliberately uses only the Python standard library so packaging continues

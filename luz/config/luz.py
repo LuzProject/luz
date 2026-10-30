@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Jaidan Arenas
 """Project loader and build entrypoint behind the public :class:`Luz` API."""
 
 # module imports

@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Jaidan Arenas
 """Main entry point for Luz."""
 
 # module imports
@@ -9,6 +10,7 @@ from .config.luz import Luz
 from .config.verify import Verify
 from .common.logger import ask, error
 from .common.utils import get_version, resolve_path
+from .common.update import update_luz
 from .luzgen.assign import assign_module
 
 
@@ -56,6 +58,20 @@ def main():
         required=False,
     )
 
+    # update
+    parser_update = sub_parsers.add_parser("update", help="update the installed Luz command")
+    parser_update.add_argument(
+        "-r",
+        "--ref",
+        default="main",
+        help="GitHub branch, tag, or commit to install (default: main)",
+    )
+    parser_update.add_argument(
+        "--no-vendors",
+        action="store_true",
+        help="do not update vendored headers, libraries, and pyLogos",
+    )
+
     # args
     args = parser.parse_args()
 
@@ -92,6 +108,8 @@ def main():
                 if args.type == "":
                     args.type = "tweak"
             assign_module(args.type)
+        elif args.command == "update":
+            update_luz(ref=args.ref, update_vendors=not args.no_vendors)
         else:
             error(f'Unknown command "{args.command}".')
             sys.exit(1)

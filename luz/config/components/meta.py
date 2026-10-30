@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Jaidan Arenas
 # module imports
 from platform import platform as plat
 from subprocess import getoutput

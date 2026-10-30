@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Jaidan Arenas
 # module imports
 from sys import stdout
 

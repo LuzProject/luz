@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Jaidan Arenas
 MY_PATH="$(dirname -- "${BASH_SOURCE[0]}")"            # relative
 MY_PATH="$(cd -- "$MY_PATH" && pwd)"    # absolutized and normalized
 if [[ -z "$MY_PATH" ]] ; then

@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Jaidan Arenas
 # module imports
 from inspect import stack
 from pathlib import Path

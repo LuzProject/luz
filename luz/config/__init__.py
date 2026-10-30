@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Jaidan Arenas
 """Public declarations available to every ``luzconf.py``.
 
 Import from this module instead of internal implementation paths::

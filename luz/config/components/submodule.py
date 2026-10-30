@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Jaidan Arenas
 # local imports
 from ...common.utils import resolve_path
 

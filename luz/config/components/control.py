@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Jaidan Arenas
 import re
 
 _PACKAGE_NAME = re.compile(r"^[a-z0-9][a-z0-9+.-]*$")

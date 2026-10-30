@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Jaidan Arenas
 # module imports
 from os import makedirs
 from importlib.util import module_from_spec, spec_from_file_location

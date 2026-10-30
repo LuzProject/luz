@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Jaidan Arenas
 """Verify the luzconf config."""
 
 # module imports

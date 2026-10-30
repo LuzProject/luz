@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Jaidan Arenas
 # credit to Fiore (https://github.com/donato-fiore)
 import random
 

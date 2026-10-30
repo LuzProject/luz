@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Jaidan Arenas
 """Installer for Luz, a build system targeting Apple Darwin-based systems.
 
 Created by Jaidan (@aja1dan)
@@ -24,7 +25,6 @@ try:
     from argparse import ArgumentParser
     from os import environ, getuid, makedirs
     from pathlib import Path
-    from importlib.metadata import PackageNotFoundError, version
     from platform import platform
     from shutil import which
     from subprocess import check_call, DEVNULL, getoutput
@@ -32,7 +32,7 @@ try:
     from typing import Union
 except:
     error("Failed to import required modules. Perhaps your Python installation is out of date?")
-    error("Required modules: argparse, importlib.metadata, os, pathlib, platform, shutil, subprocess, sys, typing")
+    error("Required modules: argparse, os, pathlib, platform, shutil, subprocess, sys, typing")
     sys_exit(1)
 
 # Luz supports current CPython releases, including Python 3.15 and newer.
@@ -215,45 +215,9 @@ def main():
     """Main function."""
     parser = ArgumentParser()
     parser.add_argument("-ns", "--no-sdks", action="store_true", help="Do not install SDKs.")
-    parser.add_argument("-u", "--update", action="store_true", help="Whether or not to update.")
     parser.add_argument("-r", "--ref", type=str, default="main", help="Reference tag of Luz to install.")
 
     args = parser.parse_args()
-
-    try:
-        version("luz")
-        missing = set()
-    except PackageNotFoundError:
-        missing = {"luz"}
-
-    if not missing and not args.update:
-        log("luz is already installed.")
-        sys_exit(0)
-    elif missing and args.update:
-        log("luz is not installed.")
-        sys_exit(0)
-
-    if args.update:
-        log("Updating vendor modules...")
-        try:
-            for module in ["headers", "lib", "pyLogos"]:
-                if resolve_path(f"$HOME/.luz/vendor/{module}").exists():
-                    command_wrapper(f"cd ~/.luz/vendor/{module} && git pull")
-        except Exception as err:
-            error(f"Failed to update vendor modules: {err}")
-            sys_exit(1)
-
-        log("Updating luz and its dependencies...")
-        try:
-            command_wrapper(
-                f"{executable} -m pip uninstall -y --break-system-packages luz && {executable} -m pip install --break-system-packages https://github.com/LuzProject/luz/archive/refs/heads/{args.ref}.zip"
-            )
-        except Exception as err:
-            error(f"Failed to update luz: {err}")
-            sys_exit(1)
-
-        log("luz has been updated.")
-        sys_exit(0)
 
     if platform_str.startswith("Darwin") or platform_str.startswith("macOS"):
         darwin_install()
