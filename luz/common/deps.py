@@ -92,7 +92,7 @@ def clone_libraries(module, update: bool = False) -> Path:
     storage = module.meta.storage
     # libraries path
     libraries_path = resolve_path(f"{storage}/vendor/lib")
-    # if it doesn't exist, clone logos
+    # if it doesn't exist, clone
     if not libraries_path.exists():
         log_stdout("Cloning libraries...")
         makedirs(libraries_path.parent, exist_ok=True)
