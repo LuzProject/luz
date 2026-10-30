@@ -12,7 +12,6 @@ from .deps import clone_headers, clone_libraries, clone_logos
 from .logger import log, warn
 from .utils import CMD, cmd_in_path, get_luz_storage
 
-
 LUZ_UPDATE_REPOSITORY = "https://github.com/LuzProject/luz"
 
 
