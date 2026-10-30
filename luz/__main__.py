@@ -54,7 +54,7 @@ def main():
         "--type",
         action="store",
         help="the type of project to generate",
-        choices=["tool", "tweak", "preferences", "prefs"],
+        choices=["tool", "tweak", "preferences", "prefs", "library", "lib", "framework", "fw"],
         required=False,
     )
 
@@ -104,7 +104,7 @@ def main():
             luz = Verify(luzbuild_path)
         elif args.command == "gen":
             if args.type is None:
-                args.type = ask('What type of project would you like to generate? (tool/tweak/preferences) (enter for "tweak")')
+                args.type = ask('What type of project would you like to generate? (tool/tweak/preferences/library/framework) (enter for "tweak")')
                 if args.type == "":
                     args.type = "tweak"
             assign_module(args.type)
