@@ -15,10 +15,7 @@ class Library(Module):
         log(f"Valid source types: {', '.join(self.valid_sources)}")
         self.source_type = self._ask_for("source type", "objc").lower()
         if self.source_type not in self.valid_sources:
-            error(
-                f"Invalid source type: {self.source_type}. "
-                f"Valid types: {', '.join(self.valid_sources)}"
-            )
+            error(f"Invalid source type: {self.source_type}. " f"Valid types: {', '.join(self.valid_sources)}")
             raise ValueError("Unsupported LuzGen source type.")
 
         super().__init__(self.type, self.source_type)

@@ -139,9 +139,7 @@ class Luz:
         # pool
         # An explicit jobs value limits module scheduling globally. Otherwise
         # preserve Luz's original high-throughput outer scheduler.
-        self.pool = ThreadPoolExecutor(
-            max_workers=min(20, self.meta.jobs) if self.meta.jobs is not None else 20
-        ) if inherit is None else inherit.pool
+        self.pool = ThreadPoolExecutor(max_workers=min(20, self.meta.jobs) if self.meta.jobs is not None else 20) if inherit is None else inherit.pool
 
         # lock
         self.lock = Lock() if inherit is None else inherit.lock
