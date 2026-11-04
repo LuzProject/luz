@@ -227,11 +227,55 @@ class ModuleBuilder:
         # add dynamic lib to args
         if compile_type == "dylib":
             build_flags.append("-dynamiclib")
-            build_flags.append(
-                f"-Wl,-install_name,{'/var/jb' if self.meta.rootless else ''}/{self.module.install_dir}/{self.module.install_name},"
-                f"-rpath,{'/var/jb' if self.meta.rootless else ''}/usr/lib/,"
-                f"-rpath,{'/var/jb' if self.meta.rootless else ''}/Library/Frameworks/"
+            install_prefix = "/var/jb" if self.meta.rootless else ""
+            linker_options = [
+                "-install_name",
+                f"{install_prefix}/{self.module.install_dir}/{self.module.install_name}",
+            ]
+
+            # A rootful library installed in /usr/lib is treated as an OS
+            # dylib by current Apple linkers. OS dylibs may not use LC_RPATH;
+            # dependency install names, rather than loader search paths, are
+            # the correct way to express their dependencies.
+            is_rootful_system_library = (
+                self.meta.is_device
+                and not self.meta.rootless
+                and self.module.install_dir.parts[:2] == ("usr", "lib")
             )
+            if not is_rootful_system_library:
+                linker_options.extend(
+                    [
+                        "-rpath",
+                        f"{install_prefix}/usr/lib/",
+                        "-rpath",
+                        f"{install_prefix}/Library/Frameworks/",
+                    ]
+                )
+                # RootHide uses a randomized jailbreak root instead of the
+                # fixed /var/jb location. Its package tools provide a
+                # .jbroot symlink beside each Mach-O, so loader-relative
+                # paths resolve correctly without hard-coding that root.
+                # Keep the conventional rootless paths above as well: a
+                # single artifact can then run on either bootstrap.
+                if self.meta.is_device and self.meta.rootless:
+                    linker_options.extend(
+                        [
+                            "-rpath",
+                            "@loader_path/.jbroot/usr/lib/",
+                            "-rpath",
+                            "@loader_path/.jbroot/Library/Frameworks/",
+                        ]
+                    )
+
+            # CydiaSubstrate is not eligible for dyld's shared cache. Recent
+            # ld versions reject a cache-eligible device dylib that links it;
+            # explicitly opt out for all device outputs using -lsubstrate.
+            # This is harmless for non-system locations and avoids requiring
+            # each project to know an Xcode-version-specific linker flag.
+            if self.meta.is_device and "substrate" in self.module.libraries:
+                linker_options.append("-not_for_dyld_shared_cache")
+
+            build_flags.append("-Wl," + ",".join(linker_options))
         # Compile and link one thin binary per requested architecture.
         for arch in self.meta.archs:
             try:
