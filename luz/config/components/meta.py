@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Jaidan Arenas
 # module imports
 from platform import platform as plat
-from subprocess import getoutput
+from subprocess import CalledProcessError, STDOUT, check_output
 
 # local imports
 from ...common.utils import cmd_in_path, get_luz_storage, resolve_path, setup_luz_dir
@@ -208,6 +208,11 @@ class Meta:
             if not prefix_path:
                 raise Exception(f'C compiler "{self.cc}" not in prefix path.')
             self.cc = prefix_path
+        elif self.prefix == "" and self.cc == "clang" and cmd_in_path("xcrun"):
+            # Ask Xcode for the default compiler now. Besides avoiding an
+            # ambiguous PATH lookup, this turns an unaccepted Xcode license
+            # into an actionable configuration error before compilation.
+            self.cc = self.xcrun_tool("clang")
 
         # format swift with prefix
         if self.prefix != "" and not resolve_path(self.swift).is_relative_to("/"):
@@ -297,15 +302,70 @@ class Meta:
         """
         return PLATFORMS[self.platform]
 
-    def __xcrun(self):
+    def xcrun_tool(self, tool: str) -> Path:
+        """Return an Xcode tool path with an actionable setup diagnostic.
+
+        ``xcrun`` may be present while unable to return a tool: for example,
+        immediately after installing or updating Xcode, before its license
+        has been accepted.  Callers receive one consistent error explaining
+        how to resolve that state instead of a blank path or a later compiler
+        failure.
+
+        Args:
+            tool: Xcode tool name, such as ``"clang"`` or ``"swift"``.
+
+        Returns:
+            The absolute executable path reported by ``xcrun``.
+
+        Raises:
+            Exception: If Xcode is unavailable, its license/configuration is
+                incomplete, or it does not provide the requested tool.
+        """
         xcrun = cmd_in_path("xcrun")
         if xcrun is None:
-            raise Exception("xcrun not found.")
-        else:
-            sdkA = getoutput(f"{xcrun} --show-sdk-path --sdk {self.platform}").split("\n")[-1]
-            if sdkA == "" or not sdkA.startswith("/"):
-                raise Exception("Could not find an SDK.")
-            self.sdk = sdkA
+            raise Exception("Xcode's xcrun tool was not found. Install or select Xcode, then try again.")
+        try:
+            output = check_output([str(xcrun), "--find", tool], text=True, stderr=STDOUT).strip()
+        except CalledProcessError as exc:
+            detail = exc.output.strip()
+            raise Exception(
+                f'Could not find Xcode tool "{tool}" via xcrun. '
+                "You may need to agree to the Xcode license: "
+                "run 'sudo xcodebuild -license accept' and try again."
+                + (f" xcrun reported: {detail}" if detail else "")
+            ) from exc
+        if not output.startswith("/"):
+            raise Exception(
+                f'Could not find Xcode tool "{tool}" via xcrun. '
+                "You may need to agree to the Xcode license: "
+                "run 'sudo xcodebuild -license accept' and try again."
+            )
+        return resolve_path(output)
+
+    def __xcrun(self):
+        """Resolve the selected platform SDK through the active Xcode."""
+        xcrun = cmd_in_path("xcrun")
+        if xcrun is None:
+            raise Exception("Xcode's xcrun tool was not found. Install or select Xcode, then try again.")
+        try:
+            sdk_path = check_output(
+                [str(xcrun), "--show-sdk-path", "--sdk", self.platform], text=True, stderr=STDOUT
+            ).strip()
+        except CalledProcessError as exc:
+            detail = exc.output.strip()
+            raise Exception(
+                f'Could not find the {self.platform} SDK via xcrun. '
+                "You may need to agree to the Xcode license: "
+                "run 'sudo xcodebuild -license accept' and try again."
+                + (f" xcrun reported: {detail}" if detail else "")
+            ) from exc
+        if not sdk_path.startswith("/"):
+            raise Exception(
+                f'Could not find the {self.platform} SDK via xcrun. '
+                "You may need to agree to the Xcode license: "
+                "run 'sudo xcodebuild -license accept' and try again."
+            )
+        self.sdk = sdk_path
         return resolve_path(self.sdk)
 
     def __get_sdk(self):

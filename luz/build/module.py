@@ -4,7 +4,6 @@ from concurrent.futures import ThreadPoolExecutor, wait
 from os import makedirs
 from pathlib import Path
 from shutil import copy2, copytree, rmtree
-from subprocess import check_output
 
 # local imports
 from ..common.deps import clone_headers, clone_libraries, logos
@@ -63,10 +62,9 @@ class ModuleBuilder:
                 # such as swiftCompatibility56.
                 # /usr/bin/swift is a developer-directory shim on macOS;
                 # xcrun resolves it to the active Xcode toolchain.
-                xcrun = cmd_in_path("xcrun")
                 swift_binary = (
-                    resolve_path(check_output([str(xcrun), "--find", "swift"], text=True).strip())
-                    if xcrun else cmd_in_path(str(self.meta.swift))
+                    self.meta.xcrun_tool("swift")
+                    if cmd_in_path("xcrun") else cmd_in_path(str(self.meta.swift))
                 )
                 swift_toolchain_libraries = swift_binary.resolve().parent.parent / "lib" / "swift" / self.meta.platform if swift_binary else None
                 if swift_toolchain_libraries and swift_toolchain_libraries.exists():
