@@ -331,15 +331,10 @@ class Meta:
             raise Exception(
                 f'Could not find Xcode tool "{tool}" via xcrun. '
                 "You may need to agree to the Xcode license: "
-                "run 'sudo xcodebuild -license accept' and try again."
-                + (f" xcrun reported: {detail}" if detail else "")
+                "run 'sudo xcodebuild -license accept' and try again." + (f" xcrun reported: {detail}" if detail else "")
             ) from exc
         if not output.startswith("/"):
-            raise Exception(
-                f'Could not find Xcode tool "{tool}" via xcrun. '
-                "You may need to agree to the Xcode license: "
-                "run 'sudo xcodebuild -license accept' and try again."
-            )
+            raise Exception(f'Could not find Xcode tool "{tool}" via xcrun. ' "You may need to agree to the Xcode license: " "run 'sudo xcodebuild -license accept' and try again.")
         return resolve_path(output)
 
     def __xcrun(self):
@@ -348,23 +343,16 @@ class Meta:
         if xcrun is None:
             raise Exception("Xcode's xcrun tool was not found. Install or select Xcode, then try again.")
         try:
-            sdk_path = check_output(
-                [str(xcrun), "--show-sdk-path", "--sdk", self.platform], text=True, stderr=STDOUT
-            ).strip()
+            sdk_path = check_output([str(xcrun), "--show-sdk-path", "--sdk", self.platform], text=True, stderr=STDOUT).strip()
         except CalledProcessError as exc:
             detail = exc.output.strip()
             raise Exception(
-                f'Could not find the {self.platform} SDK via xcrun. '
+                f"Could not find the {self.platform} SDK via xcrun. "
                 "You may need to agree to the Xcode license: "
-                "run 'sudo xcodebuild -license accept' and try again."
-                + (f" xcrun reported: {detail}" if detail else "")
+                "run 'sudo xcodebuild -license accept' and try again." + (f" xcrun reported: {detail}" if detail else "")
             ) from exc
         if not sdk_path.startswith("/"):
-            raise Exception(
-                f'Could not find the {self.platform} SDK via xcrun. '
-                "You may need to agree to the Xcode license: "
-                "run 'sudo xcodebuild -license accept' and try again."
-            )
+            raise Exception(f"Could not find the {self.platform} SDK via xcrun. " "You may need to agree to the Xcode license: " "run 'sudo xcodebuild -license accept' and try again.")
         self.sdk = sdk_path
         return resolve_path(self.sdk)
 
